@@ -1,6 +1,6 @@
 import os
-from win32com.client import Dispatch
 from PyQt5.QtWidgets import QMessageBox
+import psutil
 
 
 def msgBox(title, text):
@@ -17,11 +17,10 @@ def checked_zone_checked(lineEdit_path_check, lineEdit_table_number, zone):
                 return f
         return f
 
-    word = Dispatch("Word.Application")
-    book = word.Documents.Count
-    if book != 0:
-        msgBox('УПС!', 'Закройте все файлы Word!')
-        return
+    for proc in psutil.process_iter():
+        if proc.name() == 'WINWORD.EXE':
+            msgBox('УПС!', 'Закройте все файлы Word!')
+            return
     path = lineEdit_path_check.text().strip()
     if not path:
         msgBox('УПС!', 'Путь к проверяемым документам пуст')
@@ -48,7 +47,6 @@ def checked_zone_checked(lineEdit_path_check, lineEdit_table_number, zone):
                'Есть лишние символы в ограничении по носимым антеннам',
                'Есть лишние символы в ограничении r1',
                'Есть лишние символы в ограничении r1`')
-    print(zone_out)
     if zone_out:
         for i in zone_out:
             for j in zone_out[i]:

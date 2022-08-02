@@ -1,9 +1,11 @@
 import sys
+import os
 import Main
 import logging
-from PyQt5.QtCore import (QTranslator, QLocale, QLibraryInfo, Qt, QDir)
+from PyQt5.QtCore import (QTranslator, QLocale, QLibraryInfo, QDir)
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QFileDialog)
 from checked import checked_zone_checked
+from zone_check import ZoneChecked
 
 
 class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
@@ -57,11 +59,32 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
 
     def checked_zone(self):
         department = True if self.groupBox_FSB.isChecked() else False
+        win_lin = True if self.checkBox_win_lin.isChecked() else False
+        one_table = True if self.checkBox_first_table.isChecked() else False
         zone = [self.lineEdit_stationary_FSB, self.lineEdit_carry_FSB, self.lineEdit_wear_FSB, self.lineEdit_r1_FSB,
                 self.lineEdit_r1s_FSB] \
             if department else [self.lineEdit_stationary_FSTEK, self.lineEdit_carry_FSTEK,
                                 self.lineEdit_wear_FSTEK, self.lineEdit_r1_FSTEK]
         zone_all = checked_zone_checked(self.lineEdit_path_check, self.lineEdit_table_number, zone)
+        if self.checkBox_win_lin.isChecked():
+            zone = {i+5: zone_all[i] for i in zone_all}
+        zone_all = {**zone_all, **zone}
+        if zone_all:  # Если всё прошло запускаем поток
+            self.thread = ZoneChecked([self.lineEdit_path_check.text().strip(),
+                                       self.lineEdit_table_number.text().strip(),
+                                       department, win_lin, zone_all, one_table, logging])
+            self.thread.progress.connect(self.progressBar.setValue)
+            self.thread.status.connect(self.show_mess)
+            self.thread.finished.connect(self.stop_thread)
+            self.thread.start()
+        else:
+            return
+
+    def stop_thread(self):  # Завершение потока
+        os.chdir('C://')
+
+    def show_mess(self, value):  # Вывод значения в статус бар
+        self.statusBar().showMessage(value)
 
 
 if __name__ == '__main__':
