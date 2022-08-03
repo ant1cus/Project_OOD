@@ -1,4 +1,6 @@
 import os
+import threading
+
 import docx
 import openpyxl
 import re
@@ -7,13 +9,12 @@ from natsort import natsorted
 from docx.oxml.ns import nsdecls
 from docx.oxml import parse_xml
 from PyQt5.QtCore import QThread, pyqtSignal
-import win32com
-from win32com.client import Dispatch
 
 
 class ZoneChecked(QThread):
     progress = pyqtSignal(int)  # Сигнал для прогресс бара
     status = pyqtSignal(str)  # Сигнал для статус бара
+    messageChanged = pyqtSignal(str, str)
 
     def __init__(self, output):  # Список переданных элементов.
         QThread.__init__(self)
@@ -24,6 +25,8 @@ class ZoneChecked(QThread):
         self.zone = output[4]
         self.one_table = output[5]
         self.logging = output[6]
+        self.q = output[7]
+        self.event = threading.Event()
 
     def run(self):
         progress = 0
@@ -42,6 +45,8 @@ class ZoneChecked(QThread):
         self.logging.info("Проходимся по списку")
         try:
             for i in docs:
+                if self.pause_threading():
+                    return
                 self.logging.info("Документ " + str(i) + " в работе")
                 self.status.emit('Проверяем документ ' + i)
                 if '~' not in i:
@@ -60,6 +65,8 @@ class ZoneChecked(QThread):
                     self.logging.info("Считываем зоны")
                     if self.department:  # Если ФСБ
                         for j in range(0, win_lin, 1):
+                            if self.pause_threading():
+                                return
                             if j == 0 and self.win_lin:
                                 errors.append('\n')
                                 errors.append('Windows')
@@ -164,6 +171,8 @@ class ZoneChecked(QThread):
                     else:
                         self.logging.info("Считываем зоны")
                         for j in range(0, 4, 1):
+                            if self.pause_threading():
+                                return
                             zone = table.cell(j + 1, 1).text.replace(',', '.')
                             try:
                                 if void == 0:
@@ -244,115 +253,146 @@ class ZoneChecked(QThread):
                         if len(string) > 0:
                             e.append(string)
         except BaseException as es:
-            with open('log.txt', mode='w') as f:
-                print('--------------------------------------', file=f)
-                print(es, file=f)
-                print('--------------------------------------', file=f)
-                print(traceback.format_exc(), file=f)
+            self.logging.error(es)
+            self.logging.error(traceback.format_exc())
             progress = 0
             self.progress.emit(progress)
+            self.status.emit('Ошибка!')
             os.chdir('C://')
-            if es.args[2][2] == 'Запрашиваемый номер семейства не существует.':
-                self.status.emit('Не верно указан номер таблицы')
+            try:
+                if es.args[2][2] == 'Запрашиваемый номер семейства не существует.':
+                    self.status.emit('Не верно указан номер таблицы')
+            except IndexError:
+                pass
             return
-        e.append('\n')
-        self.logging.info("Формируем excel")
-        self.status.emit('Формируем отчёт')
-        if self.department:
-            zone = [self.zone.get(i) for i in range(0, 5)]
-            len_fill = len(zone_name)
-        else:
-            zone = [self.zone.get(i) for i in range(0, 4)]
-            len_fill = len(zone_name[:-1])
-        thin = openpyxl.styles.Side(border_style="thin", color="000000")
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        i, j = 1, 1
-        for el in e:
-            if i != 1 and el != 'Windows' and el != 'Linux':  # Чтобы отдельно заполнять первый столбец
-                if el == '\n':  # Если новая строка (используется как разделитель)
-                    pass
-                else:
-                    if j != 1:  # Если столбец не первый
-                        if '<' in el:  # Если значения '<0.1'
-                            ws.cell(i, j).value = el  # Просто пишем
-                        else:
-                            if type(el) == dict:  # Если тип словарь (если не прошло и есть значения для записи)
-                                j_ = 0
-                                for key in el:  # Имя и значения. Форматирование.
-                                    ws.cell(i, j + j_).value = key
-                                    ws.cell(i, j + j_).alignment = openpyxl.styles.Alignment(horizontal="left",
-                                                                                             vertical="center")
-                                    ws.cell(i, j + j_).font = openpyxl.styles.Font(bold=True, name="Times New Roman",
-                                                                                   size="11")
-                                    j_ += 1
-                                    for element in sorted(el[key]):
-                                        ws.cell(i, j + j_).value = element
+        try:
+            if self.pause_threading():
+                return
+            e.append('\n')
+            self.logging.info("Формируем excel")
+            self.status.emit('Формируем отчёт')
+            if self.department:
+                zone = [self.zone.get(i) for i in range(0, 5)]
+                len_fill = len(zone_name)
+            else:
+                zone = [self.zone.get(i) for i in range(0, 4)]
+                len_fill = len(zone_name[:-1])
+            thin = openpyxl.styles.Side(border_style="thin", color="000000")
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            i, j = 1, 1
+            for el in e:
+                if i != 1 and el != 'Windows' and el != 'Linux':  # Чтобы отдельно заполнять первый столбец
+                    if el == '\n':  # Если новая строка (используется как разделитель)
+                        pass
+                    else:
+                        if j != 1:  # Если столбец не первый
+                            if '<' in el:  # Если значения '<0.1'
+                                ws.cell(i, j).value = el  # Просто пишем
+                            else:
+                                if type(el) == dict:  # Если тип словарь (если не прошло и есть значения для записи)
+                                    j_ = 0
+                                    for key in el:  # Имя и значения. Форматирование.
+                                        ws.cell(i, j + j_).value = key
                                         ws.cell(i, j + j_).alignment = openpyxl.styles.Alignment(horizontal="left",
                                                                                                  vertical="center")
-                                        ws.cell(i, j + j_).font = openpyxl.styles.Font(name="Times New Roman",
+                                        ws.cell(i, j + j_).font = openpyxl.styles.Font(bold=True,
+                                                                                       name="Times New Roman",
                                                                                        size="11")
                                         j_ += 1
-                            elif '.' in el:  # Если есть точка, то форматируем
-                                ws.cell(i, j).number_format = '0.0'
-                                ws.cell(i, j).value = float(el)
-                            else:  # Если целочисленные (для ФСТЭК в основном)
-                                ws.cell(i, j).value = int(el)
-                    else:  # Если столбец первый
-                        len_ = len(el.partition('.')[2])  # Определяем какая длина после запятой (номер комплекта)
-                        ws.cell(i, j).number_format = '0.' + '0' * len_  # Для форматирования строки под требования
-                        f = '.' + str(len_) + 'f'
-                        ws.cell(i, j).value = float(format(float(el), f))  # Забиваем значение
-                    if j < len_fill + 2:  # Форматируем ячейки
-                        if j == 1:
-                            ws.cell(i, j).alignment = openpyxl.styles.Alignment(horizontal="left", vertical="center")
-                        else:
-                            ws.cell(i, j).border = openpyxl.styles.Border(top=thin, left=thin, right=thin, bottom=thin)
-                            ws.cell(i, j).alignment = openpyxl.styles.Alignment(horizontal="center", vertical="center")
-                        ws.cell(i, j).font = openpyxl.styles.Font(name="Times New Roman", size="11")
+                                        for element in sorted(el[key]):
+                                            ws.cell(i, j + j_).value = element
+                                            ws.cell(i, j + j_).alignment = openpyxl.styles.Alignment(horizontal="left",
+                                                                                                     vertical="center")
+                                            ws.cell(i, j + j_).font = openpyxl.styles.Font(name="Times New Roman",
+                                                                                           size="11")
+                                            j_ += 1
+                                elif '.' in el:  # Если есть точка, то форматируем
+                                    ws.cell(i, j).number_format = '0.0'
+                                    ws.cell(i, j).value = float(el)
+                                else:  # Если целочисленные (для ФСТЭК в основном)
+                                    ws.cell(i, j).value = int(el)
+                        else:  # Если столбец первый
+                            len_ = len(el.partition('.')[2])  # Определяем какая длина после запятой (номер комплекта)
+                            ws.cell(i, j).number_format = '0.' + '0' * len_  # Для форматирования строки под требования
+                            f = '.' + str(len_) + 'f'
+                            ws.cell(i, j).value = float(format(float(el), f))  # Забиваем значение
+                        if j < len_fill + 2:  # Форматируем ячейки
+                            if j == 1:
+                                ws.cell(i, j).alignment = openpyxl.styles.Alignment(horizontal="left",
+                                                                                    vertical="center")
+                            else:
+                                ws.cell(i, j).border = openpyxl.styles.Border(top=thin, left=thin,
+                                                                              right=thin, bottom=thin)
+                                ws.cell(i, j).alignment = openpyxl.styles.Alignment(horizontal="center",
+                                                                                    vertical="center")
+                            ws.cell(i, j).font = openpyxl.styles.Font(name="Times New Roman", size="11")
+                            ws.cell(i, j).fill = openpyxl.styles.PatternFill(start_color='92D050',
+                                                                             end_color='92D050',
+                                                                             fill_type="solid")
+                else:  # Форматируем и вставляем заголовки.
+                    ws.cell(i, j).value = el
+                    if i != 1:
+                        ws.cell(i, j).alignment = openpyxl.styles.Alignment(horizontal="left", vertical="center")
                         ws.cell(i, j).fill = openpyxl.styles.PatternFill(start_color='92D050',
                                                                          end_color='92D050',
                                                                          fill_type="solid")
-            else:  # Форматируем и вставляем заголовки.
-                ws.cell(i, j).value = el
-                if i != 1:
-                    ws.cell(i, j).alignment = openpyxl.styles.Alignment(horizontal="left", vertical="center")
-                    ws.cell(i, j).fill = openpyxl.styles.PatternFill(start_color='92D050',
-                                                                     end_color='92D050',
-                                                                     fill_type="solid")
-                else:
-                    ws.cell(i, j).alignment = openpyxl.styles.Alignment(horizontal="center", vertical="center")
-                ws.cell(i, j).font = openpyxl.styles.Font(name="Times New Roman", size="11")
-            j += 1  # Увеличиваем столбец
-            if el == '\n':  # Если переход к новой строке.
-                flag = 0
-                for element in range(2, len_fill + 2):  # Проверяем на проходимость
-                    if i != 1 and type(ws.cell(i, element).value) != str and ws.cell(i, element).value:
-                        try:  # Если не проходит, то форматируем
-                            if (ws.cell(i, element).value > float(zone[element - 2])) and (float(zone[element - 2]) != 0):
-                                ws.cell(i, element).font = openpyxl.styles.Font(bold=True, name="Times New Roman")
-                                flag = 1
-                        except TypeError:
-                            pass
-                if flag:  # Если что-то форматируется, то закрашиваем
-                    if self.win_lin:
-                        for min_ in range(1, 3):  # Закрашиваем номер комплекта
-                            print(ws.cell(i - min_, 1).value)
-                            if type(ws.cell(i - min_, 1).value) == float:
-                                ws.cell(i - min_, 1).alignment = openpyxl.styles.Alignment(
-                                    horizontal="left", vertical="center")
-                                ws.cell(i - min_, 1).fill = openpyxl.styles.PatternFill(
-                                    start_color='FFC000', end_color='FFC000', fill_type="solid")
-                                break
-                    for element in range(1, len_fill + 2):  # Закрашиваем строки
-                        ws.cell(i, element).fill = openpyxl.styles.PatternFill(
-                            start_color='FFC000', end_color='FFC000', fill_type="solid")
-                i += 1
-                j = 1
-        wb.save(filename='Зоны.xlsx')  # Сохраняем книгу.
-        wb.close()
-        os.startfile('Зоны.xlsx')
-        progress = 100
-        self.progress.emit(progress)
-        self.status.emit('Готово!')
-        os.chdir('C://')
+                    else:
+                        ws.cell(i, j).alignment = openpyxl.styles.Alignment(horizontal="center", vertical="center")
+                    ws.cell(i, j).font = openpyxl.styles.Font(name="Times New Roman", size="11")
+                j += 1  # Увеличиваем столбец
+                if el == '\n':  # Если переход к новой строке.
+                    flag = 0
+                    for element in range(2, len_fill + 2):  # Проверяем на проходимость
+                        if i != 1 and type(ws.cell(i, element).value) != str and ws.cell(i, element).value:
+                            try:  # Если не проходит, то форматируем
+                                if (ws.cell(i, element).value > float(zone[element - 2])) and\
+                                        (float(zone[element - 2]) != 0):
+                                    ws.cell(i, element).font = openpyxl.styles.Font(bold=True, name="Times New Roman")
+                                    flag = 1
+                            except TypeError:
+                                pass
+                    if flag:  # Если что-то форматируется, то закрашиваем
+                        if self.win_lin:
+                            for min_ in range(1, 3):  # Закрашиваем номер комплекта
+                                print(ws.cell(i - min_, 1).value)
+                                if type(ws.cell(i - min_, 1).value) == float:
+                                    ws.cell(i - min_, 1).alignment = openpyxl.styles.Alignment(
+                                        horizontal="left", vertical="center")
+                                    ws.cell(i - min_, 1).fill = openpyxl.styles.PatternFill(
+                                        start_color='FFC000', end_color='FFC000', fill_type="solid")
+                                    break
+                        for element in range(1, len_fill + 2):  # Закрашиваем строки
+                            ws.cell(i, element).fill = openpyxl.styles.PatternFill(
+                                start_color='FFC000', end_color='FFC000', fill_type="solid")
+                    i += 1
+                    j = 1
+            wb.save(filename='Зоны.xlsx')  # Сохраняем книгу.
+            wb.close()
+            os.startfile('Зоны.xlsx')
+            progress = 100
+            self.progress.emit(progress)
+            self.status.emit('Готово!')
+            os.chdir('C://')
+            return
+        except BaseException as es:
+            self.logging.error(es)
+            self.logging.error(traceback.format_exc())
+            progress = 0
+            self.progress.emit(progress)
+            self.status.emit('Ошибка!')
+            os.chdir('C://')
+            return
+
+    def pause_threading(self):
+        question = False if self.q.empty() else self.q.get_nowait()
+        if question:
+            self.messageChanged.emit('Вопрос?', 'Проверка остановлена пользователем. Нажмите «Да» для продолжения'
+                                                ' или «Нет» для прерывания')
+            self.event.wait()
+            self.event.clear()
+            if self.q.get_nowait():
+                self.status.emit('Прервано пользователем')
+                self.progress.emit(0)
+                return True
+        return False

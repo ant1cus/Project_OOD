@@ -1,14 +1,8 @@
 import os
-from PyQt5.QtWidgets import QMessageBox
 import psutil
 
 
-def msgBox(title, text):
-    msg = QMessageBox(QMessageBox.Critical, title, text)
-    msg.exec_()
-
-
-def checked_zone_checked(lineEdit_path_check, lineEdit_table_number, zone):
+def checked_zone_checked(line_edit_path_check, line_edit_table_number, zone):
     def check(n, e):
         f = 0
         for el in e:
@@ -19,27 +13,22 @@ def checked_zone_checked(lineEdit_path_check, lineEdit_table_number, zone):
 
     for proc in psutil.process_iter():
         if proc.name() == 'WINWORD.EXE':
-            msgBox('УПС!', 'Закройте все файлы Word!')
-            return
-    path = lineEdit_path_check.text().strip()
+            return ['УПС!', 'Закройте все файлы Word!']
+    path = line_edit_path_check.text().strip()
     if not path:
-        msgBox('УПС!', 'Путь к проверяемым документам пуст')
-        return
+        return ['УПС!', 'Путь к проверяемым документам пуст']
     if os.path.isdir(path):
         pass
     else:
-        msgBox('УПС!', 'Указанный путь к проверяемым документам не является директорией')
-        return
-    table = lineEdit_table_number.text().strip()
+        return ['УПС!', 'Указанный путь к проверяемым документам не является директорией']
+    table = line_edit_table_number.text().strip()
     err_f = ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')
     if not table:
-        msgBox('УПС!', 'Не указан номер таблицы')
-        return
+        return ['УПС!', 'Не указан номер таблицы']
     for i in table:
         flag = check(i, err_f)
         if not flag:
-            msgBox('УПС!', 'Есть лишние символы в номере таблицы')
-            return
+            return ['УПС!', 'Есть лишние символы в номере таблицы']
     zone_out = {i: el.text().replace(',', '.') for i, el in enumerate(zone) if el.text()}
     err_f = ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.')
     err_msg = ('Есть лишние символы в ограничении по стационарным антеннам',
@@ -52,9 +41,7 @@ def checked_zone_checked(lineEdit_path_check, lineEdit_table_number, zone):
             for j in zone_out[i]:
                 flag = check(j, err_f)
                 if not flag:
-                    msgBox('УПС!', err_msg[i])
-                    return
+                    return ['УПС!', err_msg[i]]
     else:
-        msgBox('УПС!', 'Не указано ни одно ограничение для проверки')
-        return
+        return ['УПС!', 'Не указано ни одно ограничение для проверки']
     return zone_out

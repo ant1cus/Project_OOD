@@ -1,9 +1,10 @@
+import queue
 import sys
 import os
 import Main
 import logging
 from PyQt5.QtCore import (QTranslator, QLocale, QLibraryInfo, QDir)
-from PyQt5.QtWidgets import (QMainWindow, QApplication, QFileDialog)
+from PyQt5.QtWidgets import (QMainWindow, QApplication, QFileDialog, QMessageBox)
 from checked import checked_zone_checked
 from zone_check import ZoneChecked
 
@@ -13,6 +14,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
+        self.q = queue.Queue(maxsize=1)
         logging.basicConfig(filename="my_log.log",
                             level=logging.DEBUG,
                             filemode="w",
@@ -27,6 +29,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.groupBox_FSB.clicked.connect(self.group_box_change_state)
         self.groupBox_FSTEK.clicked.connect(self.group_box_change_state)
         self.pushButton_check.clicked.connect(self.checked_zone)
+        self.pushButton_stop.clicked.connect(self.pause_thread)
 
     def group_box_change_state(self, state):
         if self.sender() == self.groupBox_FSTEK and state:
@@ -66,25 +69,42 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             if department else [self.lineEdit_stationary_FSTEK, self.lineEdit_carry_FSTEK,
                                 self.lineEdit_wear_FSTEK, self.lineEdit_r1_FSTEK]
         zone_all = checked_zone_checked(self.lineEdit_path_check, self.lineEdit_table_number, zone)
-        if self.checkBox_win_lin.isChecked():
-            zone = {i+5: zone_all[i] for i in zone_all}
-        zone_all = {**zone_all, **zone}
-        if zone_all:  # Если всё прошло запускаем поток
+        if type(zone_all) == list:
+            self.on_message_changed(zone_all[0], zone_all[1])
+            return
+        else:  # Если всё прошло запускаем поток
+            if self.checkBox_win_lin.isChecked():
+                zone = {i + 5: zone_all[i] for i in zone_all}
+                zone_all = {**zone_all, **zone}
             self.thread = ZoneChecked([self.lineEdit_path_check.text().strip(),
                                        self.lineEdit_table_number.text().strip(),
-                                       department, win_lin, zone_all, one_table, logging])
+                                       department, win_lin, zone_all, one_table, logging, self.q])
             self.thread.progress.connect(self.progressBar.setValue)
             self.thread.status.connect(self.show_mess)
-            self.thread.finished.connect(self.stop_thread)
+            self.thread.messageChanged.connect(self.on_message_changed)
             self.thread.start()
-        else:
-            return
 
-    def stop_thread(self):  # Завершение потока
-        os.chdir('C://')
+    def pause_thread(self):
+        if self.q.empty():
+            self.statusBar().showMessage(self.statusBar().currentMessage() + ' (прерывание процесса, подождите...)')
+            self.q.put(True)
 
     def show_mess(self, value):  # Вывод значения в статус бар
         self.statusBar().showMessage(value)
+
+    def on_message_changed(self, title, description):
+        if title == 'УПС!':
+            QMessageBox.critical(self, title, description)
+        elif title == 'Внимание!':
+            QMessageBox.warning(self, title, description)
+        elif title == 'Вопрос?':
+            self.statusBar().clearMessage()
+            ans = QMessageBox.question(self, title, description, QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if ans == QMessageBox.No:
+                self.thread.q.put(True)
+            else:
+                self.thread.q.put(False)
+            self.thread.event.set()
 
 
 if __name__ == '__main__':
