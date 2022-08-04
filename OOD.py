@@ -5,8 +5,9 @@ import Main
 import logging
 from PyQt5.QtCore import (QTranslator, QLocale, QLibraryInfo, QDir)
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QFileDialog, QMessageBox)
-from checked import checked_zone_checked
+from checked import checked_zone_checked, file_parcing_checked
 from zone_check import ZoneChecked
+from File_parcing import FileParcing
 
 
 class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
@@ -59,6 +60,19 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                     line[num - 1].setText(directory[0])
             else:  # Если директории
                 line[num - 1].setText(directory)
+
+    def parcing_file(self):
+        group_file = True if self.checkBox_group_parcing.isChecked() else False
+        folder = file_parcing_checked(self.lineEdit_path_parser, group_file)
+        if type(folder) == list:
+            self.on_message_changed(folder[0], folder[1])
+            return
+        else:  # Если всё прошло запускаем поток
+            self.thread = FileParcing([folder, group_file, logging, self.q])
+            self.thread.progress.connect(self.progressBar.setValue)
+            self.thread.status.connect(self.show_mess)
+            self.thread.messageChanged.connect(self.on_message_changed)
+            self.thread.start()
 
     def checked_zone(self):
         department = True if self.groupBox_FSB.isChecked() else False

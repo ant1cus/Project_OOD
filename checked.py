@@ -1,4 +1,6 @@
 import os
+import re
+
 import psutil
 
 
@@ -45,3 +47,33 @@ def checked_zone_checked(line_edit_path_check, line_edit_table_number, zone):
     else:
         return ['УПС!', 'Не указано ни одно ограничение для проверки']
     return zone_out
+
+
+def file_parcing_checked(dir_path, group_file):
+    def folder_checked(p):
+        errors = []
+        txt_files = filter(lambda x: x.endswith('.txt'), os.listdir(p))
+        if 'Описание.txt' not in txt_files:
+            errors.append('Нет файла с описанием режимов (' + p + ')')
+        else:
+            with open(p + '\\Описание.txt', mode='r') as f:
+                lines = f.readlines()
+                for line in lines:
+                    if re.findall(r'\s', line):
+                        errors.append('Пробелы в названии режимов (' + p + ')')
+        return errors
+    # Выбираем путь для исходников.
+    path = dir_path.text().strip()
+    if not path:
+        return ['УПС!', 'Не указан путь к исходной папке']
+    if os.path.isfile(path):
+        return ['УПС!', 'Указанный путь к исходным файлам не является директорией']
+    error = []
+    if group_file:
+        for folder in path:
+            err = folder_checked(folder)
+            if err:
+                error.append(err)
+    else:
+        error = folder_checked(path)
+    return ['УПС!', '\n'.join(error)] if error else {'path': path}
