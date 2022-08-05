@@ -59,8 +59,8 @@ def file_parcing_checked(dir_path, group_file):
             with open(p + '\\Описание.txt', mode='r') as f:
                 lines = f.readlines()
                 for line in lines:
-                    if re.findall(r'\s', line):
-                        errors.append('Пробелы в названии режимов (' + p + ')')
+                    if re.findall(r'\s', line.rstrip('\n')):
+                        errors.append('Пробелы в названии режимов (' + p + ', ' + line.rstrip('\n') + ')')
         return errors
     # Выбираем путь для исходников.
     path = dir_path.text().strip()

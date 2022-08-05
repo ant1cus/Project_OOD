@@ -29,8 +29,9 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.pushButton_open_file_vchn.clicked.connect((lambda: self.browse(7)))
         self.groupBox_FSB.clicked.connect(self.group_box_change_state)
         self.groupBox_FSTEK.clicked.connect(self.group_box_change_state)
-        self.pushButton_check.clicked.connect(self.checked_zone)
         self.pushButton_stop.clicked.connect(self.pause_thread)
+        self.pushButton_check.clicked.connect(self.checked_zone)
+        self.pushButton_parser.clicked.connect(self.parcing_file)
 
     def group_box_change_state(self, state):
         if self.sender() == self.groupBox_FSTEK and state:
@@ -68,7 +69,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.on_message_changed(folder[0], folder[1])
             return
         else:  # Если всё прошло запускаем поток
-            self.thread = FileParcing([folder, group_file, logging, self.q])
+            self.thread = FileParcing([folder['path'], group_file, logging, self.q])
             self.thread.progress.connect(self.progressBar.setValue)
             self.thread.status.connect(self.show_mess)
             self.thread.messageChanged.connect(self.on_message_changed)
