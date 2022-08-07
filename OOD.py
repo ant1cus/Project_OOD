@@ -72,8 +72,12 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.thread = FileParcing([folder['path'], group_file, logging, self.q])
             self.thread.progress.connect(self.progressBar.setValue)
             self.thread.status.connect(self.show_mess)
+            self.thread.errors.connect(self.errors)
             self.thread.messageChanged.connect(self.on_message_changed)
             self.thread.start()
+
+    def errors(self):
+        self.plainTextEdit_parcer_file.setPlainText('\n'.join(self.q.get_nowait()))
 
     def checked_zone(self):
         department = True if self.groupBox_FSB.isChecked() else False
