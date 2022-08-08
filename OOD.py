@@ -77,7 +77,9 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.thread.start()
 
     def errors(self):
-        self.plainTextEdit_parcer_file.setPlainText('\n'.join(self.q.get_nowait()))
+        if self.plainTextEdit_parcer_file.toPlainText():
+            self.plainTextEdit_parcer_file.insertPlainText('\n')
+        self.plainTextEdit_parcer_file.insertPlainText('\n'.join(self.q.get_nowait()))
 
     def checked_zone(self):
         department = True if self.groupBox_FSB.isChecked() else False

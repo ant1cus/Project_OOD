@@ -66,12 +66,18 @@ def file_parcing_checked(dir_path, group_file):
     path = dir_path.text().strip()
     if not path:
         return ['УПС!', 'Не указан путь к исходной папке']
-    if os.path.isfile(path):
+    elif os.path.isfile(path):
         return ['УПС!', 'Указанный путь к исходным файлам не является директорией']
+    else:
+        folders = [i for i in os.listdir(path) if os.path.isdir(path + '\\' + i)]
+        if group_file is False and folders:
+            return ['УПС!', 'В директории для парсинга присутствуют папки']
+        elif group_file and folders is False:
+            return ['УПС!', 'В директории для парсинга нет папок для преобразования']
     error = []
     if group_file:
-        for folder in path:
-            err = folder_checked(folder)
+        for folder in os.listdir(path):
+            err = folder_checked(path + '\\' + folder)
             if err:
                 error.append(err)
     else:
