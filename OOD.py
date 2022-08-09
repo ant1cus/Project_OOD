@@ -100,15 +100,18 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
 
     def parcing_file(self):
         self.plainTextEdit_succsess_order.clear()
+        self.groupBox_succsess_order.setStyleSheet("")
         self.plainTextEdit_error_order.clear()
+        self.groupBox_error_order.setStyleSheet("")
         self.plainTextEdit_errors.clear()
+        self.groupBox_errors.setStyleSheet("")
         group_file = True if self.checkBox_group_parcing.isChecked() else False
         folder = file_parcing_checked(self.lineEdit_path_parser, group_file)
         if type(folder) == list:
             self.on_message_changed(folder[0], folder[1])
             return
         else:  # Если всё прошло запускаем поток
-            self.thread = FileParcing([folder['path'], group_file, logging, self.q])
+            self.thread = FileParcing([folder['path'], folder['progress'], group_file, logging, self.q])
             self.thread.progress.connect(self.progressBar.setValue)
             self.thread.status.connect(self.show_mess)
             self.thread.errors.connect(self.errors)
@@ -120,12 +123,23 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         if 'Прошедшие заказы:' in text:
             self.groupBox_succsess_order.setStyleSheet('''
             QGroupBox {border: 0.5px solid;
+            border-radius: 5px;
              border-color: green;
-              padding:5px 5px 5px 5px;}''')
+              padding:10px 0px 0px 0px;}''')
             self.plainTextEdit_succsess_order.insertPlainText(text['Прошедшие заказы:'])
         elif 'Заказы с ошибками:' in text:
+            self.groupBox_error_order.setStyleSheet('''
+            QGroupBox {border: 0.5px solid;
+            border-radius: 5px;
+             border-color: red;
+              padding:10px 0px 0px 0px;}''')
             self.plainTextEdit_error_order.insertPlainText(text['Заказы с ошибками:'])
         if 'errors' in text:
+            self.groupBox_errors.setStyleSheet('''
+            QGroupBox {border: 0.5px solid;
+            border-radius: 5px;
+             border-color: yellow;
+              padding:10px 0px 0px 0px;}''')
             self.plainTextEdit_errors.insertPlainText('\n'.join(text['errors']))
             highlighter(self.plainTextEdit_errors)
 

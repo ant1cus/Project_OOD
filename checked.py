@@ -53,6 +53,7 @@ def file_parcing_checked(dir_path, group_file):
     def folder_checked(p):
         errors = []
         txt_files = filter(lambda x: x.endswith('.txt'), os.listdir(p))
+        excel_files = [x for x in os.listdir(p) if x.endswith('.xlsx')]
         if 'Описание.txt' not in txt_files:
             errors.append('Нет файла с описанием режимов (' + p + ')')
         else:
@@ -61,7 +62,7 @@ def file_parcing_checked(dir_path, group_file):
                 for line in lines:
                     if re.findall(r'\s', line.rstrip('\n')):
                         errors.append('Пробелы в названии режимов (' + p + ', ' + line.rstrip('\n') + ')')
-        return errors
+        return {'errors': errors, 'len': len(excel_files)}
     # Выбираем путь для исходников.
     path = dir_path.text().strip()
     if not path:
@@ -75,11 +76,14 @@ def file_parcing_checked(dir_path, group_file):
         elif group_file and folders is False:
             return ['УПС!', 'В директории для парсинга нет папок для преобразования']
     error = []
+    progress = 0
     if group_file:
         for folder in os.listdir(path):
             err = folder_checked(path + '\\' + folder)
-            if err:
+            progress += err['len']
+            if err['errors']:
                 error.append(err)
     else:
-        error = folder_checked(path)
-    return ['УПС!', '\n'.join(error)] if error else {'path': path}
+        err = folder_checked(path)
+        error, progress = err['errors'], err['len']
+    return ['УПС!', '\n'.join(error)] if error else {'path': path, 'progress': progress}

@@ -16,16 +16,18 @@ class FileParcing(QThread):
     def __init__(self, output):  # Список переданных элементов.
         QThread.__init__(self)
         self.path = output[0]
-        self.group_file = output[1]
-        self.logging = output[2]
-        self.q = output[3]
+        self.all_progress = output[1]
+        self.group_file = output[2]
+        self.logging = output[3]
+        self.q = output[4]
         self.event = threading.Event()
 
     def run(self):
-        def file_parcing(path, logging):
+        def file_parcing(path, logging, status, progress, per, cp):
             list_file = os.listdir(path)
             # Сохраним нужное нам описание режимов.
-            logging.info("Читаем txt и сохраняем режимы")
+            logging.info("Читаем txt и сохраняем режимы для " + path)
+            status.emit('Считываем режимы из текстового файла для заказа ' + path.rpartition('\\')[2])
             txt_files = filter(lambda x: x.endswith('.txt'), list_file)
             for file in sorted(txt_files):
                 try:
@@ -49,6 +51,7 @@ class FileParcing(QThread):
                                 list_file)
             logging.info("Начинаем прохождение по файлам excel")
             for file in sorted(exel_files):
+                status.emit('Проверяем названия рабочих листов в документе ' + file)
                 error = []
                 logging.info("Открываем книгу")
                 wb = load_workbook(path + '\\' + file, data_only=True)  # Откроем книгу.
@@ -91,14 +94,15 @@ class FileParcing(QThread):
                 logging.info("Проверяем на совпадение названий с файлом описания")
                 if name != mode:  # проверяем названия на соответствия
                     logging.info("Названия не совпадают")
-                    output = 'В заказе ' + path + ' названия режимов в исходнике ' + str(file) + ' не совпадают' \
-                                                                                                 ' с описанием: '
+                    output = 'В заказе ' + path.rpartition('\\')[2] + ' названия режимов в исходнике ' + str(file) +\
+                             ' не совпадают с описанием: '
                     for i_out, name_isx in enumerate(name):
                         if mode.count(name_isx) == 0:
                             output += str(i_out) + ') режим ' + str(name_isx) + '; '
                     error.append(output.strip(' '))
                 else:
                     for sheet in name:  # Загоняем в txt.
+                        status.emit('Проверяем рабочие листы в документе ' + file + ' на правильность заполнения')
                         logging.info("Проверяем документы на наличие ошибок")
                         if sheet.lower() != 'описание':
                             df = pd.read_excel(path + '\\' + file, sheet_name=sheet, header=None)
@@ -108,7 +112,8 @@ class FileParcing(QThread):
                                 try:  # Try/except блок для отлова листов с надписью «не обнаружено»
                                     frq, s, n = row[0], row[1], row[2]
                                     if type(frq) is str:
-                                        error.append('В заказе ' + path + ' в исходнике ' + file + ' в режиме ' + sheet +
+                                        error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' + file +
+                                                     ' в режиме ' + sheet +
                                                      ' в строке ' + str(i) + ' записано текстовое значение!')
                                     else:
                                         frq = int(row[0]) if str(row[0]).find('.') == -1 else \
@@ -116,49 +121,60 @@ class FileParcing(QThread):
                                     if s:
                                         if type(s) is float or type(s) is int:
                                             if n is False:
-                                                error.append('В заказе ' + path + ' в исходнике ' + file + ' в режиме '
+                                                error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
+                                                             file + ' в режиме '
                                                              + sheet + ' на частоте ' + str(frq) +
                                                              ' есть значение сигнала, но нет шума!')
                                             else:
                                                 s = round(float(row[1]), 2)
                                         else:
-                                            error.append('В заказе ' + path + ' в исходнике ' + file + ' в режиме '
+                                            error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
+                                                         file + ' в режиме '
                                                          + sheet + ' на частоте ' + str(frq) +
                                                          ' сигнал указан как текстовое значение')
                                     elif n:
                                         if type(n) is float or type(n) is int:
                                             if s is False:
-                                                error.append('В заказе ' + path + ' в исходнике ' + file + ' в режиме ' +
+                                                error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
+                                                             file + ' в режиме ' +
                                                              sheet + ' на частоте ' + str(frq) +
                                                              ' есть значение шума, но нет сигнала!')
                                             else:
                                                 n = round(float(row[2]), 2)
                                         else:
-                                            error.append('В заказе ' + path + ' в исходнике ' + file + ' в режиме '
+                                            error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
+                                                         file + ' в режиме '
                                                          + sheet + ' на частоте ' + str(frq) +
                                                          ' шум указан как текстовое значение')
                                     elif (type(s) is float or type(s) is int) and (type(n) is float or type(n) is int):
                                         if s < n:
-                                            error.append('В заказе ' + path + ' в исходнике ' + file + ' в режиме ' +
+                                            error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
+                                                         file + ' в режиме ' +
                                                          sheet + ' на частоте ' +
                                                          str(frq) + ' значения шума больше сигнала!')
                                         elif s == n:
-                                            error.append('В заказе ' + path + ' в исходнике ' + file + ' в режиме ' +
+                                            error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
+                                                         file + ' в режиме ' +
                                                          sheet + ' на частоте ' +
                                                          str(frq) + ' одинаковые значения сигнала и шума!')
                                         elif s > 100:
-                                            error.append('В заказе ' + path + ' в исходнике ' + file + ' в режиме ' +
+                                            error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
+                                                         file + ' в режиме ' +
                                                          sheet + ' на частоте ' +
                                                          str(frq) + ' слишком большое значение сигнала!')
                                     for j, el in enumerate([frq, s, n]):
                                         df.iloc[i, j] = el
                                 except IndexError:
                                     pass
+                cp = cp + per
                 if error:
+                    status.emit('Добавляем ошибки для документа ' + file)
                     logging.info("Добавляем ошибки")
                     wb.close()
+                    progress.emit(cp)
                     return error
                 else:
+                    status.emit('Создаем txt файлы для документа ' + file)
                     logging.info("Ошибок нет, записываем в txt")
                     logging.info("Создаем папку для txt файлов")
                     if os.path.exists(path + '\\txt\\' + book_name) is False:
@@ -170,19 +186,22 @@ class FileParcing(QThread):
                         df.to_csv(path + '\\txt\\' + book_name + '\\' + sheet + '.txt',
                                   index=None, sep='\t', mode='w', header=None)
                     wb.close()
+                    progress.emit(cp)
                     return False
         try:
-            progress = 0
+            current_progress = 0
             self.logging.info("Начинаем")
             self.status.emit('Старт')
-            self.progress.emit(progress)
+            self.progress.emit(current_progress)
+            percent = 100/self.all_progress
             errors = []
             succsess_path = []
             error_path = []
             if self.group_file:
                 for folder in os.listdir(self.path):
                     if os.path.isdir(self.path + '\\' + folder):
-                        err = file_parcing(self.path + '\\' + folder, self.logging)
+                        err = file_parcing(self.path + '\\' + folder, self.logging, self.status, self.progress, percent,
+                                           current_progress)
                         if err:
                             error_path.append(self.path + '\\' + folder)
                             for element in err:
@@ -190,7 +209,7 @@ class FileParcing(QThread):
                         else:
                             succsess_path.append(self.path + '\\' + folder)
             else:
-                errors = file_parcing(self.path, self.logging)
+                errors = file_parcing(self.path, self.logging, self.status, self.progress, percent, current_progress)
                 if errors:
                     error_path.append(self.path)
                 else:
