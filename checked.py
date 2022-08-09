@@ -69,7 +69,7 @@ def file_parcing_checked(dir_path, group_file):
     elif os.path.isfile(path):
         return ['УПС!', 'Указанный путь к исходным файлам не является директорией']
     else:
-        folders = [i for i in os.listdir(path) if os.path.isdir(path + '\\' + i)]
+        folders = [i for i in os.listdir(path) if os.path.isdir(path + '\\' + i) and i != 'txt']
         if group_file is False and folders:
             return ['УПС!', 'В директории для парсинга присутствуют папки']
         elif group_file and folders is False:

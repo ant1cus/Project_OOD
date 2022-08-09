@@ -91,10 +91,12 @@ class FileParcing(QThread):
                 logging.info("Проверяем на совпадение названий с файлом описания")
                 if name != mode:  # проверяем названия на соответствия
                     logging.info("Названия не совпадают")
-                    error.append('Названия режимов в исходнике' + str(file) + ' не совпадают с описанием:\n')
-                    for name_isx in name:
+                    output = 'В заказе ' + path + ' названия режимов в исходнике ' + str(file) + ' не совпадают' \
+                                                                                                 ' с описанием: '
+                    for i_out, name_isx in enumerate(name):
                         if mode.count(name_isx) == 0:
-                            error.append('режим ' + str(name_isx) + '\n')
+                            output += str(i_out) + ') режим ' + str(name_isx) + '; '
+                    error.append(output.strip(' '))
                 else:
                     for sheet in name:  # Загоняем в txt.
                         logging.info("Проверяем документы на наличие ошибок")
@@ -106,29 +108,48 @@ class FileParcing(QThread):
                                 try:  # Try/except блок для отлова листов с надписью «не обнаружено»
                                     frq, s, n = row[0], row[1], row[2]
                                     if type(frq) is str:
-                                        error.append('В исходнике ' + file + ' в режиме ' + sheet + ' в строке ' +
-                                                     str(i) + ' записано текстовое значение!\n')
+                                        error.append('В заказе ' + path + ' в исходнике ' + file + ' в режиме ' + sheet +
+                                                     ' в строке ' + str(i) + ' записано текстовое значение!')
                                     else:
                                         frq = int(row[0]) if str(row[0]).find('.') == -1 else \
                                             "%.4f" % float(frq)
-                                    if (type(s) is float or type(s) is int) and n is False:
-                                        error.append('В исходнике ' + file + ' в режиме ' + sheet + ' на частоте '
-                                                     + str(row[0]) + ' есть значение сигнала, но нет шума!\n')
-                                    elif (type(n) is float or type(n) is int) and s is False:
-                                        error.append('В исходнике ' + file + ' в режиме ' + sheet + ' на частоте '
-                                                     + str(row[0]) + ' есть значение шума, но нет сигнала!\n')
+                                    if s:
+                                        if type(s) is float or type(s) is int:
+                                            if n is False:
+                                                error.append('В заказе ' + path + ' в исходнике ' + file + ' в режиме '
+                                                             + sheet + ' на частоте ' + str(frq) +
+                                                             ' есть значение сигнала, но нет шума!')
+                                            else:
+                                                s = round(float(row[1]), 2)
+                                        else:
+                                            error.append('В заказе ' + path + ' в исходнике ' + file + ' в режиме '
+                                                         + sheet + ' на частоте ' + str(frq) +
+                                                         ' сигнал указан как текстовое значение')
+                                    elif n:
+                                        if type(n) is float or type(n) is int:
+                                            if s is False:
+                                                error.append('В заказе ' + path + ' в исходнике ' + file + ' в режиме ' +
+                                                             sheet + ' на частоте ' + str(frq) +
+                                                             ' есть значение шума, но нет сигнала!')
+                                            else:
+                                                n = round(float(row[2]), 2)
+                                        else:
+                                            error.append('В заказе ' + path + ' в исходнике ' + file + ' в режиме '
+                                                         + sheet + ' на частоте ' + str(frq) +
+                                                         ' шум указан как текстовое значение')
                                     elif (type(s) is float or type(s) is int) and (type(n) is float or type(n) is int):
-                                        s = round(float(row[1]), 2)
-                                        n = round(float(row[2]), 2)
                                         if s < n:
-                                            error.append('В исходнике ' + file + ' в режиме ' + sheet + ' на частоте ' +
-                                                         str(row[0]) + ' значения шума больше сигнала!\n')
+                                            error.append('В заказе ' + path + ' в исходнике ' + file + ' в режиме ' +
+                                                         sheet + ' на частоте ' +
+                                                         str(frq) + ' значения шума больше сигнала!')
                                         elif s == n:
-                                            error.append('В исходнике ' + file + ' в режиме ' + sheet + ' на частоте ' +
-                                                         str(row[0]) + ' одинаковые значения сигнала и шума!\n')
+                                            error.append('В заказе ' + path + ' в исходнике ' + file + ' в режиме ' +
+                                                         sheet + ' на частоте ' +
+                                                         str(frq) + ' одинаковые значения сигнала и шума!')
                                         elif s > 100:
-                                            error.append('В исходнике ' + file + ' в режиме ' + sheet + ' на частоте ' +
-                                                         str(row[0]) + ' слишком большое значение сигнала!\n')
+                                            error.append('В заказе ' + path + ' в исходнике ' + file + ' в режиме ' +
+                                                         sheet + ' на частоте ' +
+                                                         str(frq) + ' слишком большое значение сигнала!')
                                     for j, el in enumerate([frq, s, n]):
                                         df.iloc[i, j] = el
                                 except IndexError:
@@ -140,7 +161,8 @@ class FileParcing(QThread):
                 else:
                     logging.info("Ошибок нет, записываем в txt")
                     logging.info("Создаем папку для txt файлов")
-                    os.makedirs(path + '\\txt\\' + book_name)
+                    if os.path.exists(path + '\\txt\\' + book_name) is False:
+                        os.makedirs(path + '\\txt\\' + book_name)
                     os.chdir(path + "\\txt\\" + book_name)
                     for sheet in name:
                         df = pd.read_excel(path + '\\' + file, sheet_name=sheet, header=None)
@@ -174,14 +196,14 @@ class FileParcing(QThread):
                 else:
                     succsess_path.append(self.path)
             if succsess_path:
-                self.q.put(['Прошедшие заказы:', '\n'.join(succsess_path)])
+                self.q.put({'Прошедшие заказы:': '\n'.join(succsess_path)})
                 self.errors.emit()
             if error_path:
-                self.q.put(['Заказы с ошибками:', '\n'.join(error_path), '-\t-\t-\t-\t-\tОшибки:\t-\t-\t-\t-\t-\t'])
+                self.q.put({'Заказы с ошибками:': '\n'.join(error_path)})
                 self.errors.emit()
             if errors:
                 self.logging.info("Выводим ошибки")
-                self.q.put(errors)
+                self.q.put({'errors': errors})
                 self.errors.emit()
                 self.status.emit('В файлах присутствуют ошибки')
             else:

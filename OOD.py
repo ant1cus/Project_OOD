@@ -1,6 +1,10 @@
 import queue
+import re
 import sys
 import os
+
+from PyQt5.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor
+
 import Main
 import logging
 from PyQt5.QtCore import (QTranslator, QLocale, QLibraryInfo, QDir)
@@ -8,6 +12,38 @@ from PyQt5.QtWidgets import (QMainWindow, QApplication, QFileDialog, QMessageBox
 from checked import checked_zone_checked, file_parcing_checked
 from zone_check import ZoneChecked
 from File_parcing import FileParcing
+
+
+class SyntaxHighlighter(QSyntaxHighlighter):
+    def __init__(self, parent):
+        super(SyntaxHighlighter, self).__init__(parent)
+        self._highlight_lines = dict()
+
+    def highlight_line(self, line, fmt):
+        if isinstance(line, int) and line >= 0 and isinstance(fmt, QTextCharFormat):
+            self._highlight_lines[line] = fmt
+            tb = self.document().findBlockByNumber(line)
+            self.rehighlightBlock(tb)
+
+    def clear_highlight(self):
+        self._highlight_lines = dict()
+        self.rehighlight()
+
+    def highlightBlock(self, text):
+        line = self.currentBlock().blockNumber()
+        fmt = self._highlight_lines.get(line)
+        if fmt is not None:
+            self.setFormat(0, len(text), fmt)
+
+
+def highlighter(plainTextEdit):
+    _highlighter = SyntaxHighlighter(plainTextEdit.document())
+    fmt = QTextCharFormat()
+    fmt.setBackground(QColor("#E1E1E1"))
+    _highlighter.clear_highlight()
+    for i in range(len(plainTextEdit.toPlainText().split('\n'))):
+        if i % 2 == 0:
+            _highlighter.highlight_line(i, fmt)
 
 
 class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
@@ -63,6 +99,9 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 line[num - 1].setText(directory)
 
     def parcing_file(self):
+        self.plainTextEdit_succsess_order.clear()
+        self.plainTextEdit_error_order.clear()
+        self.plainTextEdit_errors.clear()
         group_file = True if self.checkBox_group_parcing.isChecked() else False
         folder = file_parcing_checked(self.lineEdit_path_parser, group_file)
         if type(folder) == list:
@@ -77,9 +116,18 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.thread.start()
 
     def errors(self):
-        if self.plainTextEdit_parcer_file.toPlainText():
-            self.plainTextEdit_parcer_file.insertPlainText('\n')
-        self.plainTextEdit_parcer_file.insertPlainText('\n'.join(self.q.get_nowait()))
+        text = self.q.get_nowait()
+        if 'Прошедшие заказы:' in text:
+            self.groupBox_succsess_order.setStyleSheet('''
+            QGroupBox {border: 0.5px solid;
+             border-color: green;
+              padding:5px 5px 5px 5px;}''')
+            self.plainTextEdit_succsess_order.insertPlainText(text['Прошедшие заказы:'])
+        elif 'Заказы с ошибками:' in text:
+            self.plainTextEdit_error_order.insertPlainText(text['Заказы с ошибками:'])
+        if 'errors' in text:
+            self.plainTextEdit_errors.insertPlainText('\n'.join(text['errors']))
+            highlighter(self.plainTextEdit_errors)
 
     def checked_zone(self):
         department = True if self.groupBox_FSB.isChecked() else False
