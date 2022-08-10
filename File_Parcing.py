@@ -50,6 +50,7 @@ class FileParcing(QThread):
             exel_files = filter(lambda x: x.endswith('.xlsx') and ('~' not in x) and (x[:-4] not in parcing_file),
                                 list_file)
             logging.info("Начинаем прохождение по файлам excel")
+            output_error = []
             for file in sorted(exel_files):
                 status.emit('Проверяем названия рабочих листов в документе ' + file)
                 error = []
@@ -115,79 +116,73 @@ class FileParcing(QThread):
                                         error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' + file +
                                                      ' в режиме ' + sheet +
                                                      ' в строке ' + str(i) + ' записано текстовое значение!')
-                                    else:
-                                        frq = int(row[0]) if str(row[0]).find('.') == -1 else \
-                                            "%.4f" % float(frq)
                                     if s:
                                         if type(s) is float or type(s) is int:
                                             if n is False:
                                                 error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
                                                              file + ' в режиме '
-                                                             + sheet + ' на частоте ' + str(frq) +
+                                                             + sheet + ' на частоте ' + str(round(frq, 4)) +
                                                              ' есть значение сигнала, но нет шума!')
-                                            else:
-                                                s = round(float(row[1]), 2)
                                         else:
                                             error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
                                                          file + ' в режиме '
-                                                         + sheet + ' на частоте ' + str(frq) +
+                                                         + sheet + ' на частоте ' + str(round(frq, 4)) +
                                                          ' сигнал указан как текстовое значение')
-                                    elif n:
+                                    if n:
                                         if type(n) is float or type(n) is int:
                                             if s is False:
                                                 error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
                                                              file + ' в режиме ' +
-                                                             sheet + ' на частоте ' + str(frq) +
+                                                             sheet + ' на частоте ' + str(round(frq, 4)) +
                                                              ' есть значение шума, но нет сигнала!')
-                                            else:
-                                                n = round(float(row[2]), 2)
                                         else:
                                             error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
                                                          file + ' в режиме '
-                                                         + sheet + ' на частоте ' + str(frq) +
+                                                         + sheet + ' на частоте ' + str(round(frq, 4)) +
                                                          ' шум указан как текстовое значение')
-                                    elif (type(s) is float or type(s) is int) and (type(n) is float or type(n) is int):
+                                    if (type(s) is float or type(s) is int) and (type(n) is float or type(n) is int):
                                         if s < n:
                                             error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
                                                          file + ' в режиме ' +
                                                          sheet + ' на частоте ' +
-                                                         str(frq) + ' значения шума больше сигнала!')
+                                                         str(round(frq, 4)) + ' значения шума больше сигнала!')
                                         elif s == n:
                                             error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
                                                          file + ' в режиме ' +
                                                          sheet + ' на частоте ' +
-                                                         str(frq) + ' одинаковые значения сигнала и шума!')
+                                                         str(round(frq, 4)) + ' одинаковые значения сигнала и шума!')
                                         elif s > 100:
                                             error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
                                                          file + ' в режиме ' +
                                                          sheet + ' на частоте ' +
-                                                         str(frq) + ' слишком большое значение сигнала!')
-                                    for j, el in enumerate([frq, s, n]):
-                                        df.iloc[i, j] = el
+                                                         str(round(frq, 4)) + ' слишком большое значение сигнала!')
                                 except IndexError:
                                     pass
                 cp = cp + per
                 if error:
                     status.emit('Добавляем ошибки для документа ' + file)
                     logging.info("Добавляем ошибки")
+                    for e in error:
+                        output_error.append(e)
                     wb.close()
                     progress.emit(cp)
-                    return error
                 else:
                     status.emit('Создаем txt файлы для документа ' + file)
                     logging.info("Ошибок нет, записываем в txt")
                     logging.info("Создаем папку для txt файлов")
                     if os.path.exists(path + '\\txt\\' + book_name) is False:
                         os.makedirs(path + '\\txt\\' + book_name)
-                    os.chdir(path + "\\txt\\" + book_name)
-                    for sheet in name:
-                        df = pd.read_excel(path + '\\' + file, sheet_name=sheet, header=None)
-                        df = df.dropna()
-                        df.to_csv(path + '\\txt\\' + book_name + '\\' + sheet + '.txt',
-                                  index=None, sep='\t', mode='w', header=None)
+                        os.chdir(path + "\\txt\\" + book_name)
+                        for sheet in name:
+                            df = pd.read_excel(path + '\\' + file, sheet_name=sheet, header=None)
+                            if sheet.lower() != 'описание':
+                                df = df.dropna()
+                            df = df.round(4)
+                            df.to_csv(path + '\\txt\\' + book_name + '\\' + sheet + '.txt',
+                                      index=None, sep='\t', mode='w', header=None)
                     wb.close()
                     progress.emit(cp)
-                    return False
+            return {'error': output_error, 'cp': cp}
         try:
             current_progress = 0
             self.logging.info("Начинаем")
@@ -202,15 +197,17 @@ class FileParcing(QThread):
                     if os.path.isdir(self.path + '\\' + folder):
                         err = file_parcing(self.path + '\\' + folder, self.logging, self.status, self.progress, percent,
                                            current_progress)
-                        if err:
+                        if err['error']:
                             error_path.append(self.path + '\\' + folder)
-                            for element in err:
+                            for element in err['error']:
                                 errors.append(element)
                         else:
                             succsess_path.append(self.path + '\\' + folder)
+                        current_progress = err['cp']
             else:
-                errors = file_parcing(self.path, self.logging, self.status, self.progress, percent, current_progress)
-                if errors:
+                err = file_parcing(self.path, self.logging, self.status, self.progress, percent, current_progress)
+                if err['error']:
+                    errors = err['error']
                     error_path.append(self.path)
                 else:
                     succsess_path.append(self.path)

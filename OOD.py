@@ -10,8 +10,8 @@ import logging
 from PyQt5.QtCore import (QTranslator, QLocale, QLibraryInfo, QDir)
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QFileDialog, QMessageBox)
 from checked import checked_zone_checked, file_parcing_checked
-from zone_check import ZoneChecked
-from File_parcing import FileParcing
+from Zone_Check import ZoneChecked
+from File_Parcing import FileParcing
 
 
 class SyntaxHighlighter(QSyntaxHighlighter):
