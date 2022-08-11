@@ -16,16 +16,16 @@ class ZoneChecked(QThread):
     status = pyqtSignal(str)  # Сигнал для статус бара
     messageChanged = pyqtSignal(str, str)
 
-    def __init__(self, output):  # Список переданных элементов.
+    def __init__(self, incoming_data):  # Список переданных элементов.
         QThread.__init__(self)
-        self.path = output[0]
-        self.table = output[1]
-        self.department = output[2]
-        self.win_lin = output[3]
-        self.zone = output[4]
-        self.one_table = output[5]
-        self.logging = output[6]
-        self.q = output[7]
+        self.path = incoming_data[0]
+        self.table = incoming_data[1]
+        self.department = incoming_data[2]
+        self.win_lin = incoming_data[3]
+        self.zone = incoming_data[4]
+        self.one_table = incoming_data[5]
+        self.logging = incoming_data[6]
+        self.q = incoming_data[7]
         self.event = threading.Event()
 
     def run(self):

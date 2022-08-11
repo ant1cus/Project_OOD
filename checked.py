@@ -3,6 +3,7 @@ import re
 import pathlib
 
 import psutil
+from openpyxl import load_workbook
 
 
 def check(n, e):
@@ -88,7 +89,8 @@ def file_parcing_checked(dir_path, group_file):
     return ['УПС!', '\n'.join(error)] if error else {'path': path, 'progress': progress}
 
 
-def check_generation_data(source_file, output_file, complect_number, complect_quantity):
+def check_generation_data(source_file, output_file, complect_number, complect_quantity, freq_restrict,
+                          freq_restrict_path):
 
     source = source_file.text().strip()
     if not source:
@@ -109,7 +111,6 @@ def check_generation_data(source_file, output_file, complect_number, complect_qu
         if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ' ', '-', ',', '.')):
             return ['УПС!', 'Есть лишние символы в номерах комплектов']
     complect_num = complect_num.replace(' ', '').replace(',', '.')
-    nf = []
     if complect_num[0] == '.' or complect_num[0] == '-':
         return ['УПС!', 'Первый символ введён не верно']
     if complect_num[-1] == '.' or complect_num[-1] == '-':
@@ -118,12 +119,6 @@ def check_generation_data(source_file, output_file, complect_number, complect_qu
         if complect_num[i] == '.' or complect_num[i] == '-':
             if complect_num[i + 1] == '.' or complect_num[i + 1] == '-':
                 return ['УПС!', 'Два разделителя номеров подряд']
-    complect_quant = complect_quantity.text()
-    if not complect_quant:
-        return ['УПС!', 'Не указано количество комплектов']
-    for i in complect_quant:
-        if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')):
-            return ['УПС!', 'Не правильно указано количество комплектов']
     complect = []
     for element in complect_num.split('.'):
         if '-' in element:
@@ -138,78 +133,54 @@ def check_generation_data(source_file, output_file, complect_number, complect_qu
     complect.sort()
     if len(complect) != len(set(complect)):
         return ['УПС!', 'Есть повторения в номерах комплектов']
+    complect_quant = complect_quantity.text()
+    if not complect_quant:
+        return ['УПС!', 'Не указано количество комплектов']
+    for i in complect_quant:
+        if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')):
+            return ['УПС!', 'Не правильно указано количество комплектов']
     if len(complect) != int(complect_quant):
         return ['УПС!', 'Указанные номера не совпадают с количеством генерируемых комплектов']
     txt_files = list(filter(lambda x: x.endswith('.txt'), os.listdir(source)))
     if len(txt_files) != 1:
         return ['УПС!', 'В папке больше одного или нет txt файла']
-    flag = 0
-    it = []
-    for file in sorted(txtfiles):
-        if os.stat(r"./" + file).st_size == 0:
-            QMessageBox.critical(self, 'УПС!', 'Файл с описанием режимов пуст')
-            return
+    name_mode = ''
+    for file in sorted(txt_files):
+        if os.stat(source + '\\' + file).st_size == 0:
+            return ['УПС!', 'Файл с описанием режимов пуст']
         else:
-            path_txt_op = os.path.abspath(r'./' + str(file))
-            with open(file, mode='r') as f:
-                e = f.readlines()
-            e = [line.rstrip() for line in e]
-            e = [x for x in e if x]
-            if self.checkBox1.isChecked():
-                flag = 0
-                error_1 = []
-                exelfiles = list(filter(lambda x: x.endswith('.xlsx'), spisok_v_pap2))
-                for file_exel in sorted(exelfiles):
-                    for xl in nf:
-                        if file_exel == (str(xl) + '.xlsx'):
-                            QMessageBox.critical(self, 'УПС!', 'В указанной папке уже есть такие исходники')
-                            return
-                    wb = load_workbook("./" + file_exel)  # Откроем книгу.
-                    name = wb.sheetnames  # Список листов.
-                    i = 0
-                    flag_err = 0
-                    for line in e:
-                        i = i + 1
-                        for name_exel in name:
-                            if line.lower() == name_exel.lower():
-                                flag_err = flag_err + 1
-                    wb.close()
-                    if i != flag_err:
-                        error_1.append('Названия режимов в файле ' + file_exel + ' не совпадают с описанием.\n')
-                        flag = 1
-            if flag == 1:
-                err = ''.join(error_1)
-                QMessageBox.critical(self, 'УПС!', err)
-                return
-            for line in e:
-                try:
-                    if line.index(' '):
-                        f.close()
-                        QMessageBox.critical(self, 'УПС!', 'Пробелы в названии режимов')
-                        return
-                except ValueError:
-                    continue
-    try:
-        len(e)
-    except UnboundLocalError:
-        QMessageBox.critical(self, 'УПС!', 'Нет файла с описанием режимов')
-        return
-
-    # Новое добавление для разницы!
-    if self.checkBox3.isChecked():
-        path3 = self.dirPath3.text()
-        if not path3:
-            QMessageBox.critical(self, 'УПС!', 'Путь к файлу с ограничениями пуст')
-            return
-        if os.path.isfile(path3):
-            if path3.endswith('.txt'):
-                if os.stat(path3).st_size == 0:
-                    QMessageBox.critical(self, 'УПС!', 'Файл для комплектов пуст')
-                    return
+            with open(source + '\\' + file, mode='r') as f:
+                name_mode = f.readlines()
+                if ' ' in name_mode:
+                    return ['УПС!', 'Пробелы в названии режимов в файле «Описание»']
+                else:
+                    name_mode = [line.rstrip().lower() for line in name_mode if line]
+    error = []
+    for file_exel in sorted(list(filter(lambda x: x.endswith('.xlsx'), os.listdir(output)))):
+        if file_exel[:-4] in complect:
+            return ['УПС!', 'В указанной папке уже есть такие исходники']
+        wb = load_workbook(source + '\\' + file_exel)  # Откроем книгу.
+        name = wb.sheetnames  # Список листов.
+        for name_exel in name:
+            if name_exel.lower() not in name_mode:
+                error.append('Названия режимов в файле ' + file_exel + ' не совпадают с описанием.')
+                break
+        wb.close()
+    if error:
+        return ['УПС!', '\n'.join(error)]
+    # Добавление для разницы!
+    restrict_file = False
+    if freq_restrict:
+        restrict_file = freq_restrict_path.text().strip()
+        if not restrict_file:
+            return ['УПС!', 'Путь к файлу с ограничениями пуст']
+        if os.path.isfile(restrict_file):
+            if restrict_file.endswith('.txt'):
+                if os.stat(restrict_file).st_size == 0:
+                    return ['УПС!', 'Файл для комплектов пуст']
             else:
-                QMessageBox.critical(self, 'УПС!', 'Файл для комплектов не txt')
-                return
-        df_lim = pd.DataFrame({"Mode": [], "Freq": [], "Lim": []})
-        with open(path3, mode='r') as f:
-            df_lim = pd.read_csv(f, sep='\t', names=['Mode', 'Freq', 'Lim'])
-            df_limit = df_lim.replace({',': '.'}, regex=True)
+                return ['УПС!', 'Файл для комплектов не txt']
+        else:
+            return ['УПС!', 'Указана директория в файле для ограничений']
+    return {'source': source, 'output': output, 'complect': complect, 'complect_quant': complect_quant,
+            'name_mode': name_mode, 'restrict_file': restrict_file}

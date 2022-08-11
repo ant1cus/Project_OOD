@@ -9,9 +9,10 @@ import Main
 import logging
 from PyQt5.QtCore import (QTranslator, QLocale, QLibraryInfo, QDir)
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QFileDialog, QMessageBox)
-from checked import checked_zone_checked, file_parcing_checked
+from checked import checked_zone_checked, file_parcing_checked, check_generation_data
 from Zone_Check import ZoneChecked
 from File_Parcing import FileParcing
+from Generation_Files import GenerationFile
 
 
 class SyntaxHighlighter(QSyntaxHighlighter):
@@ -68,6 +69,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.pushButton_stop.clicked.connect(self.pause_thread)
         self.pushButton_check.clicked.connect(self.checked_zone)
         self.pushButton_parser.clicked.connect(self.parcing_file)
+        self.pushButton_generation_pemi.clicked.connect(self.generate_pemi)
 
     def group_box_change_state(self, state):
         if self.sender() == self.groupBox_FSTEK and state:
@@ -98,6 +100,21 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             else:  # Если директории
                 line[num - 1].setText(directory)
 
+    def generate_pemi(self):
+        generate = check_generation_data(self.lineEdit_path_original_file, self.lineEdit_path_finish_folder,
+                                         self.lineEdit_complect_number_pemi, self.lineEdit_complect_quant_pemi,
+                                         self.checkBox_freq_restrict.isChecked(), self.lineEdit_path_freq_restrict)
+        if type(generate) == list:
+            self.on_message_changed(generate[0], generate[1])
+            return
+        else:  # Если всё прошло запускаем поток
+            generate['logging'], generate['q'] = logging, self.q
+            self.thread = GenerationFile(generate)
+            self.thread.progress.connect(self.progressBar.setValue)
+            self.thread.status.connect(self.show_mess)
+            self.thread.messageChanged.connect(self.on_message_changed)
+            self.thread.start()
+
     def parcing_file(self):
         self.plainTextEdit_succsess_order.clear()
         self.groupBox_succsess_order.setStyleSheet("")
@@ -111,7 +128,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.on_message_changed(folder[0], folder[1])
             return
         else:  # Если всё прошло запускаем поток
-            self.thread = FileParcing([folder['path'], folder['progress'], group_file, logging, self.q])
+            folder['group_file'], folder['logging'], folder['q'] = group_file, logging, self.q
+            self.thread = FileParcing(folder)
             self.thread.progress.connect(self.progressBar.setValue)
             self.thread.status.connect(self.show_mess)
             self.thread.errors.connect(self.errors)
