@@ -1,10 +1,14 @@
 import os
+import random
 import threading
 
 import docx
 import openpyxl
 import re
 import traceback
+
+import pandas as pd
+import numpy as np
 from natsort import natsorted
 from docx.oxml.ns import nsdecls
 from docx.oxml import parse_xml
@@ -36,10 +40,81 @@ class GenerationFile(QThread):
         self.progress.emit(current_progress)
         percent = 1
         error = file_parcing(self.source, self.logging, self.status, self.progress, percent, current_progress)
+        quant_doc = len(os.listdir(self.source)) - 2
         errors = False
         if error['error']:
             errors = error['error']
+        else:
+            self.status.emit('Считываем режимы из текстового файла для создания словаря')
+            txt_files = filter(lambda x: x.endswith('.txt'), os.listdir(self.source))
+            for file in sorted(txt_files):
+                try:
+                    with open(self.source + '\\' + file, mode='r', encoding="utf-8-sig") as f:
+                        self.logging.info("Кодировка utf-8-sig")
+                        mode_1 = f.readlines()
+                        mode_1 = [line.rstrip() for line in mode_1]
+                except UnicodeDecodeError:
+                    with open(self.source + '\\' + file, mode='r') as f:
+                        self.logging.info("Другая кодировка")
+                        mode_1 = f.readlines()
+                        mode_1 = [line.rstrip() for line in mode_1]
+            mode = {x: pd.DataFrame() for x in mode_1 if x}
+            description = pd.DataFrame()
+            df_out = {x: pd.DataFrame(columns=['frq', 'max_s', 'min_s', 'max_n', 'min_n', 'quant_frq']) for x in mode_1}
+            for element in os.listdir(self.source + '\\' + 'txt'):
+                os.chdir(self.source + '\\' + 'txt' + '\\' + element)
+                for el in os.listdir():
+                    if 'описание' not in el.lower():
+                        if os.stat(r"./" + el).st_size != 0:
+                            df = pd.read_csv(el, sep='\t', header=None)
+                            if 1 in df.columns:
+                                mode[el[:-4]] = mode[el[:-4]].append(df)
+                            else:
+                                mode[el[:-4]] = mode[el[:-4]].append(pd.Series(), ignore_index=True)
+                        else:
+                            mode[el[:-4]] = mode[el[:-4]].append(pd.Series(), ignore_index=True)
+                    # else:
+                    #     description = pd.read_csv(el, header=None)
+            for element in mode:
+                if 0 in mode[element].columns:
+                    df = mode[element][0].value_counts()
+                    for el in df.index.values:
+                        col = (mode[element][mode[element][0].isin([el])].sort_values(by=[0]))
+                        df_out[element] = pd.concat([df_out[element], pd.DataFrame({'frq': [el],
+                                                                                    'max_s': [col[1].max()],
+                                                                                    'min_s': [col[1].min()],
+                                                                                    'max_n': [col[2].max()],
+                                                                                    'min_n': [col[2].min()],
+                                                                                    'quant_frq': [df[el]/quant_doc]})],
+                                                    axis=0)
 
+            for el in df_out:
+                print('--------------------------------')
+                print(df_out[el])
+            for complect_number in self.complect:
+                wb = pd.ExcelWriter(self.output + '\\' + complect_number + '.xlsx')
+                df_sheet = {}
+                for element in df_out:
+                    df = pd.DataFrame(columns=['frq', 'signal', 'noise'])
+                    for i, row in enumerate(df_out[element].itertuples(index=False)):
+                        if random.random() > (1-row['quant_frq']):
+                            if row['max_s'] == row['min_s']:
+                                s = random.uniform(row['max_s'] + 1, row['min_s'] - 1)
+                                n = random.uniform(row['max_n'] + 1, row['min_n'] - 1)
+                            else:
+                                s = random.uniform(row['max_s'], row['min_s'])
+                                n = random.uniform(row['max_n'], row['min_n'])
+                            if s < n:
+                                s, n = n, s
+                            if s == n:
+                                s = s + 0.1
+                            df = pd.concat([df, pd.DataFrame({'frq': row['frq'], 'signal': s, 'noise': n})], axis=0)
+                    df = df.round({'frq': 4, 'signal': 2, 'noise': 2})
+                    df_sheet[element] = df
+                for sheet_name in df_sheet.keys():
+                    df_sheet[sheet_name].to_excel(wb, sheet_name=sheet_name, index=False)
+                wb.save()
+                    
         if errors:
             self.logging.info("Выводим ошибки")
             self.q.put({'errors': errors})
