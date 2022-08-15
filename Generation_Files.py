@@ -20,6 +20,7 @@ class GenerationFile(QThread):
     progress = pyqtSignal(int)  # Сигнал для прогресс бара
     status = pyqtSignal(str)  # Сигнал для статус бара
     messageChanged = pyqtSignal(str, str)
+    errors = pyqtSignal()
 
     def __init__(self, incoming_data):  # Список переданных элементов.
         QThread.__init__(self)
@@ -73,8 +74,9 @@ class GenerationFile(QThread):
                                 mode[el[:-4]] = mode[el[:-4]].append(pd.Series(), ignore_index=True)
                         else:
                             mode[el[:-4]] = mode[el[:-4]].append(pd.Series(), ignore_index=True)
-                    # else:
-                    #     description = pd.read_csv(el, header=None)
+                    else:
+                        if description.empty:
+                            description = pd.read_csv(el, sep='\t', header=None)
             for element in mode:
                 if 0 in mode[element].columns:
                     df = mode[element][0].value_counts()
@@ -87,39 +89,43 @@ class GenerationFile(QThread):
                                                                                     'min_n': [col[2].min()],
                                                                                     'quant_frq': [df[el]/quant_doc]})],
                                                     axis=0)
-
-            for el in df_out:
-                print('--------------------------------')
-                print(df_out[el])
             for complect_number in self.complect:
-                wb = pd.ExcelWriter(self.output + '\\' + complect_number + '.xlsx')
+                wb = pd.ExcelWriter(self.output + '\\' + str(complect_number) + '.xlsx')
                 df_sheet = {}
                 for element in df_out:
                     df = pd.DataFrame(columns=['frq', 'signal', 'noise'])
                     for i, row in enumerate(df_out[element].itertuples(index=False)):
-                        if random.random() > (1-row['quant_frq']):
-                            if row['max_s'] == row['min_s']:
-                                s = random.uniform(row['max_s'] + 1, row['min_s'] - 1)
-                                n = random.uniform(row['max_n'] + 1, row['min_n'] - 1)
+                        if random.random() > (1-row[5]):
+                            if row[1] == row[2]:
+                                s = random.uniform(row[1] + 1, row[2] - 1)
                             else:
-                                s = random.uniform(row['max_s'], row['min_s'])
-                                n = random.uniform(row['max_n'], row['min_n'])
+                                s = random.uniform(row[1], row[2])
+                            if row[3] == row[4]:
+                                n = random.uniform(row[3] + 1, row[4] - 1)
+                            else:
+                                n = random.uniform(row[3], row[4])
                             if s < n:
                                 s, n = n, s
                             if s == n:
-                                s = s + 0.1
-                            df = pd.concat([df, pd.DataFrame({'frq': row['frq'], 'signal': s, 'noise': n})], axis=0)
+                                s = s + 0.5
+                            df = pd.concat([df, pd.DataFrame({'frq': [row[0]], 'signal': [s], 'noise': [n]})], axis=0)
                     df = df.round({'frq': 4, 'signal': 2, 'noise': 2})
                     df_sheet[element] = df
                 for sheet_name in df_sheet.keys():
-                    df_sheet[sheet_name].to_excel(wb, sheet_name=sheet_name, index=False)
+                    if 'описание' in sheet_name.lower():
+                        description.to_excel(wb, sheet_name=sheet_name, index=False, header=False)
+                    else:
+                        if df_sheet[sheet_name].empty:
+                            pd.Series('Не обнаружено').to_excel(wb, sheet_name=sheet_name, index=False, header=False)
+                        else:
+                            df_sheet[sheet_name].to_excel(wb, sheet_name=sheet_name, index=False, header=False)
                 wb.save()
-                    
         if errors:
             self.logging.info("Выводим ошибки")
-            self.q.put({'errors': errors})
+            self.q.put({'errors_gen': errors})
             self.errors.emit()
             self.status.emit('В файлах присутствуют ошибки')
+            self.progress.emit(0)
         else:
             self.logging.info("Конец работы программы")
             self.status.emit('Готово')

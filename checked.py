@@ -122,7 +122,7 @@ def check_generation_data(source_file, output_file, complect_number, complect_qu
     complect = []
     for element in complect_num.split('.'):
         if '-' in element:
-            num1, num2 = element.partition('-')[0], element.partition('-')[2]
+            num1, num2 = int(element.partition('-')[0]), int(element.partition('-')[2])
             if num1 >= num2:
                 return ['УПС!', 'Диапазон номеров комплектов указан не верно']
             else:

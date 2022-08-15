@@ -113,6 +113,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.thread.progress.connect(self.progressBar.setValue)
             self.thread.status.connect(self.show_mess)
             self.thread.messageChanged.connect(self.on_message_changed)
+            self.thread.errors.connect(self.errors)
             self.thread.start()
 
     def parcing_file(self):
@@ -152,7 +153,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
              border-color: red;
               padding:10px 0px 0px 0px;}''')
             self.plainTextEdit_error_order.insertPlainText(text['Заказы с ошибками:'])
-        if 'errors' in text:
+        elif 'errors' in text:
             self.groupBox_errors.setStyleSheet('''
             QGroupBox {border: 0.5px solid;
             border-radius: 5px;
@@ -160,6 +161,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
               padding:10px 0px 0px 0px;}''')
             self.plainTextEdit_errors.insertPlainText('\n'.join(text['errors']))
             highlighter(self.plainTextEdit_errors)
+        elif 'errors_gen' in text:
+            self.on_message_changed('УПС!', '\n'.join(text['errors_gen']))
 
     def checked_zone(self):
         department = True if self.groupBox_FSB.isChecked() else False
