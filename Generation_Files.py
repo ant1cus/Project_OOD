@@ -36,7 +36,7 @@ class GenerationFile(QThread):
 
     def run(self):
         current_progress = 0
-        self.logging.info("Начинаем")
+        self.logging.info('Начинаем генерировать файлы')
         self.status.emit('Старт')
         self.progress.emit(current_progress)
         percent = 100/(2*(len(os.listdir(self.source)) - 1) + int(self.complect_quant))

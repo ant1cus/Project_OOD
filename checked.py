@@ -49,7 +49,7 @@ def checked_zone_checked(line_edit_path_check, line_edit_table_number, zone):
     return zone_out
 
 
-def file_parcing_checked(dir_path, group_file):
+def checked_file_parcing(dir_path, group_file):
     def folder_checked(p):
         errors = []
         txt_files = filter(lambda x: x.endswith('.txt'), os.listdir(p))
@@ -184,3 +184,58 @@ def check_generation_data(source_file, output_file, complect_number, complect_qu
             return ['УПС!', 'Указана директория в файле для ограничений']
     return {'source': source, 'output': output, 'complect': complect, 'complect_quant': complect_quant,
             'name_mode': name_mode, 'restrict_file': restrict_file}
+
+
+def checked_delete_header_footer(path):
+    source = path.text().strip()
+    if not source:
+        return ['УПС!', 'Путь к исходным файлам пуст']
+    if os.path.isfile(source):
+        return ['УПС!', 'Указанный путь к исходным файлам не является директорией']
+    return {'path': source}
+
+
+def checked_hfe_generation(path, complect, req_val, frequency, value):
+    output = path.text().strip()
+    if not output:
+        return ['УПС!', 'Не указан путь к конечной папке!']
+    if os.path.isfile(output):
+        return ['УПС!', 'Указанный путь не является директорией!']
+    if req_val.isChecked():
+        freq = frequency.text().strip()
+        val = value.text().strip()
+    else:
+        freq = 100
+        val = 100
+    quantity = complect.text().strip()
+    variables = [freq, val, quantity]
+    errors1 = ['Не указана частота!', 'Не указан уровень!', 'Не указано количество комплектов!']
+    errors2 = ['Частота указана с ошибкой!', 'Уровень указан с ошибкой!', 'Количество комплектов указано с ошибкой!']
+    for i in range(0, 3, 1):
+        if not variables[i]:
+            return ['УПС!', errors1[i]]
+        for j in variables[i]:
+            if check(j, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')):
+                return ['УПС!', errors2[i]]
+    return {'path': output, 'quantity': int(quantity), 'freq': freq, 'val': val}
+
+
+def checked_hfi_generation(path, frequency, quantity, mode):
+    output = path.text().strip()
+    if not output:
+        return ['УПС!', 'Не указан путь к конечной папке!']
+    if os.path.isfile(output):
+        return ['УПС!', 'Указанный путь не является директорией!']
+    variables = [frequency.text().strip(), quantity.text().strip()]
+    errors1 = ['Не указана частота навязывания!', 'Не указано количество комплектов!']
+    errors2 = ['Частота навязывания указана с ошибкой!', 'Количество комплектов указано с ошибкой!']
+    for i in range(0, 2, 1):
+        if not variables[i]:
+            return ['УПС!', errors1[i]]
+        for j in variables[i]:
+            if check(j, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')):
+                return ['УПС!', errors2[i]]
+    if any(mode):
+        return {'path': output, 'quantity': int(quantity), 'freq': variables[0], 'val': variables[1], 'mode': mode}
+    else:
+        return ['УПС!', 'Не выбран не один режим!']

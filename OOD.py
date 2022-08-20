@@ -1,7 +1,5 @@
 import queue
-import re
 import sys
-import os
 
 from PyQt5.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor
 
@@ -9,10 +7,14 @@ import Main
 import logging
 from PyQt5.QtCore import (QTranslator, QLocale, QLibraryInfo, QDir)
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QFileDialog, QMessageBox)
-from checked import checked_zone_checked, file_parcing_checked, check_generation_data
+from checked import (checked_zone_checked, checked_file_parcing, check_generation_data, checked_delete_header_footer,
+                     checked_hfe_generation, checked_hfi_generation)
 from Zone_Check import ZoneChecked
 from File_Parcing import FileParcing
 from Generation_Files import GenerationFile
+from Delete_Header_Footer import DeleteHeaderFooter
+from HFE_Generation import HFEGeneration
+from HFI_Generation import HFIGeneration
 
 
 class SyntaxHighlighter(QSyntaxHighlighter):
@@ -62,14 +64,17 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.pushButton_open_original_file.clicked.connect((lambda: self.browse(3)))
         self.pushButton_open_finish_folder.clicked.connect((lambda: self.browse(4)))
         self.pushButton_open_freq_restrict.clicked.connect((lambda: self.browse(5)))
-        self.pushButton_open_file_vcho.clicked.connect((lambda: self.browse(6)))
-        self.pushButton_open_file_vchn.clicked.connect((lambda: self.browse(7)))
+        self.pushButton_open_file_HFE.clicked.connect((lambda: self.browse(6)))
+        self.pushButton_open_file_HFI.clicked.connect((lambda: self.browse(7)))
         self.groupBox_FSB.clicked.connect(self.group_box_change_state)
         self.groupBox_FSTEK.clicked.connect(self.group_box_change_state)
         self.pushButton_stop.clicked.connect(self.pause_thread)
         self.pushButton_check.clicked.connect(self.checked_zone)
         self.pushButton_parser.clicked.connect(self.parcing_file)
         self.pushButton_generation_pemi.clicked.connect(self.generate_pemi)
+        self.pushButton_generation_exctract.clicked.connect(self.delete_header_footer)
+        self.pushButton_generation_HFE.clicked.connect(self.generate_hfe)
+        self.pushButton_generation_HFI.clicked.connect(self.generate_hfi)
 
     def group_box_change_state(self, state):
         if self.sender() == self.groupBox_FSTEK and state:
@@ -116,6 +121,40 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.thread.errors.connect(self.errors)
             self.thread.start()
 
+    def generate_hfe(self):
+        generate = checked_hfe_generation(self.lineEdit_path_file_HFE, self.lineEdit_complect_quant_HFE,
+                                          self.checkBox_required_values_HFE, self.lineEdit_frequency,
+                                          self.lineEdit_level)
+        if type(generate) == list:
+            self.on_message_changed(generate[0], generate[1])
+            return
+        else:  # Если всё прошло запускаем поток
+            generate['logging'], generate['q'] = logging, self.q
+            self.thread = HFEGeneration(generate)
+            self.thread.progress.connect(self.progressBar.setValue)
+            self.thread.status.connect(self.show_mess)
+            self.thread.messageChanged.connect(self.on_message_changed)
+            self.thread.errors.connect(self.errors)
+            self.thread.start()
+
+    def generate_hfi(self):
+        generate = checked_hfi_generation(self.lineEdit_path_file_HFI, self.lineEdit_imposition_freq,
+                                          self.lineEdit_complect_quant_HFI,
+                                          [self.checkBox_power_supply.isChecked(),
+                                           self.checkBox_symmetrical.isChecked(),
+                                           self.checkBox_asymetriacal.isChecked()])
+        if type(generate) == list:
+            self.on_message_changed(generate[0], generate[1])
+            return
+        else:  # Если всё прошло запускаем поток
+            generate['logging'], generate['q'] = logging, self.q
+            self.thread = HFIGeneration(generate)
+            self.thread.progress.connect(self.progressBar.setValue)
+            self.thread.status.connect(self.show_mess)
+            self.thread.messageChanged.connect(self.on_message_changed)
+            self.thread.errors.connect(self.errors)
+            self.thread.start()
+
     def parcing_file(self):
         self.plainTextEdit_succsess_order.clear()
         self.groupBox_succsess_order.setStyleSheet("")
@@ -124,7 +163,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.plainTextEdit_errors.clear()
         self.groupBox_errors.setStyleSheet("")
         group_file = True if self.checkBox_group_parcing.isChecked() else False
-        folder = file_parcing_checked(self.lineEdit_path_parser, group_file)
+        folder = checked_file_parcing(self.lineEdit_path_parser, group_file)
         if type(folder) == list:
             self.on_message_changed(folder[0], folder[1])
             return
@@ -180,9 +219,23 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             if self.checkBox_win_lin.isChecked():
                 zone = {i + 5: zone_all[i] for i in zone_all}
                 zone_all = {**zone_all, **zone}
-            self.thread = ZoneChecked([self.lineEdit_path_check.text().strip(),
-                                       self.lineEdit_table_number.text().strip(),
-                                       department, win_lin, zone_all, one_table, logging, self.q])
+            zone = {'path_check': self.lineEdit_path_check.text().strip(),
+                    'table_number': self.lineEdit_table_number.text().strip(), 'department': department,
+                    'win_lin': win_lin, 'zone_all': zone_all, 'one_table': one_table, 'logging': logging, 'q': self.q}
+            self.thread = ZoneChecked(zone)
+            self.thread.progress.connect(self.progressBar.setValue)
+            self.thread.status.connect(self.show_mess)
+            self.thread.messageChanged.connect(self.on_message_changed)
+            self.thread.start()
+
+    def delete_header_footer(self):
+        output = checked_delete_header_footer(self.lineEdit_path_original_extract)
+        if type(output) == list:
+            self.on_message_changed(output[0], output[1])
+            return
+        else:  # Если всё прошло запускаем поток
+            output['logging'], output['q'] = logging, self.q
+            self.thread = DeleteHeaderFooter(output)
             self.thread.progress.connect(self.progressBar.setValue)
             self.thread.status.connect(self.show_mess)
             self.thread.messageChanged.connect(self.on_message_changed)

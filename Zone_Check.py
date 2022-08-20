@@ -18,19 +18,19 @@ class ZoneChecked(QThread):
 
     def __init__(self, incoming_data):  # Список переданных элементов.
         QThread.__init__(self)
-        self.path = incoming_data[0]
-        self.table = incoming_data[1]
-        self.department = incoming_data[2]
-        self.win_lin = incoming_data[3]
-        self.zone = incoming_data[4]
-        self.one_table = incoming_data[5]
-        self.logging = incoming_data[6]
-        self.q = incoming_data[7]
+        self.path = incoming_data['path_check']
+        self.table = incoming_data['table_number']
+        self.department = incoming_data['department']
+        self.win_lin = incoming_data['win_lin']
+        self.zone = incoming_data['zone_all']
+        self.one_table = incoming_data['one_table']
+        self.logging = incoming_data['logging']
+        self.q = incoming_data['q']
         self.event = threading.Event()
 
     def run(self):
         progress = 0
-        self.logging.info("Начинаем")
+        self.logging.info('Начинаем проверять зоны')
         self.status.emit('Старт')
         self.progress.emit(progress)
 
@@ -43,6 +43,10 @@ class ZoneChecked(QThread):
         void = 0
         e = []
         self.logging.info("Проходимся по списку")
+        if self.department:
+            percent_ = percent / 10 if self.win_lin else percent / 5
+        else:
+            percent_ = percent / 4
         try:
             for i in docs:
                 if self.pause_threading():
@@ -94,154 +98,156 @@ class ZoneChecked(QThread):
                                 zone = table.cell(7, j - 3).text.replace(',', '.')
                             elif j <= 9 and self.win_lin:
                                 zone = table.cell(j, 2).text.replace(',', '.')
+
+                            if void == 0:  # Добавляем имена диапазонов
+                                e.append('\t')
+                                for k in zone_name:
+                                    e.append(k)
+                                void = 2
+                                e.append('\n')
+                            void = 1
                             try:
-                                if void == 0:  # Добавляем имена диапазонов
-                                    e.append('\t')
-                                    for k in zone_name:
-                                        e.append(k)
-                                    void = 2
-                                    e.append('\n')
-                                void = 1
                                 errors.append(round(float(zone), 1))
-                                if self.one_table is False:  # Если нужно проверять таблицу
-                                    self.logging.info("Проверяем и красим таблицу")
-                                    self.status.emit('Проверяем и закрашиваем таблицу в документе ' + str(i))
-                                    percent_ = percent/5
-                                    if j in self.zone:
-                                        # Условия проверки
-                                        if (float(self.zone[j]) < float(zone)) and (float(self.zone[j]) != 0):
-                                            flag_for_exit = 1  # Для прерывания цикла
-                                            # Поисковый диапазон
-                                            range_search = [9, 11, 13, 5, 7] * 2 if self.win_lin else [9, 11, 13, 5, 7]
-                                            x = 0
-                                            name = ''
-                                            table_3 = doc.tables[1] if self.win_lin else doc.tables[2]
-                                            for row in table_3.rows:
-                                                for cell in row.cells:
-                                                    try:
-                                                        # Для определения позиции ячейки (tc.top, tc.bottom etc)
-                                                        tc = cell._tc
-                                                        # Если полностью объединена
-                                                        if tc.right - tc.left == len(table_3.columns):
-                                                            if cell.text != 'Опасные сигналы не обнаружены':
-                                                                if self.win_lin:
-                                                                    # Если находим имя - не прерываем цикл
-                                                                    if len(re.findall(name_system, cell.text)):
-                                                                        flag_for_exit = 1
-                                                                    else:
-                                                                        flag_for_exit = 0
-                                                                # Имя системы
-                                                                name = re.findall(r"\(([^)]*)\)", cell.text)[0]
-                                                        if flag_for_exit:  # Если нужно в цикл
-                                                            if tc.right == 1 and tc.left == 0:
-                                                                frq = float(cell.text.replace(',', '.'))  # Частота
-                                                                try:
-                                                                    x = float(table_3.cell(tc.top, range_search[j])
-                                                                              .text.replace(',', '.'))
-                                                                except BaseException:
-                                                                    if '<' in table_3.cell(tc.top, range_search[j]).text:
-                                                                        x = -1
-                                                                # Если больше, то красим через xml
-                                                                if x > float(self.zone[j]):
-                                                                    string.setdefault(name, [])
-                                                                    shading_elm.append(parse_xml(
-                                                                        r'<w:shd {} w:fill="FFFF00"/>'.format(nsdecls('w')))
-                                                                    )
-                                                                    table_3.rows[tc.top].cells[0]._tc.get_or_add_tcPr().append(
-                                                                        shading_elm[shading_index])
-                                                                    shading_index += 1
-                                                                    shading_elm.append(parse_xml(
-                                                                        r'<w:shd {} w:fill="FFFF00"/>'.format(nsdecls('w')))
-                                                                    )
-                                                                    table_3.rows[tc.top].cells[
-                                                                        range_search[j]]._tc.get_or_add_tcPr().append(
-                                                                        shading_elm[shading_index])
-                                                                    shading_index += 1
-                                                                    if frq not in string[name]:
-                                                                        string[name].append(frq)
-                                                        break
-                                                    except BaseException:
-                                                        break
-                                            self.logging.info("Сохраняем документ")
-                                            doc.save(os.path.abspath(self.path) + '\\' + i)
-                                    progress = progress + percent_
-                                    self.progress.emit(progress)
                             except ValueError:
-                                errors.append(zone)
+                                if '<' in zone:
+                                    errors.append(zone)
+                            if self.one_table is False and '<' not in zone:  # Если нужно проверять таблицу
+                                self.logging.info("Проверяем и красим таблицу")
+                                self.status.emit('Проверяем и закрашиваем таблицу в документе ' + str(i))
+                                if j in self.zone:
+                                    # Условия проверки
+                                    if (float(self.zone[j]) < float(zone)) and (float(self.zone[j]) != 0):
+                                        flag_for_exit = 1  # Для прерывания цикла
+                                        # Поисковый диапазон
+                                        range_search = [9, 11, 13, 5, 7] * 2 if self.win_lin else [9, 11, 13, 5, 7]
+                                        x = 0
+                                        name = ''
+                                        table_3 = doc.tables[1] if self.win_lin else doc.tables[2]
+                                        for row in table_3.rows:
+                                            for cell in row.cells:
+                                                try:
+                                                    # Для определения позиции ячейки (tc.top, tc.bottom etc)
+                                                    tc = cell._tc
+                                                    # Если полностью объединена
+                                                    if tc.right - tc.left == len(table_3.columns):
+                                                        if cell.text != 'Опасные сигналы не обнаружены':
+                                                            if self.win_lin:
+                                                                # Если находим имя - не прерываем цикл
+                                                                if len(re.findall(name_system, cell.text)):
+                                                                    flag_for_exit = 1
+                                                                else:
+                                                                    flag_for_exit = 0
+                                                            # Имя системы
+                                                            name = re.findall(r"\(([^)]*)\)", cell.text)[0]
+                                                    if flag_for_exit:  # Если нужно в цикл
+                                                        if tc.right == 1 and tc.left == 0:
+                                                            frq = float(cell.text.replace(',', '.'))  # Частота
+                                                            try:
+                                                                x = float(table_3.cell(tc.top, range_search[j])
+                                                                          .text.replace(',', '.'))
+                                                            except BaseException:
+                                                                if '<' in table_3.cell(tc.top, range_search[j]).text:
+                                                                    x = -1
+                                                            # Если больше, то красим через xml
+                                                            if x > float(self.zone[j]):
+                                                                string.setdefault(name, [])
+                                                                shading_elm.append(parse_xml(
+                                                                    r'<w:shd {} w:fill="FFFF00"/>'.format(nsdecls('w')))
+                                                                )
+                                                                table_3.rows[tc.top].cells[0]._tc.get_or_add_tcPr().append(
+                                                                    shading_elm[shading_index])
+                                                                shading_index += 1
+                                                                shading_elm.append(parse_xml(
+                                                                    r'<w:shd {} w:fill="FFFF00"/>'.format(nsdecls('w')))
+                                                                )
+                                                                table_3.rows[tc.top].cells[
+                                                                    range_search[j]]._tc.get_or_add_tcPr().append(
+                                                                    shading_elm[shading_index])
+                                                                shading_index += 1
+                                                                if frq not in string[name]:
+                                                                    string[name].append(frq)
+                                                    break
+                                                except BaseException:
+                                                    break
+                                        self.logging.info("Сохраняем документ")
+                                        doc.save(os.path.abspath(self.path) + '\\' + i)
+                            progress = progress + percent_
+                            self.progress.emit(progress)
                     else:
                         self.logging.info("Считываем зоны")
                         for j in range(0, 4, 1):
                             if self.pause_threading():
                                 return
                             zone = table.cell(j + 1, 1).text.replace(',', '.')
+
+                            if void == 0:
+                                e.append('\t')
+                                for k in zone_name[:-1]:
+                                    e.append(k)
+                                void = 2
+                                e.append('\n')
+                            void = 1
                             try:
-                                if void == 0:
-                                    e.append('\t')
-                                    for k in zone_name[:-1]:
-                                        e.append(k)
-                                    void = 2
-                                    e.append('\n')
-                                void = 1
-                                try:
-                                    errors.append(int(zone))
-                                except ValueError:
-                                    errors.append(round(float(zone), 1))
-                                if self.one_table is False:
-                                    self.logging.info("Проверяем и красим таблицу")
-                                    self.status.emit('Проверяем и закрашиваем таблицу в документе ' + str(i))
-                                    percent_ = percent / 4
-                                    if j in self.zone:
-                                        # Условия проверки
-                                        if (float(self.zone[j]) < float(zone)) and (float(self.zone[j]) != 0):
-                                            flag_for_exit = 0
-                                            range_search = [7, 8, 9, 10]
-                                            x = 0
-                                            table_3 = doc.tables[2]
-                                            for row in table_3.rows:
-                                                for cell in row.cells:
-                                                    try:
-                                                        tc = cell._tc
-                                                        if tc.right - tc.left == len(table_3.columns):
-                                                            if cell.text == '3 категория':
-                                                                flag_for_exit = 1
-                                                            try:
-                                                                try:
-                                                                    x = int(table_3.cell(tc.top, range_search[j]).text)
-                                                                except ValueError:
-                                                                    x = float(table_3.cell(tc.top, range_search[j])
-                                                                              .text.replace(',', '.'))
-                                                            except BaseException:
-                                                                if '<' in table_3.cell(tc.top, range_search[j]).text:
-                                                                    x = -1
-                                                            if x > float(self.zone[j]):
-                                                                # string.setdefault(name, [])
-                                                                shading_elm.append(parse_xml(
-                                                                    r'<w:shd {} w:fill="FFFF00"/>'.format(nsdecls('w'))))
-                                                                table_3.rows[tc.top].cells[1]._tc.get_or_add_tcPr().append(
-                                                                    shading_elm[shading_index])
-                                                                shading_index += 1
-                                                                shading_elm.append(parse_xml(
-                                                                    r'<w:shd {} w:fill="FFFF00"/>'.format(nsdecls('w'))))
-                                                                table_3.rows[tc.top].cells[2]._tc.get_or_add_tcPr().append(
-                                                                    shading_elm[shading_index])
-                                                                shading_index += 1
-                                                                shading_elm.append(parse_xml(
-                                                                    r'<w:shd {} w:fill="FFFF00"/>'.format(nsdecls('w'))))
-                                                                table_3.rows[tc.top].cells[
-                                                                    range_search[j]]._tc.get_or_add_tcPr().append(
-                                                                    shading_elm[shading_index])
-                                                                shading_index += 1
-                                                        break
-                                                    except BaseException:
-                                                        break
-                                                if flag_for_exit:
-                                                    break
-                                            self.logging.info("Сохраняем документ")
-                                            doc.save(os.path.abspath(self.path) + '\\' + i)
-                                    progress = progress + percent_
-                                    self.progress.emit(progress)
+                                errors.append(int(zone))
                             except ValueError:
-                                pass
+                                try:
+                                    errors.append(round(float(zone), 1))
+                                except ValueError:
+                                    if '<' in zone:
+                                        errors.append(zone)
+                            if self.one_table is False:
+                                self.logging.info("Проверяем и красим таблицу")
+                                self.status.emit('Проверяем и закрашиваем таблицу в документе ' + str(i))
+                                if j in self.zone:
+                                    # Условия проверки
+                                    if (float(self.zone[j]) < float(zone)) and (float(self.zone[j]) != 0):
+                                        flag_for_exit = 0
+                                        range_search = [7, 8, 9, 10]
+                                        x = 0
+                                        table_3 = doc.tables[2]
+                                        for row in table_3.rows:
+                                            for cell in row.cells:
+                                                try:
+                                                    tc = cell._tc
+                                                    if tc.right - tc.left == len(table_3.columns):
+                                                        if cell.text == '3 категория':
+                                                            flag_for_exit = 1
+                                                        try:
+                                                            try:
+                                                                x = int(table_3.cell(tc.top, range_search[j]).text)
+                                                            except ValueError:
+                                                                x = float(table_3.cell(tc.top, range_search[j])
+                                                                          .text.replace(',', '.'))
+                                                        except BaseException:
+                                                            if '<' in table_3.cell(tc.top, range_search[j]).text:
+                                                                x = -1
+                                                        if x > float(self.zone[j]):
+                                                            # string.setdefault(name, [])
+                                                            shading_elm.append(parse_xml(
+                                                                r'<w:shd {} w:fill="FFFF00"/>'.format(nsdecls('w'))))
+                                                            table_3.rows[tc.top].cells[1]._tc.get_or_add_tcPr().append(
+                                                                shading_elm[shading_index])
+                                                            shading_index += 1
+                                                            shading_elm.append(parse_xml(
+                                                                r'<w:shd {} w:fill="FFFF00"/>'.format(nsdecls('w'))))
+                                                            table_3.rows[tc.top].cells[2]._tc.get_or_add_tcPr().append(
+                                                                shading_elm[shading_index])
+                                                            shading_index += 1
+                                                            shading_elm.append(parse_xml(
+                                                                r'<w:shd {} w:fill="FFFF00"/>'.format(nsdecls('w'))))
+                                                            table_3.rows[tc.top].cells[
+                                                                range_search[j]]._tc.get_or_add_tcPr().append(
+                                                                shading_elm[shading_index])
+                                                            shading_index += 1
+                                                    break
+                                                except BaseException:
+                                                    break
+                                            if flag_for_exit:
+                                                break
+                                        self.logging.info("Сохраняем документ")
+                                        doc.save(os.path.abspath(self.path) + '\\' + i)
+                                progress = progress + percent_
+                                self.progress.emit(progress)
                     self.logging.info("Добавляем результаты")
                     self.status.emit('Добавляем результаты документа ' + str(i))
                     if void == 1:
@@ -355,7 +361,6 @@ class ZoneChecked(QThread):
                     if flag:  # Если что-то форматируется, то закрашиваем
                         if self.win_lin:
                             for min_ in range(1, 3):  # Закрашиваем номер комплекта
-                                print(ws.cell(i - min_, 1).value)
                                 if type(ws.cell(i - min_, 1).value) == float:
                                     ws.cell(i - min_, 1).alignment = openpyxl.styles.Alignment(
                                         horizontal="left", vertical="center")

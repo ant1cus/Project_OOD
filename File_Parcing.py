@@ -23,7 +23,7 @@ class FileParcing(QThread):
     def run(self):
         try:
             current_progress = 0
-            self.logging.info("Начинаем")
+            self.logging.info('Начинаем парсить файлы')
             self.status.emit('Старт')
             self.progress.emit(current_progress)
             percent = 100/self.all_progress
