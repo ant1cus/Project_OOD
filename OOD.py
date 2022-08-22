@@ -229,7 +229,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.thread.start()
 
     def delete_header_footer(self):
-        output = checked_delete_header_footer(self.lineEdit_path_original_extract)
+        output = checked_delete_header_footer(self.lineEdit_path_original_extract, self.lineEdit_conclusion,
+                                              self.lineEdit_protocol, self.lineEdit_prescription)
         if type(output) == list:
             self.on_message_changed(output[0], output[1])
             return

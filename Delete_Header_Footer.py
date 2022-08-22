@@ -7,6 +7,7 @@ import traceback
 import zipfile
 
 from PyQt5.QtCore import QThread, pyqtSignal
+from docx.shared import Pt
 from lxml import etree
 import docx
 
@@ -20,6 +21,7 @@ class DeleteHeaderFooter(QThread):
     def __init__(self, incoming_data):  # Список переданных элементов.
         QThread.__init__(self)
         self.path = incoming_data['path']
+        self.name_executor = incoming_data['name_executor']
         self.logging = incoming_data['logging']
         self.q = incoming_data['q']
         self.event = threading.Event()
@@ -76,20 +78,17 @@ class DeleteHeaderFooter(QThread):
                 date = re.findall(r'\d{2}\.\d{2}\.\d{4}',
                                   doc.sections[len(doc.sections) - 1].first_page_footer.paragraphs[0].text)
                 doc.sections[len(doc.sections) - 1].first_page_footer.paragraphs[0].text = None
-                self.logging.info('Удаляем лишние параграфы в конце документа')
-                for para in doc.paragraphs[len(doc.paragraphs):0:-1]:
-                    if len(para.text) in [0, 1]:
-                        p = para._element
-                        p.getparent().remove(p)
-                        p._p = p._element = None
-                    else:
-                        break
-                name = element.rpartition('.')[0]
+                doc.sections[len(doc.sections) - 1].first_page_header.is_linked_to_previous = False  # Хидер
+                doc.sections[len(doc.sections) - 1].first_page_footer.is_linked_to_previous = False  # Футер
+                doc.save(self.path + '\\' + element)
+                doc = docx.Document(self.path + '\\' + element)  # Открываем
                 self.logging.info('Переименовываем заголовок')
+                name = element.rpartition('.')[0].rpartition(' ')[0]
                 if 'Заключение СП' in name:
                     name = re.sub('Заключение СП', 'Заключение', name)
                 for paragraph in doc.paragraphs:
                     if re.findall(name, paragraph.text):
+                        size = paragraph.runs[0].font.size.pt
                         name_doc = name.partition(' ')[0]
                         if name_doc.lower() == 'проктокол':
                             name_doc += 'а'
@@ -97,10 +96,42 @@ class DeleteHeaderFooter(QThread):
                             name_doc = list(name_doc)
                             name_doc[-1] = 'я'
                             name_doc = ''.join(name_doc)
-                        paragraph.text = re.sub(paragraph.text,
-                                                'Выписка из ' + name_doc.lower() + ' уч. № ' +
-                                                number + ' от ' + date[0],
+                        paragraph.text = re.sub(name.partition(' ')[0],
+                                                'ВЫПИСКА ИЗ ' + name_doc.upper(),
                                                 paragraph.text)
+                        paragraph.add_run('\nУч. № ' + number + ' от ' + date[0])
+                        for run in paragraph.runs:
+                            run.font.bold = True
+                            run.font.size = Pt(size)
+                        break
+                if 'Заключение' in name:
+                    name_executor = self.name_executor[0]
+                elif 'Протокол' in name:
+                    name_executor = self.name_executor[1]
+                else:
+                    name_executor = self.name_executor[2]
+                for e in reversed(list(doc.paragraphs)):
+                    if 'специальных' in e.text:
+                        text = e.text.strip()
+                        size = e.runs[0].font.size.pt
+                        name_person = text.rpartition(' ')[2]
+                        name_person = text[len(text) - (5 + len(name_person)):len(text)]
+                        e.add_run('\n\nВыписка верна\n' + re.sub(name_person, name_executor, text.strip()))
+                        for run in e.runs:
+                            run.font.size = Pt(size)
+                        break
+                doc.save(self.path + '\\' + element)
+                doc = docx.Document(self.path + '\\' + element)  # Открываем
+                self.logging.info('Удаляем лишние параграфы в конце документа')
+                sectPrs = doc._element.xpath(".//w:pPr/w:sectPr")
+                for sectPr in sectPrs:
+                    sectPr.getparent().remove(sectPr)
+                for para in doc.paragraphs[len(doc.paragraphs):0:-1]:
+                    if len(para.text) in [0, 1]:
+                        p = para._element
+                        p.getparent().remove(p)
+                        p._p = p._element = None
+                    else:
                         break
                 doc.save(self.path + '\\' + element)
                 self.logging.info('Извлекаем архив и добавляем шапку')
@@ -111,7 +142,7 @@ class DeleteHeaderFooter(QThread):
                 pages_xml = os.path.join(temp_folder, "word", "document.xml")
                 tree = etree.parse(pages_xml)
                 root = tree.getroot()
-                root[0][-2].append(header)
+                root[0][-1].append(header)
                 tree.write(os.path.join(temp_folder, "word", "document.xml"), encoding="UTF-8", xml_declaration=True)
                 self.logging.info('Удаляем архив')
                 os.remove(temp_zip)

@@ -9,12 +9,99 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+import os
+
+
+class Button(QtWidgets.QLineEdit):
+
+	def __init__(self, parent):
+		super(Button, self).__init__(parent)
+
+		self.setAcceptDrops(True)
+
+	def dragEnterEvent(self, e):
+
+		if e.mimeData().hasUrls():
+			e.accept()
+		else:
+			super(Button, self).dragEnterEvent(e)
+
+	def dragMoveEvent(self, e):
+
+		super(Button, self).dragMoveEvent(e)
+
+	def dropEvent(self, e):
+
+		if e.mimeData().hasUrls():
+			for url in e.mimeData().urls():
+				self.setText(os.path.normcase(url.toLocalFile()))
+				e.accept()
+		else:
+			super(Button, self).dropEvent(e)
+import os
+import os
+
+
+class Button(QtWidgets.QLineEdit):
+
+	def __init__(self, parent):
+		super(Button, self).__init__(parent)
+
+		self.setAcceptDrops(True)
+
+	def dragEnterEvent(self, e):
+
+		if e.mimeData().hasUrls():
+			e.accept()
+		else:
+			super(Button, self).dragEnterEvent(e)
+
+	def dragMoveEvent(self, e):
+
+		super(Button, self).dragMoveEvent(e)
+
+	def dropEvent(self, e):
+
+		if e.mimeData().hasUrls():
+			for url in e.mimeData().urls():
+				self.setText(os.path.normcase(url.toLocalFile()))
+				e.accept()
+		else:
+			super(Button, self).dropEvent(e)
+
+
+class Button(QtWidgets.QLineEdit):
+
+	def __init__(self, parent):
+		super(Button, self).__init__(parent)
+
+		self.setAcceptDrops(True)
+
+	def dragEnterEvent(self, e):
+
+		if e.mimeData().hasUrls():
+			e.accept()
+		else:
+			super(Button, self).dragEnterEvent(e)
+
+	def dragMoveEvent(self, e):
+
+		super(Button, self).dragMoveEvent(e)
+
+	def dropEvent(self, e):
+
+		if e.mimeData().hasUrls():
+			for url in e.mimeData().urls():
+				self.setText(os.path.normcase(url.toLocalFile()))
+				e.accept()
+		else:
+			super(Button, self).dropEvent(e)
 
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(655, 677)
+        MainWindow.resize(657, 677)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
@@ -208,7 +295,7 @@ class Ui_MainWindow(object):
         self.label_zone_area.setAlignment(QtCore.Qt.AlignCenter)
         self.label_zone_area.setObjectName("label_zone_area")
         self.gridLayout_2.addWidget(self.label_zone_area, 2, 0, 1, 3)
-        self.lineEdit_path_check = QtWidgets.QLineEdit(self.tab)
+        self.lineEdit_path_check = Button(self.tab)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.lineEdit_path_check.setFont(font)
@@ -377,8 +464,6 @@ class Ui_MainWindow(object):
         self.label_r1s_FSB.setSizePolicy(sizePolicy)
         font = QtGui.QFont()
         font.setPointSize(10)
-        font.setBold(True)
-        font.setWeight(75)
         self.label_r1s_FSB.setFont(font)
         self.label_r1s_FSB.setAlignment(QtCore.Qt.AlignCenter)
         self.label_r1s_FSB.setObjectName("label_r1s_FSB")
@@ -402,7 +487,7 @@ class Ui_MainWindow(object):
         self.label_path_parser.setFont(font)
         self.label_path_parser.setObjectName("label_path_parser")
         self.gridLayout_8.addWidget(self.label_path_parser, 0, 0, 1, 1)
-        self.lineEdit_path_parser = QtWidgets.QLineEdit(self.tab_2)
+        self.lineEdit_path_parser = Button(self.tab_2)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.lineEdit_path_parser.setFont(font)
@@ -495,7 +580,7 @@ class Ui_MainWindow(object):
         self.label_original_file.setSizePolicy(sizePolicy)
         self.label_original_file.setObjectName("label_original_file")
         self.gridLayout_9.addWidget(self.label_original_file, 0, 0, 1, 1)
-        self.lineEdit_path_original_file = QtWidgets.QLineEdit(self.tab_3)
+        self.lineEdit_path_original_file = Button(self.tab_3)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -519,7 +604,7 @@ class Ui_MainWindow(object):
         self.label_finish_folder.setSizePolicy(sizePolicy)
         self.label_finish_folder.setObjectName("label_finish_folder")
         self.gridLayout_9.addWidget(self.label_finish_folder, 1, 0, 1, 1)
-        self.lineEdit_path_finish_folder = QtWidgets.QLineEdit(self.tab_3)
+        self.lineEdit_path_finish_folder = Button(self.tab_3)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -538,7 +623,7 @@ class Ui_MainWindow(object):
         self.checkBox_freq_restrict.setSizePolicy(sizePolicy)
         self.checkBox_freq_restrict.setObjectName("checkBox_freq_restrict")
         self.gridLayout_9.addWidget(self.checkBox_freq_restrict, 2, 0, 1, 1)
-        self.lineEdit_path_freq_restrict = QtWidgets.QLineEdit(self.tab_3)
+        self.lineEdit_path_freq_restrict = Button(self.tab_3)
         self.lineEdit_path_freq_restrict.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -599,7 +684,7 @@ class Ui_MainWindow(object):
         self.tab_4.setObjectName("tab_4")
         self.gridLayout_10 = QtWidgets.QGridLayout(self.tab_4)
         self.gridLayout_10.setObjectName("gridLayout_10")
-        self.lineEdit_path_file_HFE = QtWidgets.QLineEdit(self.tab_4)
+        self.lineEdit_path_file_HFE = Button(self.tab_4)
         self.lineEdit_path_file_HFE.setObjectName("lineEdit_path_file_HFE")
         self.gridLayout_10.addWidget(self.lineEdit_path_file_HFE, 0, 1, 1, 1)
         self.label_compelct_quant_HFE = QtWidgets.QLabel(self.tab_4)
@@ -728,15 +813,15 @@ class Ui_MainWindow(object):
         self.lineEdit_complect_quant_HFI.setSizePolicy(sizePolicy)
         self.lineEdit_complect_quant_HFI.setObjectName("lineEdit_complect_quant_HFI")
         self.gridLayout_11.addWidget(self.lineEdit_complect_quant_HFI, 1, 2, 1, 1)
-        self.checkBox_symmetrical = QtWidgets.QCheckBox(self.tab_5)
+        self.checkBox_symetrical = QtWidgets.QCheckBox(self.tab_5)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.checkBox_symmetrical.sizePolicy().hasHeightForWidth())
-        self.checkBox_symmetrical.setSizePolicy(sizePolicy)
-        self.checkBox_symmetrical.setObjectName("checkBox_symmetrical")
-        self.gridLayout_11.addWidget(self.checkBox_symmetrical, 5, 2, 1, 1)
-        self.lineEdit_path_file_HFI = QtWidgets.QLineEdit(self.tab_5)
+        sizePolicy.setHeightForWidth(self.checkBox_symetrical.sizePolicy().hasHeightForWidth())
+        self.checkBox_symetrical.setSizePolicy(sizePolicy)
+        self.checkBox_symetrical.setObjectName("checkBox_symetrical")
+        self.gridLayout_11.addWidget(self.checkBox_symetrical, 5, 2, 1, 1)
+        self.lineEdit_path_file_HFI = Button(self.tab_5)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -757,6 +842,83 @@ class Ui_MainWindow(object):
         self.tab_6.setObjectName("tab_6")
         self.gridLayout_16 = QtWidgets.QGridLayout(self.tab_6)
         self.gridLayout_16.setObjectName("gridLayout_16")
+        self.label_protocol = QtWidgets.QLabel(self.tab_6)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.label_protocol.sizePolicy().hasHeightForWidth())
+        self.label_protocol.setSizePolicy(sizePolicy)
+        self.label_protocol.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        font.setBold(False)
+        font.setWeight(50)
+        self.label_protocol.setFont(font)
+        self.label_protocol.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+        self.label_protocol.setObjectName("label_protocol")
+        self.gridLayout_16.addWidget(self.label_protocol, 3, 0, 1, 1)
+        self.lineEdit_protocol = QtWidgets.QLineEdit(self.tab_6)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lineEdit_protocol.sizePolicy().hasHeightForWidth())
+        self.lineEdit_protocol.setSizePolicy(sizePolicy)
+        self.lineEdit_protocol.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        font.setBold(False)
+        font.setWeight(50)
+        self.lineEdit_protocol.setFont(font)
+        self.lineEdit_protocol.setObjectName("lineEdit_protocol")
+        self.gridLayout_16.addWidget(self.lineEdit_protocol, 3, 1, 1, 4)
+        self.label_prescription = QtWidgets.QLabel(self.tab_6)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.label_prescription.sizePolicy().hasHeightForWidth())
+        self.label_prescription.setSizePolicy(sizePolicy)
+        self.label_prescription.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        font.setBold(False)
+        font.setWeight(50)
+        self.label_prescription.setFont(font)
+        self.label_prescription.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+        self.label_prescription.setObjectName("label_prescription")
+        self.gridLayout_16.addWidget(self.label_prescription, 4, 0, 1, 1)
+        self.lineEdit_prescription = QtWidgets.QLineEdit(self.tab_6)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lineEdit_prescription.sizePolicy().hasHeightForWidth())
+        self.lineEdit_prescription.setSizePolicy(sizePolicy)
+        self.lineEdit_prescription.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        font.setBold(False)
+        font.setWeight(50)
+        self.lineEdit_prescription.setFont(font)
+        self.lineEdit_prescription.setObjectName("lineEdit_prescription")
+        self.gridLayout_16.addWidget(self.lineEdit_prescription, 4, 1, 1, 4)
+        self.pushButton_generation_exctract = QtWidgets.QPushButton(self.tab_6)
+        self.pushButton_generation_exctract.setObjectName("pushButton_generation_exctract")
+        self.gridLayout_16.addWidget(self.pushButton_generation_exctract, 6, 0, 1, 5)
+        self.pushButton_open_original_exctract = QtWidgets.QPushButton(self.tab_6)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.pushButton_open_original_exctract.sizePolicy().hasHeightForWidth())
+        self.pushButton_open_original_exctract.setSizePolicy(sizePolicy)
+        self.pushButton_open_original_exctract.setObjectName("pushButton_open_original_exctract")
+        self.gridLayout_16.addWidget(self.pushButton_open_original_exctract, 0, 4, 1, 1)
+        self.lineEdit_path_original_extract = Button(self.tab_6)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lineEdit_path_original_extract.sizePolicy().hasHeightForWidth())
+        self.lineEdit_path_original_extract.setSizePolicy(sizePolicy)
+        self.lineEdit_path_original_extract.setObjectName("lineEdit_path_original_extract")
+        self.gridLayout_16.addWidget(self.lineEdit_path_original_extract, 0, 1, 1, 3)
         self.label_original_file_extract = QtWidgets.QLabel(self.tab_6)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -765,30 +927,40 @@ class Ui_MainWindow(object):
         self.label_original_file_extract.setSizePolicy(sizePolicy)
         self.label_original_file_extract.setObjectName("label_original_file_extract")
         self.gridLayout_16.addWidget(self.label_original_file_extract, 0, 0, 1, 1)
-        self.lineEdit_path_original_extract = QtWidgets.QLineEdit(self.tab_6)
+        self.label_conclusion = QtWidgets.QLabel(self.tab_6)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.label_conclusion.sizePolicy().hasHeightForWidth())
+        self.label_conclusion.setSizePolicy(sizePolicy)
+        self.label_conclusion.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        font.setBold(False)
+        font.setWeight(50)
+        self.label_conclusion.setFont(font)
+        self.label_conclusion.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+        self.label_conclusion.setObjectName("label_conclusion")
+        self.gridLayout_16.addWidget(self.label_conclusion, 1, 0, 1, 1)
+        self.lineEdit_conclusion = QtWidgets.QLineEdit(self.tab_6)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.lineEdit_path_original_extract.sizePolicy().hasHeightForWidth())
-        self.lineEdit_path_original_extract.setSizePolicy(sizePolicy)
-        self.lineEdit_path_original_extract.setObjectName("lineEdit_path_original_extract")
-        self.gridLayout_16.addWidget(self.lineEdit_path_original_extract, 0, 1, 1, 1)
-        self.pushButton_open_original_exctract = QtWidgets.QPushButton(self.tab_6)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.pushButton_open_original_exctract.sizePolicy().hasHeightForWidth())
-        self.pushButton_open_original_exctract.setSizePolicy(sizePolicy)
-        self.pushButton_open_original_exctract.setObjectName("pushButton_open_original_exctract")
-        self.gridLayout_16.addWidget(self.pushButton_open_original_exctract, 0, 2, 1, 1)
-        self.pushButton_generation_exctract = QtWidgets.QPushButton(self.tab_6)
-        self.pushButton_generation_exctract.setObjectName("pushButton_generation_exctract")
-        self.gridLayout_16.addWidget(self.pushButton_generation_exctract, 1, 0, 1, 3)
+        sizePolicy.setHeightForWidth(self.lineEdit_conclusion.sizePolicy().hasHeightForWidth())
+        self.lineEdit_conclusion.setSizePolicy(sizePolicy)
+        self.lineEdit_conclusion.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        font.setBold(False)
+        font.setWeight(50)
+        self.lineEdit_conclusion.setFont(font)
+        self.lineEdit_conclusion.setObjectName("lineEdit_conclusion")
+        self.gridLayout_16.addWidget(self.lineEdit_conclusion, 1, 1, 1, 4)
         self.tabWidget.addTab(self.tab_6, "")
-        self.gridLayout.addWidget(self.tabWidget, 1, 0, 1, 1)
+        self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 655, 26))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 657, 21))
         self.menubar.setObjectName("menubar")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
@@ -814,6 +986,61 @@ class Ui_MainWindow(object):
         self.pushButton_clear.clicked.connect(self.label_wear_FSTEK.clear)
         self.pushButton_clear.clicked.connect(self.lineEdit_r1_FSTEK.clear)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        MainWindow.setTabOrder(self.lineEdit_path_check, self.pushButton_open_zone_check)
+        MainWindow.setTabOrder(self.pushButton_open_zone_check, self.lineEdit_table_number)
+        MainWindow.setTabOrder(self.lineEdit_table_number, self.checkBox_first_table)
+        MainWindow.setTabOrder(self.checkBox_first_table, self.groupBox_FSB)
+        MainWindow.setTabOrder(self.groupBox_FSB, self.checkBox_win_lin)
+        MainWindow.setTabOrder(self.checkBox_win_lin, self.lineEdit_stationary_FSB)
+        MainWindow.setTabOrder(self.lineEdit_stationary_FSB, self.lineEdit_carry_FSB)
+        MainWindow.setTabOrder(self.lineEdit_carry_FSB, self.lineEdit_wear_FSB)
+        MainWindow.setTabOrder(self.lineEdit_wear_FSB, self.lineEdit_r1_FSB)
+        MainWindow.setTabOrder(self.lineEdit_r1_FSB, self.lineEdit_r1s_FSB)
+        MainWindow.setTabOrder(self.lineEdit_r1s_FSB, self.groupBox_FSTEK)
+        MainWindow.setTabOrder(self.groupBox_FSTEK, self.lineEdit_stationary_FSTEK)
+        MainWindow.setTabOrder(self.lineEdit_stationary_FSTEK, self.lineEdit_carry_FSTEK)
+        MainWindow.setTabOrder(self.lineEdit_carry_FSTEK, self.lineEdit_wear_FSTEK)
+        MainWindow.setTabOrder(self.lineEdit_wear_FSTEK, self.lineEdit_r1_FSTEK)
+        MainWindow.setTabOrder(self.lineEdit_r1_FSTEK, self.pushButton_clear)
+        MainWindow.setTabOrder(self.pushButton_clear, self.pushButton_stop)
+        MainWindow.setTabOrder(self.pushButton_stop, self.pushButton_check)
+        MainWindow.setTabOrder(self.pushButton_check, self.lineEdit_path_parser)
+        MainWindow.setTabOrder(self.lineEdit_path_parser, self.pushButton_open_parser)
+        MainWindow.setTabOrder(self.pushButton_open_parser, self.checkBox_group_parcing)
+        MainWindow.setTabOrder(self.checkBox_group_parcing, self.plainTextEdit_succsess_order)
+        MainWindow.setTabOrder(self.plainTextEdit_succsess_order, self.plainTextEdit_error_order)
+        MainWindow.setTabOrder(self.plainTextEdit_error_order, self.plainTextEdit_errors)
+        MainWindow.setTabOrder(self.plainTextEdit_errors, self.pushButton_parser)
+        MainWindow.setTabOrder(self.pushButton_parser, self.lineEdit_path_original_file)
+        MainWindow.setTabOrder(self.lineEdit_path_original_file, self.pushButton_open_original_file)
+        MainWindow.setTabOrder(self.pushButton_open_original_file, self.lineEdit_path_finish_folder)
+        MainWindow.setTabOrder(self.lineEdit_path_finish_folder, self.pushButton_open_finish_folder)
+        MainWindow.setTabOrder(self.pushButton_open_finish_folder, self.checkBox_freq_restrict)
+        MainWindow.setTabOrder(self.checkBox_freq_restrict, self.lineEdit_path_freq_restrict)
+        MainWindow.setTabOrder(self.lineEdit_path_freq_restrict, self.pushButton_open_freq_restrict)
+        MainWindow.setTabOrder(self.pushButton_open_freq_restrict, self.checkBox_excel_file)
+        MainWindow.setTabOrder(self.checkBox_excel_file, self.lineEdit_complect_quant_pemi)
+        MainWindow.setTabOrder(self.lineEdit_complect_quant_pemi, self.lineEdit_complect_number_pemi)
+        MainWindow.setTabOrder(self.lineEdit_complect_number_pemi, self.pushButton_generation_pemi)
+        MainWindow.setTabOrder(self.pushButton_generation_pemi, self.pushButton_open_file_HFE)
+        MainWindow.setTabOrder(self.pushButton_open_file_HFE, self.lineEdit_path_file_HFE)
+        MainWindow.setTabOrder(self.lineEdit_path_file_HFE, self.lineEdit_complect_quant_HFE)
+        MainWindow.setTabOrder(self.lineEdit_complect_quant_HFE, self.checkBox_required_values_HFE)
+        MainWindow.setTabOrder(self.checkBox_required_values_HFE, self.lineEdit_frequency)
+        MainWindow.setTabOrder(self.lineEdit_frequency, self.lineEdit_level)
+        MainWindow.setTabOrder(self.lineEdit_level, self.pushButton_generation_HFE)
+        MainWindow.setTabOrder(self.pushButton_generation_HFE, self.pushButton_open_file_HFI)
+        MainWindow.setTabOrder(self.pushButton_open_file_HFI, self.lineEdit_path_file_HFI)
+        MainWindow.setTabOrder(self.lineEdit_path_file_HFI, self.lineEdit_complect_quant_HFI)
+        MainWindow.setTabOrder(self.lineEdit_complect_quant_HFI, self.checkBox_imposition_freq)
+        MainWindow.setTabOrder(self.checkBox_imposition_freq, self.lineEdit_imposition_freq)
+        MainWindow.setTabOrder(self.lineEdit_imposition_freq, self.checkBox_power_supply)
+        MainWindow.setTabOrder(self.checkBox_power_supply, self.checkBox_symetrical)
+        MainWindow.setTabOrder(self.checkBox_symetrical, self.checkBox_asymetriacal)
+        MainWindow.setTabOrder(self.checkBox_asymetriacal, self.pushButton_generation_HFI)
+        MainWindow.setTabOrder(self.pushButton_generation_HFI, self.lineEdit_path_original_extract)
+        MainWindow.setTabOrder(self.lineEdit_path_original_extract, self.pushButton_open_original_exctract)
+        MainWindow.setTabOrder(self.pushButton_open_original_exctract, self.pushButton_generation_exctract)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -877,10 +1104,13 @@ class Ui_MainWindow(object):
         self.pushButton_generation_HFI.setText(_translate("MainWindow", "Генерация txt"))
         self.checkBox_asymetriacal.setText(_translate("MainWindow", "Несимметричка"))
         self.lineEdit_imposition_freq.setText(_translate("MainWindow", "1"))
-        self.checkBox_symmetrical.setText(_translate("MainWindow", "Симметричка"))
+        self.checkBox_symetrical.setText(_translate("MainWindow", "Симметричка"))
         self.pushButton_open_file_HFI.setText(_translate("MainWindow", "Путь к файлам"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_5), _translate("MainWindow", "Генератор ВЧН"))
-        self.label_original_file_extract.setText(_translate("MainWindow", "Исходные файлы"))
-        self.pushButton_open_original_exctract.setText(_translate("MainWindow", "Открыть"))
+        self.label_protocol.setText(_translate("MainWindow", "ФИО протокол"))
+        self.label_prescription.setText(_translate("MainWindow", "ФИО предписание"))
         self.pushButton_generation_exctract.setText(_translate("MainWindow", "Обезличить документы"))
+        self.pushButton_open_original_exctract.setText(_translate("MainWindow", "Открыть"))
+        self.label_original_file_extract.setText(_translate("MainWindow", "Исходные файлы"))
+        self.label_conclusion.setText(_translate("MainWindow", "ФИО заключение"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_6), _translate("MainWindow", "Экземпляры для выписки"))
