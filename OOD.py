@@ -125,13 +125,13 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.line = [self.lineEdit_path_check, self.lineEdit_table_number, self.lineEdit_stationary_FSB,
                      self.lineEdit_carry_FSB, self.lineEdit_wear_FSB, self.lineEdit_r1_FSB, self.lineEdit_r1s_FSB,
                      self.lineEdit_stationary_FSTEK, self.lineEdit_carry_FSTEK, self.lineEdit_wear_FSTEK,
-                     self.lineEdit_r1_FSTEK, self.lineEdit_path_parser, self.lineEdit_path_original_file,
-                     self.lineEdit_path_finish_folder, self.lineEdit_path_freq_restrict,
-                     self.lineEdit_complect_quant_pemi, self.lineEdit_complect_number_pemi,
-                     self.lineEdit_path_file_HFE, self.lineEdit_complect_quant_HFE, self.lineEdit_frequency,
-                     self.lineEdit_level, self.lineEdit_path_file_HFI, self.lineEdit_complect_quant_HFI,
-                     self.lineEdit_imposition_freq, self.lineEdit_path_original_extract, self.lineEdit_conclusion,
-                     self.lineEdit_protocol, self.lineEdit_prescription]
+                     self.lineEdit_r1_FSTEK, self.lineEdit_path_parser, self.lineEdit_path_original_extract,
+                     self.lineEdit_conclusion, self.lineEdit_protocol, self.lineEdit_prescription,
+                     self.lineEdit_path_original_file, self.lineEdit_path_finish_folder,
+                     self.lineEdit_path_freq_restrict, self.lineEdit_complect_quant_pemi,
+                     self.lineEdit_complect_number_pemi, self.lineEdit_path_file_HFE,
+                     self.lineEdit_complect_quant_HFE, self.lineEdit_frequency, self.lineEdit_level,
+                     self.lineEdit_path_file_HFI, self.lineEdit_complect_quant_HFI, self.lineEdit_imposition_freq]
         self.default_date(data)
 
     def default_date(self, d):

@@ -156,6 +156,16 @@ class DeleteHeaderFooter(QThread):
                 os.rename(temp_zip, temp_docx)  # rename zip file to docx
                 shutil.rmtree(temp_folder)
                 shutil.rmtree(self.path + '\\zip')
+                doc = docx.Document(self.path + '\\' + element)  # Открываем
+                self.logging.info('Удаляем лишние параграфы в шапке')
+                for para in reversed(list(doc.sections[0].first_page_header.paragraphs)):
+                    if len(para.text) in [0, 1]:
+                        p = para._element
+                        p.getparent().remove(p)
+                        p._p = p._element = None
+                    else:
+                        break
+                doc.save(self.path + '\\' + element)
                 current_progress += percent
                 self.progress.emit(current_progress)
             self.logging.info("Конец работы программы")
