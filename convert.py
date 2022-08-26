@@ -157,6 +157,8 @@ def file_parcing(path, logging, status, progress, per, cp):
                 for sheet in name:
                     df = pd.read_excel(path + '\\' + file, sheet_name=sheet, header=None)
                     if sheet.lower() != 'описание':
+                        if [0, 1, 2] in df.columns.tolist():
+                            df = df[[0, 1, 2]]
                         df = df.dropna()
                     df = df.round(4)
                     df.to_csv(path + '\\txt\\' + book_name + '\\' + sheet + '.txt',

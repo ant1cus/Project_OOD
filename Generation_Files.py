@@ -103,7 +103,7 @@ class GenerationFile(QThread):
                 df_sheet = {}
                 for element in df_out:
                     df = pd.DataFrame(columns=['frq', 'signal', 'noise'])
-                    for i, row in enumerate(df_out[element].itertuples(index=False)):
+                    for i, row in enumerate(df_out[element].sort_values(by='frq').itertuples(index=False)):
                         if random.random() > (1-row[5]):
                             if row[1] == row[2]:
                                 s = random.uniform(row[1] + 1, row[2] - 1)

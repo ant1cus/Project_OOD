@@ -83,13 +83,16 @@ class DeleteHeaderFooter(QThread):
                 doc.save(self.path + '\\' + element)
                 doc = docx.Document(self.path + '\\' + element)  # Открываем
                 self.logging.info('Переименовываем заголовок')
-                name = element.rpartition('.')[0].rpartition(' ')[0]
+                name = element.rpartition('.')[0]
                 if 'Заключение СП' in name:
                     name = re.sub('Заключение СП', 'Заключение', name)
                 for paragraph in doc.paragraphs:
                     if re.findall(name, paragraph.text):
-                        size = paragraph.runs[0].font.size.pt
-                        name_doc = name.partition(' ')[0]
+                        if paragraph.runs[0].font.size is None:
+                            size = paragraph.style.font.size.pt
+                        else:
+                            size = paragraph.runs[0].font.size.pt
+                        name_doc = name.partition(' ')[0] if name.partition(' ')[0] else name.partition('.')[0]
                         if name_doc.lower() == 'проктокол':
                             name_doc += 'а'
                         else:
@@ -113,10 +116,13 @@ class DeleteHeaderFooter(QThread):
                 for e in reversed(list(doc.paragraphs)):
                     if 'специальных' in e.text:
                         text = e.text.strip()
-                        size = e.runs[0].font.size.pt
+                        if e.runs[0].font.size is None:
+                            size = e.style.font.size.pt
+                        else:
+                            size = e.runs[0].font.size.pt
                         name_person = text.rpartition(' ')[2]
                         name_person = text[len(text) - (5 + len(name_person)):len(text)]
-                        e.add_run('\n\nВыписка верна\n' + re.sub(name_person, name_executor, text.strip()))
+                        e.add_run('\n\nВыписка верна\n\n' + re.sub(name_person, name_executor, text.strip()))
                         for run in e.runs:
                             run.font.size = Pt(size)
                         break

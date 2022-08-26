@@ -192,11 +192,24 @@ def checked_delete_header_footer(path, conclusion, protocol, prescription):
         return ['УПС!', 'Путь к исходным файлам пуст']
     if os.path.isfile(source):
         return ['УПС!', 'Указанный путь к исходным файлам не является директорией']
+    name_file = [False, False, False]
+    for file in os.listdir(source):
+        if 'заключение' in file.lower():
+            name_file[0] = True
+        elif 'протокол' in file.lower():
+            name_file[1] = True
+        elif 'предписание' in file.lower():
+            name_file[2] = True
+        if any([name_file]):
+            break
     name_concl, name_prot, name_pre = conclusion.text().strip(), protocol.text().strip(), prescription.text().strip()
+    name_rus = ['заключении', 'протоколе', 'предписании']
     if any([name_concl, name_prot, name_pre]):
-        for el in [name_concl, name_prot, name_pre]:
-            if any(map(str.isdigit, el)):
-                return ['УПС!', 'Имя ' + el + ' написано неверно']
+        for name, el in zip(name_file, [name_concl, name_prot, name_pre]):
+            if name:
+                if re.match(r'[А-Я]\.[А-Я]\.\s[А-Я][а-я]+', el) is None:
+                    return ['УПС!', 'Имя ' + el + ' в ' + name_rus[[name_concl, name_prot, name_pre].index(el)]
+                            + ' написано неверно (Шаблон имени «И.И. Иванов»)']
         return {'path': source, 'name_executor': [name_concl, name_prot, name_pre]}
     else:
         return ['УПС!', 'Не указано ни одно имя']
