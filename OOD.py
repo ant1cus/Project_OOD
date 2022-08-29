@@ -165,8 +165,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             directory = QFileDialog.getExistingDirectory(self, "Find Files", QDir.currentPath())
         # Список линий
         line = [self.lineEdit_path_check, self.lineEdit_path_parser, self.lineEdit_path_original_file,
-                self.lineEdit_path_finish_folder, self.lineEdit_path_freq_restrict, self.lineEdit_path_file_HFI,
-                self.lineEdit_path_file_HFE, self.lineEdit_path_original_extract]
+                self.lineEdit_path_finish_folder, self.lineEdit_path_freq_restrict, self.lineEdit_path_file_HFE,
+                self.lineEdit_path_file_HFI, self.lineEdit_path_original_extract]
         if directory:  # Если нажать кнопку отркыть в диалоге выбора
             if num in [5]:  # Если файлы
                 if directory[0]:  # Если есть файл, чтобы не очищалось поле
