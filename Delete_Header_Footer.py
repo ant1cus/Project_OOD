@@ -10,7 +10,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from docx.shared import Pt
 from lxml import etree
 import docx
-
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 
 class DeleteHeaderFooter(QThread):
     progress = pyqtSignal(int)  # Сигнал для прогресс бара
@@ -68,44 +68,74 @@ class DeleteHeaderFooter(QThread):
                 shutil.rmtree(self.path + '\\zip')
                 self.logging.info('Работаем с ворд документом')
                 doc = docx.Document(self.path + '\\' + element)  # Открываем
-                doc.sections[0].first_page_header.paragraphs[0].text = None
-                p = doc.sections[0].first_page_header.paragraphs[0]._element
-                p.getparent().remove(p)
-                p._p = p._element = None
+
+                def paragraph_del(par):
+                    par.text = None
+                    p = par._element
+                    p.getparent().remove(p)
+                    p._p = p._element = None
+
+                for paragraph in doc.sections[0].first_page_header.paragraphs:
+                    if 'Экз.' in paragraph.text:
+                        paragraph_del(paragraph)
+                        break
+                    paragraph_del(paragraph)
+                # doc.sections[0].first_page_header.paragraphs[0].text = None
+                # p = doc.sections[0].first_page_header.paragraphs[0]._element
+                # p.getparent().remove(p)
+                # p._p = p._element = None
                 number = doc.sections[0].first_page_footer.paragraphs[0].text
                 doc.sections[0].first_page_footer.paragraphs[0].text = None
-                doc.sections[1].footer.paragraphs[0].text = None
-                date = re.findall(r'\d{2}\.\d{2}\.\d{4}',
-                                  doc.sections[len(doc.sections) - 1].first_page_footer.paragraphs[0].text)
-                doc.sections[len(doc.sections) - 1].first_page_footer.paragraphs[0].text = None
-                doc.sections[len(doc.sections) - 1].first_page_header.is_linked_to_previous = False  # Хидер
-                doc.sections[len(doc.sections) - 1].first_page_footer.is_linked_to_previous = False  # Футер
+                doc.sections[0].footer.paragraphs[0].text = None
+                if doc.sections[len(doc.sections) - 1].different_first_page_header_footer:
+                    for paragraph in doc.sections[len(doc.sections) - 1].first_page_footer.paragraphs:
+                        if re.findall(r'\d{2}\.\d{2}\.\d{4}', paragraph.text):
+                            date = re.findall(r'\d{2}\.\d{2}\.\d{4}', paragraph.text)
+                        if 'Б/ч' in paragraph.text:
+                            paragraph_del(paragraph)
+                            break
+                        paragraph_del(paragraph)
+                    doc.sections[len(doc.sections) - 1].first_page_header.is_linked_to_previous = False  # Хидер
+                    doc.sections[len(doc.sections) - 1].first_page_footer.is_linked_to_previous = False  # Футер
+                else:
+                    for paragraph in doc.sections[len(doc.sections) - 1].footer.paragraphs:
+                        if re.findall(r'\d{2}\.\d{2}\.\d{4}', paragraph.text):
+                            date = re.findall(r'\d{2}\.\d{2}\.\d{4}', paragraph.text)
+                        if 'Б/ч' in paragraph.text:
+                            paragraph_del(paragraph)
+                            break
+                        paragraph_del(paragraph)
+                    # date = re.findall(r'\d{2}\.\d{2}\.\d{4}',
+                    #                   doc.sections[len(doc.sections) - 1].footer.paragraphs[0].text)
+                # doc.sections[len(doc.sections) - 1].first_page_footer.paragraphs[0].text = None
                 doc.save(self.path + '\\' + element)
                 doc = docx.Document(self.path + '\\' + element)  # Открываем
                 self.logging.info('Переименовываем заголовок')
                 name = element.rpartition('.')[0]
                 if 'Заключение СП' in name:
                     name = re.sub('Заключение СП', 'Заключение', name)
-                for paragraph in doc.paragraphs:
-                    if re.findall(name, paragraph.text):
+                for i, paragraph in enumerate(doc.paragraphs):
+                    if re.findall(name.partition(' ')[0].upper(), paragraph.text):
                         if paragraph.runs[0].font.size is None:
                             size = paragraph.style.font.size.pt
                         else:
                             size = paragraph.runs[0].font.size.pt
                         name_doc = name.partition(' ')[0] if name.partition(' ')[0] else name.partition('.')[0]
-                        if name_doc.lower() == 'проктокол':
+                        if name_doc.lower() == 'протокол':
                             name_doc += 'а'
                         else:
                             name_doc = list(name_doc)
                             name_doc[-1] = 'я'
                             name_doc = ''.join(name_doc)
-                        paragraph.text = re.sub(name.partition(' ')[0],
+                        paragraph.text = re.sub(name.partition(' ')[0].upper(),
                                                 'ВЫПИСКА ИЗ ' + name_doc.upper(),
                                                 paragraph.text)
-                        paragraph.add_run('\nУч. № ' + number + ' от ' + date[0])
-                        for run in paragraph.runs:
-                            run.font.bold = True
-                            run.font.size = Pt(size)
+                        doc.paragraphs[i + 1].insert_paragraph_before('\tУч. № ' + number + ' от ' + date[0])
+                        for j in [i, i + 1]:
+                            doc.paragraphs[j].paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+                            for run in doc.paragraphs[j].runs:
+                                run.font.bold = True
+                                run.font.size = Pt(size)
                         break
                 if 'Заключение' in name:
                     name_executor = self.name_executor[0]

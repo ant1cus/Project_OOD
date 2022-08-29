@@ -14,30 +14,30 @@ import os
 
 class Button(QtWidgets.QLineEdit):
 
-    def __init__(self, parent):
-        super(Button, self).__init__(parent)
+	def __init__(self, parent):
+		super(Button, self).__init__(parent)
 
-        self.setAcceptDrops(True)
+		self.setAcceptDrops(True)
 
-    def dragEnterEvent(self, e):
+	def dragEnterEvent(self, e):
 
-        if e.mimeData().hasUrls():
-            e.accept()
-        else:
-            super(Button, self).dragEnterEvent(e)
+		if e.mimeData().hasUrls():
+			e.accept()
+		else:
+			super(Button, self).dragEnterEvent(e)
 
-    def dragMoveEvent(self, e):
+	def dragMoveEvent(self, e):
 
-        super(Button, self).dragMoveEvent(e)
+		super(Button, self).dragMoveEvent(e)
 
-    def dropEvent(self, e):
+	def dropEvent(self, e):
 
-        if e.mimeData().hasUrls():
-            for url in e.mimeData().urls():
-                self.setText(os.path.normcase(url.toLocalFile()))
-                e.accept()
-        else:
-            super(Button, self).dropEvent(e)
+		if e.mimeData().hasUrls():
+			for url in e.mimeData().urls():
+				self.setText(os.path.normcase(url.toLocalFile()))
+				e.accept()
+		else:
+			super(Button, self).dropEvent(e)
 
 
 class Ui_MainWindow(object):
@@ -528,7 +528,7 @@ class Ui_MainWindow(object):
         font.setBold(False)
         font.setWeight(50)
         self.label_protocol.setFont(font)
-        self.label_protocol.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.label_protocol.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.label_protocol.setObjectName("label_protocol")
         self.gridLayout_16.addWidget(self.label_protocol, 3, 0, 1, 1)
         self.lineEdit_protocol = QtWidgets.QLineEdit(self.tab_6)
@@ -557,7 +557,7 @@ class Ui_MainWindow(object):
         font.setBold(False)
         font.setWeight(50)
         self.label_prescription.setFont(font)
-        self.label_prescription.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.label_prescription.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.label_prescription.setObjectName("label_prescription")
         self.gridLayout_16.addWidget(self.label_prescription, 4, 0, 1, 1)
         self.lineEdit_prescription = QtWidgets.QLineEdit(self.tab_6)
@@ -583,9 +583,6 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.pushButton_open_original_exctract.sizePolicy().hasHeightForWidth())
         self.pushButton_open_original_exctract.setSizePolicy(sizePolicy)
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        self.pushButton_open_original_exctract.setFont(font)
         self.pushButton_open_original_exctract.setObjectName("pushButton_open_original_exctract")
         self.gridLayout_16.addWidget(self.pushButton_open_original_exctract, 0, 4, 1, 1)
         self.lineEdit_path_original_extract = Button(self.tab_6)
@@ -594,9 +591,6 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.lineEdit_path_original_extract.sizePolicy().hasHeightForWidth())
         self.lineEdit_path_original_extract.setSizePolicy(sizePolicy)
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        self.lineEdit_path_original_extract.setFont(font)
         self.lineEdit_path_original_extract.setObjectName("lineEdit_path_original_extract")
         self.gridLayout_16.addWidget(self.lineEdit_path_original_extract, 0, 1, 1, 3)
         self.label_original_file_extract = QtWidgets.QLabel(self.tab_6)
@@ -605,9 +599,6 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label_original_file_extract.sizePolicy().hasHeightForWidth())
         self.label_original_file_extract.setSizePolicy(sizePolicy)
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        self.label_original_file_extract.setFont(font)
         self.label_original_file_extract.setObjectName("label_original_file_extract")
         self.gridLayout_16.addWidget(self.label_original_file_extract, 0, 0, 1, 1)
         self.label_conclusion = QtWidgets.QLabel(self.tab_6)
@@ -622,7 +613,7 @@ class Ui_MainWindow(object):
         font.setBold(False)
         font.setWeight(50)
         self.label_conclusion.setFont(font)
-        self.label_conclusion.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.label_conclusion.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.label_conclusion.setObjectName("label_conclusion")
         self.gridLayout_16.addWidget(self.label_conclusion, 1, 0, 1, 1)
         self.lineEdit_conclusion = QtWidgets.QLineEdit(self.tab_6)
@@ -833,7 +824,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label_imposition_freq.sizePolicy().hasHeightForWidth())
         self.label_imposition_freq.setSizePolicy(sizePolicy)
-        self.label_imposition_freq.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.label_imposition_freq.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.label_imposition_freq.setObjectName("label_imposition_freq")
         self.gridLayout_11.addWidget(self.label_imposition_freq, 3, 1, 1, 1)
         self.checkBox_imposition_freq = QtWidgets.QCheckBox(self.tab_5)
@@ -913,7 +904,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 657, 26))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 657, 21))
         self.menubar.setObjectName("menubar")
         self.menu_settings = QtWidgets.QMenu(self.menubar)
         self.menu_settings.setObjectName("menu_settings")
@@ -948,6 +939,7 @@ class Ui_MainWindow(object):
         self.pushButton_clear.clicked.connect(self.label_wear_FSTEK.clear)
         self.pushButton_clear.clicked.connect(self.lineEdit_r1_FSTEK.clear)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        MainWindow.setTabOrder(self.tabWidget, self.lineEdit_path_check)
         MainWindow.setTabOrder(self.lineEdit_path_check, self.pushButton_open_zone_check)
         MainWindow.setTabOrder(self.pushButton_open_zone_check, self.lineEdit_table_number)
         MainWindow.setTabOrder(self.lineEdit_table_number, self.checkBox_first_table)
@@ -973,7 +965,13 @@ class Ui_MainWindow(object):
         MainWindow.setTabOrder(self.plainTextEdit_succsess_order, self.plainTextEdit_error_order)
         MainWindow.setTabOrder(self.plainTextEdit_error_order, self.plainTextEdit_errors)
         MainWindow.setTabOrder(self.plainTextEdit_errors, self.pushButton_parser)
-        MainWindow.setTabOrder(self.pushButton_parser, self.lineEdit_path_original_file)
+        MainWindow.setTabOrder(self.pushButton_parser, self.lineEdit_path_original_extract)
+        MainWindow.setTabOrder(self.lineEdit_path_original_extract, self.pushButton_open_original_exctract)
+        MainWindow.setTabOrder(self.pushButton_open_original_exctract, self.lineEdit_conclusion)
+        MainWindow.setTabOrder(self.lineEdit_conclusion, self.lineEdit_protocol)
+        MainWindow.setTabOrder(self.lineEdit_protocol, self.lineEdit_prescription)
+        MainWindow.setTabOrder(self.lineEdit_prescription, self.pushButton_generation_exctract)
+        MainWindow.setTabOrder(self.pushButton_generation_exctract, self.lineEdit_path_original_file)
         MainWindow.setTabOrder(self.lineEdit_path_original_file, self.pushButton_open_original_file)
         MainWindow.setTabOrder(self.pushButton_open_original_file, self.lineEdit_path_finish_folder)
         MainWindow.setTabOrder(self.lineEdit_path_finish_folder, self.pushButton_open_finish_folder)
@@ -1000,9 +998,6 @@ class Ui_MainWindow(object):
         MainWindow.setTabOrder(self.checkBox_power_supply, self.checkBox_symetrical)
         MainWindow.setTabOrder(self.checkBox_symetrical, self.checkBox_asymetriacal)
         MainWindow.setTabOrder(self.checkBox_asymetriacal, self.pushButton_generation_HFI)
-        MainWindow.setTabOrder(self.pushButton_generation_HFI, self.lineEdit_path_original_extract)
-        MainWindow.setTabOrder(self.lineEdit_path_original_extract, self.pushButton_open_original_exctract)
-        MainWindow.setTabOrder(self.pushButton_open_original_exctract, self.pushButton_generation_exctract)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -1044,8 +1039,7 @@ class Ui_MainWindow(object):
         self.pushButton_open_original_exctract.setText(_translate("MainWindow", "Открыть"))
         self.label_original_file_extract.setText(_translate("MainWindow", "Исходные файлы"))
         self.label_conclusion.setText(_translate("MainWindow", "ФИО заключение"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_6),
-                                  _translate("MainWindow", "Экземпляры для выписки"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_6), _translate("MainWindow", "Экземпляры для выписки"))
         self.label_original_file.setText(_translate("MainWindow", "Исходные файлы"))
         self.pushButton_open_original_file.setText(_translate("MainWindow", "Открыть"))
         self.label_finish_folder.setText(_translate("MainWindow", "Папка назначения"))

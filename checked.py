@@ -193,23 +193,29 @@ def checked_delete_header_footer(path, conclusion, protocol, prescription):
     if os.path.isfile(source):
         return ['УПС!', 'Указанный путь к исходным файлам не является директорией']
     name_file = [False, False, False]
+    error = []
     for file in os.listdir(source):
+        if file.endswith('.doc'):
+            error.append(file)
         if 'заключение' in file.lower():
             name_file[0] = True
         elif 'протокол' in file.lower():
             name_file[1] = True
         elif 'предписание' in file.lower():
             name_file[2] = True
-        if any([name_file]):
-            break
+    if error:
+        return ['УПС!', 'Файлы старого формата:\n' + '\n'.join(error)]
     name_concl, name_prot, name_pre = conclusion.text().strip(), protocol.text().strip(), prescription.text().strip()
     name_rus = ['заключении', 'протоколе', 'предписании']
+    error = []
     if any([name_concl, name_prot, name_pre]):
         for name, el in zip(name_file, [name_concl, name_prot, name_pre]):
             if name:
                 if re.match(r'[А-Я]\.[А-Я]\.\s[А-Я][а-я]+', el) is None:
-                    return ['УПС!', 'Имя ' + el + ' в ' + name_rus[[name_concl, name_prot, name_pre].index(el)]
-                            + ' написано неверно (Шаблон имени «И.И. Иванов»)']
+                    error.append('Имя ' + el + ' в ' + name_rus[[name_concl, name_prot, name_pre].index(el)]
+                                 + ' написано неверно (Шаблон имени «И.И. Иванов»)')
+        if error:
+            return ['УПС!', '\n'.join(error)]
         return {'path': source, 'name_executor': [name_concl, name_prot, name_pre]}
     else:
         return ['УПС!', 'Не указано ни одно имя']

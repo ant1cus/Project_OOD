@@ -81,6 +81,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.pushButton_open_freq_restrict.clicked.connect((lambda: self.browse(5)))
         self.pushButton_open_file_HFE.clicked.connect((lambda: self.browse(6)))
         self.pushButton_open_file_HFI.clicked.connect((lambda: self.browse(7)))
+        self.pushButton_open_original_exctract.clicked.connect((lambda: self.browse(8)))
         self.groupBox_FSB.clicked.connect(self.group_box_change_state)
         self.groupBox_FSTEK.clicked.connect(self.group_box_change_state)
         self.pushButton_stop.clicked.connect(self.pause_thread)
@@ -160,12 +161,12 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         directory = None
         if num in [5]:  # Если необходимо открыть файл
             directory = QFileDialog.getOpenFileName(self, "Find Files", QDir.currentPath())
-        elif num in [1, 2, 3, 4, 6, 7]:  # Если необходимо открыть директорию
+        elif num in [1, 2, 3, 4, 6, 7, 8]:  # Если необходимо открыть директорию
             directory = QFileDialog.getExistingDirectory(self, "Find Files", QDir.currentPath())
         # Список линий
         line = [self.lineEdit_path_check, self.lineEdit_path_parser, self.lineEdit_path_original_file,
-                self.lineEdit_path_finish_folder, self.lineEdit_path_freq_restrict, self.lineEdit_path_file_vcho,
-                self.lineEdit_path_file_vchn]
+                self.lineEdit_path_finish_folder, self.lineEdit_path_freq_restrict, self.lineEdit_path_file_HFI,
+                self.lineEdit_path_file_HFE, self.lineEdit_path_original_extract]
         if directory:  # Если нажать кнопку отркыть в диалоге выбора
             if num in [5]:  # Если файлы
                 if directory[0]:  # Если есть файл, чтобы не очищалось поле
