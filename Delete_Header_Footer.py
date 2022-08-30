@@ -64,8 +64,15 @@ class DeleteHeaderFooter(QThread):
                 os.remove(temp_zip)
                 shutil.make_archive(temp_zip.replace(".zip", ""), 'zip', temp_folder)
                 os.rename(temp_zip, temp_docx)  # rename zip file to docx
-                shutil.rmtree(temp_folder)
-                shutil.rmtree(self.path + '\\zip')
+                while True:
+                    try:
+                        shutil.rmtree(temp_folder)
+                        shutil.rmtree(self.path + '\\zip')
+                        break
+                    except OSError as es:
+                        self.logging.error(es)
+                        self.logging.error(traceback.format_exc())
+                        self.logging.info('Ошибка с удалением, пробуем ещё раз')
                 self.logging.info('Работаем с ворд документом')
                 doc = docx.Document(self.path + '\\' + element)  # Открываем
 
@@ -115,6 +122,8 @@ class DeleteHeaderFooter(QThread):
                 if 'Заключение СП' in name:
                     name = re.sub('Заключение СП', 'Заключение', name)
                 for i, paragraph in enumerate(doc.paragraphs):
+                    if re.findall(r'«\d{2}»\s\w+\s\d{4}\s[г]\.', paragraph.text):
+                        paragraph.text = re.sub(r'«\d{2}»\s\w+\s\d{4}\s[г]\.', 'date', paragraph.text)
                     if re.findall(name.partition(' ')[0].upper(), paragraph.text):
                         if paragraph.runs[0].font.size is None:
                             size = paragraph.style.font.size.pt
