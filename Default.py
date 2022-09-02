@@ -36,9 +36,10 @@ class Button(QLineEdit):
 
 
 class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки по умолчанию
-    def __init__(self, parent):
+    def __init__(self, parent, path):
         super().__init__()
         self.setupUi(self)
+        self.path_for_default = path
         self.parent = parent
         # Имена
         self.name_list = {'checked-path_check': 'Путь к файлам', 'checked-table_number': 'Номер таблицы',
@@ -57,12 +58,17 @@ class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки п
                           'HFE-path_file_HFE': 'Путь к файлам', 'HFE-complect_quant_HFE': 'Количество комплектов',
                           'HFE-frequency': 'Частота', 'HFE-level': 'Уровень',
                           'HFI-path_file_HFI': 'Путь к файлам', 'HFI-complect_quant_HFI': 'Количество комплектов',
-                          'HFI-imposition_freq': 'Частота навязывания'}
+                          'HFI-imposition_freq': 'Частота навязывания', 'application-path_example': 'Путь к файлу',
+                          'application-path_finish_folder_example': 'Конечная папка',
+                          'application-number_position': 'Номер позиции',
+                          'application-quantity_document': 'Количество комплектов'}
         self.name_box = [self.groupBox_checked, self.groupBox_parcing, self.groupBox_exctracting,
-                         self.groupBox_gen_pemi, self.groupBox_gen_hfe, self.groupBox_gen_hfi]
+                         self.groupBox_gen_pemi, self.groupBox_gen_hfe, self.groupBox_gen_hfi,
+                         self.groupBox_application]
         self.name_grid = [self.gridLayout_checked, self.gridLayout_parcer, self.gridLayout_exctract,
-                          self.gridLayout_gen_pemi, self.gridLayout_HFE, self.gridLayout_HFI]
-        with open(pathlib.Path(pathlib.Path.cwd(), 'Настройки.txt'), "r", encoding='utf-8-sig') as f:  # Открываем
+                          self.gridLayout_gen_pemi, self.gridLayout_HFE, self.gridLayout_HFI,
+                          self.gridLayout_application]
+        with open(pathlib.Path(self.path_for_default, 'Настройки.txt'), "r", encoding='utf-8-sig') as f:  # Открываем
             self.data = json.load(f)  # Загружаем данные
         self.buttongroup_add = QButtonGroup()
         self.buttongroup_add.buttonClicked[int].connect(self.add_button_clicked)
@@ -74,7 +80,7 @@ class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки п
         for i, el in enumerate(self.name_list):  # Заполняем
             frame = False
             grid = False
-            for j, n in enumerate(['checked', 'parser', 'extract', 'gen_pemi', 'HFE', 'HFI']):
+            for j, n in enumerate(['checked', 'parser', 'extract', 'gen_pemi', 'HFE', 'HFI', 'application']):
                 if n in el.partition('-')[0]:
                     frame = self.name_box[j]
                     grid = self.name_grid[j]
@@ -117,7 +123,7 @@ class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки п
                     self.data[el] = self.name[i].text()
                 else:  # Если нет текста, то удаляем значение
                     self.data[el] = None
-        with open(pathlib.Path(pathlib.Path.cwd(), 'Настройки.txt'), 'w', encoding='utf-8-sig') as f:  # Пишем в файл
+        with open(pathlib.Path(self.path_for_default, 'Настройки.txt'), 'w', encoding='utf-8-sig') as f:  # Пишем в файл
             json.dump(self.data, f, ensure_ascii=False, sort_keys=True, indent=4)
         self.close()  # Закрываем
 
@@ -125,7 +131,7 @@ class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки п
         os.chdir(pathlib.Path.cwd())
         if self.sender() and self.sender().text() == 'Принять':
             event.accept()
-            with open(pathlib.Path(pathlib.Path.cwd(), 'Настройки.txt'), "r", encoding='utf-8-sig') as f:  # Открываем
+            with open(pathlib.Path(self.path_for_default, 'Настройки.txt'), "r", encoding='utf-8-sig') as f:  # Открываем
                 data = json.load(f)  # Загружаем данные
             self.parent.default_date(data)
             self.parent.show()

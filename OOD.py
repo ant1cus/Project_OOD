@@ -10,7 +10,7 @@ import logging
 from PyQt5.QtCore import (QTranslator, QLocale, QLibraryInfo, QDir)
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QFileDialog, QMessageBox, QDialog)
 from checked import (checked_zone_checked, checked_file_parcing, check_generation_data, checked_delete_header_footer,
-                     checked_hfe_generation, checked_hfi_generation)
+                     checked_hfe_generation, checked_hfi_generation, check_application_data)
 import about
 from Default import DefaultWindow
 from Zone_Check import ZoneChecked
@@ -19,6 +19,7 @@ from Generation_Files import GenerationFile
 from Delete_Header_Footer import DeleteHeaderFooter
 from HFE_Generation import HFEGeneration
 from HFI_Generation import HFIGeneration
+from CopyApplication import GenerateCopyApplication
 
 
 class AboutWindow(QDialog, about.Ui_Dialog):  # Для отображения информации
@@ -82,6 +83,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.pushButton_open_file_HFE.clicked.connect((lambda: self.browse(6)))
         self.pushButton_open_file_HFI.clicked.connect((lambda: self.browse(7)))
         self.pushButton_open_original_exctract.clicked.connect((lambda: self.browse(8)))
+        self.pushButton_open_example.clicked.connect((lambda: self.browse(9)))
+        self.pushButton_open_finish_folder_example.clicked.connect((lambda: self.browse(10)))
         self.groupBox_FSB.clicked.connect(self.group_box_change_state)
         self.groupBox_FSTEK.clicked.connect(self.group_box_change_state)
         self.pushButton_stop.clicked.connect(self.pause_thread)
@@ -91,6 +94,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.pushButton_generation_exctract.clicked.connect(self.delete_header_footer)
         self.pushButton_generation_HFE.clicked.connect(self.generate_hfe)
         self.pushButton_generation_HFI.clicked.connect(self.generate_hfi)
+        self.pushButton_create_application.clicked.connect(self.copy_application)
         self.action_settings_default.triggered.connect(self.default_settings)
         self.menu_about.aboutToShow.connect(about)
 
@@ -142,7 +146,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
 
     def default_settings(self):  # Запускаем окно с настройками по умолчанию.
         self.close()
-        window_add = DefaultWindow(self)
+        window_add = DefaultWindow(self, self.path_for_default)
         window_add.show()
 
     def group_box_change_state(self, state):
@@ -159,20 +163,36 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
 
     def browse(self, num):  # Для кнопки открыть
         directory = None
-        if num in [5]:  # Если необходимо открыть файл
+        if num in [5, 9]:  # Если необходимо открыть файл
             directory = QFileDialog.getOpenFileName(self, "Find Files", QDir.currentPath())
-        elif num in [1, 2, 3, 4, 6, 7, 8]:  # Если необходимо открыть директорию
+        elif num in [1, 2, 3, 4, 6, 7, 8, 10]:  # Если необходимо открыть директорию
             directory = QFileDialog.getExistingDirectory(self, "Find Files", QDir.currentPath())
         # Список линий
         line = [self.lineEdit_path_check, self.lineEdit_path_parser, self.lineEdit_path_original_file,
                 self.lineEdit_path_finish_folder, self.lineEdit_path_freq_restrict, self.lineEdit_path_file_HFE,
-                self.lineEdit_path_file_HFI, self.lineEdit_path_original_extract]
+                self.lineEdit_path_file_HFI, self.lineEdit_path_original_extract,
+                self.lineEdit_path_example, self.lineEdit_path_finish_folder_example]
         if directory:  # Если нажать кнопку отркыть в диалоге выбора
-            if num in [5]:  # Если файлы
+            if num in [5, 9]:  # Если файлы
                 if directory[0]:  # Если есть файл, чтобы не очищалось поле
                     line[num - 1].setText(directory[0])
             else:  # Если директории
                 line[num - 1].setText(directory)
+
+    def copy_application(self):
+        application = check_application_data(self.lineEdit_path_example, self.lineEdit_path_finish_folder_example,
+                                             self.lineEdit_number_position, self.lineEdit_quantity_document)
+        if type(application) == list:
+            self.on_message_changed(application[0], application[1])
+            return
+        else:  # Если всё прошло запускаем поток
+            application['logging'], application['q'] = logging, self.q
+            self.thread = GenerateCopyApplication(application)
+            self.thread.progress.connect(self.progressBar.setValue)
+            self.thread.status.connect(self.show_mess)
+            self.thread.messageChanged.connect(self.on_message_changed)
+            self.thread.errors.connect(self.errors)
+            self.thread.start()
 
     def generate_pemi(self):
         generate = check_generation_data(self.lineEdit_path_original_file, self.lineEdit_path_finish_folder,

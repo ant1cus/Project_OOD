@@ -12,6 +12,7 @@ from lxml import etree
 import docx
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 
+
 class DeleteHeaderFooter(QThread):
     progress = pyqtSignal(int)  # Сигнал для прогресс бара
     status = pyqtSignal(str)  # Сигнал для статус бара

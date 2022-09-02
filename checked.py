@@ -265,3 +265,34 @@ def checked_hfi_generation(path, frequency, quantity, mode):
         return {'path': output, 'quantity': int(quantity), 'freq': variables[0], 'val': variables[1], 'mode': mode}
     else:
         return ['УПС!', 'Не выбран не один режим']
+
+
+def check_application_data(file_path, folder_path, number, quant):
+    file = file_path.text().strip()
+    if not file:
+        return ['УПС!', 'Не указан путь к файлу для генерации']
+    if os.path.isdir(file):
+        return ['УПС!', 'Указанный путь не является файлом']
+    else:
+        if file.endswith('.docx'):
+            pass
+        else:
+            return ['УПС!', 'Указанный файл неверного формата (необходим docx)']
+    folder = folder_path.text().strip()
+    if not folder:
+        return ['УПС!', 'Не указан путь к конечной папке для генерации']
+    if os.path.isfile(folder):
+        return ['УПС!', 'Указанный путь не является директорией']
+    position_num = number.text().strip()
+    if not position_num:
+        return ['УПС!', 'Не указан номер позиции']
+    for i in position_num:
+        if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')):
+            return ['УПС!', 'Не правильно указан номер позиции']
+    quantity = quant.text().strip()
+    if not quantity:
+        return ['УПС!', 'Не указано количество комплектов']
+    for i in quantity:
+        if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')):
+            return ['УПС!', 'Не правильно указано количество комплектов']
+    return {'file': file, 'path': folder, 'quantity': int(quantity), 'position_num': int(position_num)}
