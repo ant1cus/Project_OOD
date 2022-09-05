@@ -96,7 +96,7 @@ def file_parcing(path, logging, status, progress, per, cp):
                             if type(frq) is str:
                                 error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' + file +
                                              ' в режиме ' + sheet +
-                                             ' в строке ' + str(i) + ' записано текстовое значение!')
+                                             ' в строке ' + str(i + 1) + ' записано текстовое значение!')
                             if s:
                                 if type(s) is float or type(s) is int:
                                     if n is False:
@@ -155,14 +155,22 @@ def file_parcing(path, logging, status, progress, per, cp):
                 os.makedirs(path + '\\txt\\' + book_name)
                 os.chdir(path + "\\txt\\" + book_name)
                 for sheet in name:
+                    if re.findall(r'_lin', sheet) or re.findall(r'_linux', sheet):
+                        name_sheet = sheet.upper()
+                    else:
+                        name_sheet = sheet.lower()
                     df = pd.read_excel(path + '\\' + file, sheet_name=sheet, header=None)
-                    if sheet.lower() != 'описание':
-                        if [0, 1, 2] in df.columns.tolist():
-                            df = df[[0, 1, 2]]
-                        df = df.dropna()
-                    df = df.round(4)
-                    df.to_csv(path + '\\txt\\' + book_name + '\\' + sheet + '.txt',
-                              index=None, sep='\t', mode='w', header=None)
+                    if type(df.iloc[0, 0]) == str and 'не обнаружено' in df.iloc[0, 0].lower():
+                        with open(path + '\\txt\\' + book_name + '\\' + name_sheet + '.txt', 'w') as f:
+                            pass
+                    else:
+                        if sheet.lower() != 'описание':
+                            if [0, 1, 2] in df.columns.tolist():
+                                df = df[[0, 1, 2]]
+                            df = df.dropna()
+                        df = df.round(4)
+                        df.to_csv(path + '\\txt\\' + book_name + '\\' + name_sheet + '.txt',
+                                  index=None, sep='\t', mode='w', header=None)
             wb.close()
             progress.emit(cp)
     return {'error': output_error, 'cp': cp}

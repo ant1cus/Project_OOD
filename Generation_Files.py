@@ -39,7 +39,7 @@ class GenerationFile(QThread):
         self.logging.info('Начинаем генерировать файлы')
         self.status.emit('Старт')
         self.progress.emit(current_progress)
-        percent = 100/(2*(len(os.listdir(self.source)) - 1) + int(self.complect_quant))
+        percent = 100/(2*(len(os.listdir(self.source)) - 1) + 2*int(self.complect_quant))
         error = file_parcing(self.source, self.logging, self.status, self.progress, percent, current_progress)
         quant_doc = len(os.listdir(self.source)) - 2
         errors = False
@@ -61,9 +61,9 @@ class GenerationFile(QThread):
                         self.logging.info("Другая кодировка")
                         mode_1 = f.readlines()
                         mode_1 = [line.rstrip() for line in mode_1]
-            mode = {x: pd.DataFrame() for x in mode_1 if x}
+            mode = {x.lower(): pd.DataFrame() for x in mode_1 if x}
             description = pd.DataFrame()
-            df_out = {x: pd.DataFrame(columns=['frq', 'max_s', 'min_s', 'max_n', 'min_n', 'quant_frq']) for x in mode_1}
+            df_out = {x.lower(): pd.DataFrame(columns=['frq', 'max_s', 'min_s', 'max_n', 'min_n', 'quant_frq']) for x in mode_1}
             self.status.emit('Считываем значения из исходных файлов')
             self.logging.info('Считываем значения из исходных файлов')
             for element in os.listdir(self.source + '\\' + 'txt'):
@@ -74,11 +74,11 @@ class GenerationFile(QThread):
                         if os.stat(r"./" + el).st_size != 0:
                             df = pd.read_csv(el, sep='\t', header=None)
                             if 1 in df.columns:
-                                mode[el[:-4]] = mode[el[:-4]].append(df)
+                                mode[el[:-4].lower()] = mode[el[:-4].lower()].append(df)
                             else:
-                                mode[el[:-4]] = mode[el[:-4]].append(pd.Series(), ignore_index=True)
+                                mode[el[:-4].lower()] = mode[el[:-4].lower()].append(pd.Series(), ignore_index=True)
                         else:
-                            mode[el[:-4]] = mode[el[:-4]].append(pd.Series(), ignore_index=True)
+                            mode[el[:-4].lower()] = mode[el[:-4].lower()].append(pd.Series(), ignore_index=True)
                     else:
                         if description.empty:
                             description = pd.read_csv(el, sep='\t', header=None)
@@ -144,6 +144,7 @@ class GenerationFile(QThread):
             self.status.emit('Создаём файл описания')
             with open(self.output + '\\Описание.txt', mode='w', encoding='utf-8-sig') as f:
                 f.write('\n'.join([el for el in mode]).rstrip())
+        file_parcing(self.output, self.logging, self.status, self.progress, percent, current_progress)
         if errors:
             self.logging.info("Выводим ошибки")
             self.q.put({'errors_gen': errors})

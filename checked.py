@@ -79,10 +79,11 @@ def checked_file_parcing(dir_path, group_file):
     progress = 0
     if group_file:
         for folder in os.listdir(path):
-            err = folder_checked(path + '\\' + folder)
-            progress += err['len']
-            if err['errors']:
-                error.append(err)
+            if os.path.isdir(path + '\\' + folder):
+                err = folder_checked(path + '\\' + folder)
+                progress += err['len']
+                if err['errors']:
+                    error.append(err)
     else:
         err = folder_checked(path)
         error, progress = err['errors'], err['len']
