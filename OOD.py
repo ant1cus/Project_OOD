@@ -8,7 +8,7 @@ from PyQt5.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor
 import Main
 import logging
 from PyQt5.QtCore import (QTranslator, QLocale, QLibraryInfo, QDir)
-from PyQt5.QtWidgets import (QMainWindow, QApplication, QFileDialog, QMessageBox, QDialog)
+from PyQt5.QtWidgets import (QMainWindow, QApplication, QFileDialog, QMessageBox, QDialog, QWidget)
 from checked import (checked_zone_checked, checked_file_parcing, check_generation_data, checked_delete_header_footer,
                      checked_hfe_generation, checked_hfi_generation, check_application_data)
 import about
@@ -97,7 +97,10 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.pushButton_create_application.clicked.connect(self.copy_application)
         self.action_settings_default.triggered.connect(self.default_settings)
         self.menu_about.aboutToShow.connect(about)
-
+        self.tabWidget.tabBarClicked.connect(self.tab_cl)
+        self.tabWidget.tabBar().tabMoved.connect(self.tab_)
+        self.start_index = 0
+        self.stop_index = 0
         self.path_for_default = pathlib.Path.cwd()  # Путь для файла настроек
         # Имена в файле
         self.name_list = {'checked-path_check': 'Путь к файлам', 'checked-table_number': 'Номер таблицы',
@@ -120,12 +123,16 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         # Грузим значения по умолчанию
         try:
             with open(pathlib.Path(pathlib.Path.cwd(), 'Настройки.txt'), "r", encoding='utf-8-sig') as f:
-                data = json.load(f)
+                dict_load = json.load(f)
+                data = dict_load['widget_settings']
+                tab_order = dict_load['gui_settings']['tab_order']
         except FileNotFoundError:
             with open(pathlib.Path(pathlib.Path.cwd(), 'Настройки.txt'), "w", encoding='utf-8-sig') as f:
                 json.dump({}, f, ensure_ascii=False, sort_keys=True, indent=4)
                 data = {}
-
+        for tab in range(0, self.tabWidget.tabBar().count()):
+            self.tabWidget.tabBar().moveTab(tab, tab_order[self.tabWidget.tabBar().tabText(tab)])
+        self.tabWidget.tabBar().setCurrentIndex(0)
         # Линии для заполнения
         self.line = [self.lineEdit_path_check, self.lineEdit_table_number, self.lineEdit_stationary_FSB,
                      self.lineEdit_carry_FSB, self.lineEdit_wear_FSB, self.lineEdit_r1_FSB, self.lineEdit_r1s_FSB,
@@ -138,6 +145,12 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                      self.lineEdit_complect_quant_HFE, self.lineEdit_frequency, self.lineEdit_level,
                      self.lineEdit_path_file_HFI, self.lineEdit_complect_quant_HFI, self.lineEdit_imposition_freq]
         self.default_date(data)
+
+    def tab_(self, index):
+        self.stop_index = index
+
+    def tab_cl(self, index):
+        self.start_index = index
 
     def default_date(self, d):
         for i, el in enumerate(self.name_list):
