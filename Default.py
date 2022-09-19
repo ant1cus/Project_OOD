@@ -69,7 +69,10 @@ class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки п
                           self.gridLayout_gen_pemi, self.gridLayout_HFE, self.gridLayout_HFI,
                           self.gridLayout_application]
         with open(pathlib.Path(self.path_for_default, 'Настройки.txt'), "r", encoding='utf-8-sig') as f:  # Открываем
-            self.data = json.load(f)  # Загружаем данные
+            dict_load = json.load(f)  # Загружаем данные
+            self.data = dict_load['widget_settings']
+            self.tab_order = dict_load['gui_settings']['tab_order']
+            self.tab_visible = dict_load['gui_settings']['tab_visible']
         self.buttongroup_add = QButtonGroup()
         self.buttongroup_add.buttonClicked[int].connect(self.add_button_clicked)
         self.pushButton_ok.clicked.connect(self.accept)  # Принять
@@ -124,18 +127,22 @@ class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки п
                 else:  # Если нет текста, то удаляем значение
                     self.data[el] = None
         with open(pathlib.Path(self.path_for_default, 'Настройки.txt'), 'w', encoding='utf-8-sig') as f:  # Пишем в файл
-            json.dump(self.data, f, ensure_ascii=False, sort_keys=True, indent=4)
+            data_insert = {"widget_settings": self.data,
+                           "gui_settings":
+                               {"tab_order": self.tab_order}
+                           }
+            json.dump(data_insert, f, ensure_ascii=False, sort_keys=True, indent=4)
         self.close()  # Закрываем
 
     def closeEvent(self, event):
         os.chdir(pathlib.Path.cwd())
         if self.sender() and self.sender().text() == 'Принять':
             event.accept()
-            with open(pathlib.Path(self.path_for_default, 'Настройки.txt'), "r", encoding='utf-8-sig') as f:  # Открываем
-                data = json.load(f)  # Загружаем данные
+            # Открываем и загружаем данные
+            with open(pathlib.Path(self.path_for_default, 'Настройки.txt'), "r", encoding='utf-8-sig') as f:
+                data = json.load(f)['widget_settings']
             self.parent.default_date(data)
             self.parent.show()
         else:
             event.accept()
             self.parent.show()
-

@@ -7,8 +7,8 @@ from PyQt5.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor
 
 import Main
 import logging
-from PyQt5.QtCore import (QTranslator, QLocale, QLibraryInfo, QDir)
-from PyQt5.QtWidgets import (QMainWindow, QApplication, QFileDialog, QMessageBox, QDialog, QWidget)
+from PyQt5.QtCore import (QTranslator, QLocale, QLibraryInfo, QDir, QEvent, Qt)
+from PyQt5.QtWidgets import (QMainWindow, QApplication, QFileDialog, QMessageBox, QDialog)
 from checked import (checked_zone_checked, checked_file_parcing, check_generation_data, checked_delete_header_footer,
                      checked_hfe_generation, checked_hfi_generation, check_application_data)
 import about
@@ -97,10 +97,16 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.pushButton_create_application.clicked.connect(self.copy_application)
         self.action_settings_default.triggered.connect(self.default_settings)
         self.menu_about.aboutToShow.connect(about)
-        self.tabWidget.tabBarClicked.connect(self.tab_cl)
+        self.action_zone_checked.triggered.connect(self.add_tab)
+        self.action_parser.triggered.connect(self.add_tab)
+        self.action_extract.triggered.connect(self.add_tab)
+        self.action_gen_application.triggered.connect(self.add_tab)
+        self.action_gen_pemi.triggered.connect(self.add_tab)
+        self.action_gen_HFE.triggered.connect(self.add_tab)
+        self.action_gen_HFI.triggered.connect(self.add_tab)
         self.tabWidget.tabBar().tabMoved.connect(self.tab_)
-        self.start_index = 0
-        self.stop_index = 0
+        self.tabWidget.tabBarClicked.connect(self.tab_click)
+        self.start_name = False
         self.path_for_default = pathlib.Path.cwd()  # Путь для файла настроек
         # Имена в файле
         self.name_list = {'checked-path_check': 'Путь к файлам', 'checked-table_number': 'Номер таблицы',
@@ -121,17 +127,45 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                           'HFI-path_file_HFI': 'Путь к файлам', 'HFI-complect_quant_HFI': 'Количество комплектов',
                           'HFI-imposition_freq': 'Частота навязывания'}
         # Грузим значения по умолчанию
+        self.name_tab = {"tab_zone_checked": "Проверка зон", "tab_parser": "Парсер txt",
+                         "tab_exctract": "Обезличивание", "tab_gen_application": "Генератор приложений",
+                         "tab_gen_pemi": "Генератор ПЭМИ", "tab_gen_HFE": "Генератор ВЧО",
+                         "tab_gen_HFI": "Генератор ВЧН"}
+        self.name_action = {"tab_zone_checked": self.action_zone_checked, "tab_parser": self.action_parser,
+                            "tab_exctract": self.action_extract, "tab_gen_application": self.action_gen_application,
+                            "tab_gen_pemi": self.action_gen_pemi, "tab_gen_HFE": self.action_gen_HFE,
+                            "tab_gen_HFI": self.action_gen_HFI}
         try:
             with open(pathlib.Path(pathlib.Path.cwd(), 'Настройки.txt'), "r", encoding='utf-8-sig') as f:
                 dict_load = json.load(f)
-                data = dict_load['widget_settings']
-                tab_order = dict_load['gui_settings']['tab_order']
+                self.data = dict_load['widget_settings']
+                self.tab_order = dict_load['gui_settings']['tab_order']
+                self.tab_visible = dict_load['gui_settings']['tab_visible']
         except FileNotFoundError:
             with open(pathlib.Path(pathlib.Path.cwd(), 'Настройки.txt'), "w", encoding='utf-8-sig') as f:
-                json.dump({}, f, ensure_ascii=False, sort_keys=True, indent=4)
-                data = {}
+                data_insert = {"widget_settings": {},
+                               "gui_settings":
+                                   {"tab_order": {'0': "tab_zone_checked", '1': "tab_parser", '2': "tab_exctract",
+                                                  '3': "tab_gen_application", '4': "tab_gen_pemi", '5': "tab_gen_HFE",
+                                                  '6': "tab_gen_HFI"},
+                                    "tab_visible": {"tab_zone_checked": True, "tab_parser": True, "tab_exctract": True,
+                                                    "tab_gen_application": True, "tab_gen_pemi": True,
+                                                    "tab_gen_HFE": True, "tab_gen_HFI": True}
+                                    }
+                               }
+                json.dump(data_insert, f, ensure_ascii=False, sort_keys=True, indent=4)
+                self.data = {}
+                self.tab_order = data_insert['gui_settings']['tab_order']
+                self.tab_visible = data_insert['gui_settings']['tab_visible']
+
+        self.tab_for_paint = {}
         for tab in range(0, self.tabWidget.tabBar().count()):
-            self.tabWidget.tabBar().moveTab(tab, tab_order[self.tabWidget.tabBar().tabText(tab)])
+            self.tab_for_paint[self.tabWidget.widget(tab).objectName()] = self.tabWidget.widget(tab)
+        self.tabWidget.clear()
+        for tab in self.tab_order:
+            if self.tab_visible[self.tab_order[tab]]:
+                self.name_action[self.tab_order[tab]].setChecked(True)
+                self.tabWidget.addTab(self.tab_for_paint[self.tab_order[tab]], self.name_tab[self.tab_order[tab]])
         self.tabWidget.tabBar().setCurrentIndex(0)
         # Линии для заполнения
         self.line = [self.lineEdit_path_check, self.lineEdit_table_number, self.lineEdit_stationary_FSB,
@@ -144,13 +178,52 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                      self.lineEdit_complect_number_pemi, self.lineEdit_path_file_HFE,
                      self.lineEdit_complect_quant_HFE, self.lineEdit_frequency, self.lineEdit_level,
                      self.lineEdit_path_file_HFI, self.lineEdit_complect_quant_HFI, self.lineEdit_imposition_freq]
-        self.default_date(data)
+        self.default_date(self.data)
 
     def tab_(self, index):
-        self.stop_index = index
+        for tab in self.tab_order.items():
+            if tab[1] == self.start_name:
+                self.tab_order[str(index)], self.tab_order[tab[0]] = self.tab_order[tab[0]], self.tab_order[str(index)]
+                break
+        with open(pathlib.Path(self.path_for_default, 'Настройки.txt'), "r",
+                  encoding='utf-8-sig') as f:  # Открываем
+            dict_load = json.load(f)  # Загружаем данные
+            dict_load['gui_settings']['tab_order'] = self.tab_order
+        with open(pathlib.Path(self.path_for_default, 'Настройки.txt'), 'w', encoding='utf-8-sig') as f:  # Пишем в файл
+            json.dump(dict_load, f, ensure_ascii=False, sort_keys=True, indent=4)
 
-    def tab_cl(self, index):
-        self.start_index = index
+    def tab_click(self, index):
+        self.start_name = self.tab_order[str(index)]
+
+    def add_tab(self):
+        name_open_tab = {self.tabWidget.widget(ind).objectName(): ind for ind
+                         in range(0, self.tabWidget.tabBar().count())}
+        for el in self.name_tab:
+            if self.name_tab[el] == self.sender().text():
+                if self.name_action[el].isChecked():
+                    if el not in name_open_tab:
+                        self.tabWidget.addTab(self.tab_for_paint[el], self.name_tab[el])
+                    if self.tab_visible[el] is False:
+                        self.tab_visible[el] = True
+                        with open(pathlib.Path(self.path_for_default, 'Настройки.txt'), "r",
+                                  encoding='utf-8-sig') as f:  # Открываем
+                            dict_load = json.load(f)  # Загружаем данные
+                            dict_load['gui_settings']['tab_visible'] = self.tab_visible
+                        with open(pathlib.Path(self.path_for_default, 'Настройки.txt'), 'w',
+                                  encoding='utf-8-sig') as f:  # Пишем в файл
+                            json.dump(dict_load, f, ensure_ascii=False, sort_keys=True, indent=4)
+                else:
+                    if el in name_open_tab:
+                        self.tabWidget.tabRemoved(name_open_tab[el])
+                    if self.tab_visible[el]:
+                        self.tab_visible[el] = False
+                        with open(pathlib.Path(self.path_for_default, 'Настройки.txt'), "r",
+                                  encoding='utf-8-sig') as f:  # Открываем
+                            dict_load = json.load(f)  # Загружаем данные
+                            dict_load['gui_settings']['tab_visible'] = self.tab_visible
+                        with open(pathlib.Path(self.path_for_default, 'Настройки.txt'), 'w',
+                                  encoding='utf-8-sig') as f:  # Пишем в файл
+                            json.dump(dict_load, f, ensure_ascii=False, sort_keys=True, indent=4)
 
     def default_date(self, d):
         for i, el in enumerate(self.name_list):
