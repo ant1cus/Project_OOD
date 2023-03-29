@@ -160,7 +160,7 @@ def file_parcing(path, logging, status, progress, per, cp):
                     else:
                         name_sheet = sheet.lower()
                     df = pd.read_excel(path + '\\' + file, sheet_name=sheet, header=None)
-                    if type(df.iloc[0, 0]) == str and 'не обнаружено' in df.iloc[0, 0].lower():
+                    if type(df.iloc[0, 0]) == str:
                         with open(path + '\\txt\\' + book_name + '\\' + name_sheet + '.txt', 'w') as f:
                             pass
                     else:

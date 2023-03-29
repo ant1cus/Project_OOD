@@ -90,8 +90,8 @@ def checked_file_parcing(dir_path, group_file):
     return ['УПС!', '\n'.join(error)] if error else {'path': path, 'progress': progress}
 
 
-def check_generation_data(source_file, output_file, complect_number, complect_quantity, freq_restrict,
-                          freq_restrict_path):
+def checked_generation_pemi(source_file, output_file, complect_number, complect_quantity, freq_restrict,
+                            freq_restrict_path):
 
     source = source_file.text().strip()
     if not source:
@@ -187,7 +187,8 @@ def check_generation_data(source_file, output_file, complect_number, complect_qu
             'name_mode': name_mode, 'restrict_file': restrict_file}
 
 
-def checked_delete_header_footer(path, conclusion, protocol, prescription):
+def checked_delete_header_footer(path, conclusion_post, conclusion_name, protocol_post, protocol_name,
+                                 prescription_post, prescription_name):
     source = path.text().strip()
     if not source:
         return ['УПС!', 'Путь к исходным файлам пуст']
@@ -206,18 +207,23 @@ def checked_delete_header_footer(path, conclusion, protocol, prescription):
             name_file[2] = True
     if error:
         return ['УПС!', 'Файлы старого формата:\n' + '\n'.join(error)]
-    name_concl, name_prot, name_pre = conclusion.text().strip(), protocol.text().strip(), prescription.text().strip()
+    post_concl, post_prot, post_pre = conclusion_post.text().strip(), protocol_post.text().strip(), prescription_post.text().strip()
+    name_concl, name_prot, name_pre = conclusion_name.text().strip(), protocol_name.text().strip(), prescription_name.text().strip()
     name_rus = ['заключении', 'протоколе', 'предписании']
     error = []
     if any([name_concl, name_prot, name_pre]):
-        for name, el in zip(name_file, [name_concl, name_prot, name_pre]):
+        for name, el_name, el_post in zip(name_file, [name_concl, name_prot, name_pre],
+                                          [post_concl, post_prot, post_pre]):
             if name:
-                if re.match(r'[А-Я]\.[А-Я]\.\s[А-Я][а-я]+', el) is None:
-                    error.append('Имя ' + el + ' в ' + name_rus[[name_concl, name_prot, name_pre].index(el)]
+                if re.match(r'[А-Я]\.[А-Я]\.\s[А-Я][а-я]+', el_name) is None:
+                    error.append('Имя ' + el_name + ' в ' + name_rus[[name_concl, name_prot, name_pre].index(el_name)]
                                  + ' написано неверно (Шаблон имени «И.И. Иванов»)')
+                if len(el_post) == 0:
+                    error.append('Не указана должность в ' + name_rus[[post_concl, post_prot, post_pre].index(el_post)])
         if error:
             return ['УПС!', '\n'.join(error)]
-        return {'path': source, 'name_executor': [name_concl, name_prot, name_pre]}
+        return {'path': source, 'post_executor': [post_concl, post_prot, post_pre],
+                'name_executor': [name_concl, name_prot, name_pre]}
     else:
         return ['УПС!', 'Не указано ни одно имя']
 
@@ -268,7 +274,7 @@ def checked_hfi_generation(path, frequency, quantity, mode):
         return ['УПС!', 'Не выбран не один режим']
 
 
-def check_application_data(file_path, folder_path, number, quant):
+def checked_application_data(file_path, folder_path, number, quant):
     file = file_path.text().strip()
     if not file:
         return ['УПС!', 'Не указан путь к файлу для генерации']
@@ -297,3 +303,24 @@ def check_application_data(file_path, folder_path, number, quant):
         if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')):
             return ['УПС!', 'Не правильно указано количество комплектов']
     return {'file': file, 'path': folder, 'quantity': int(quantity), 'position_num': int(position_num)}
+
+
+def checked_lf_data(source_folder, output_folder, excel_file):
+    source = source_folder.text().strip()
+    if not source:
+        return ['УПС!', 'Путь к исходным файлам пуст']
+    if os.path.isfile(source):
+        return ['УПС!', 'Указанный путь к исходным файлам не является директорией']
+    output = output_folder.text().strip()
+    if not output:
+        return ['УПС!', 'Путь к создаваемым файлам пуст']
+    if os.path.isfile(output):
+        return ['УПС!', 'Указанный путь к создаваемым файлам не является директорией']
+    file = excel_file.text().strip()
+    if not file:
+        return ['УПС!', 'Путь к файлу генератору пуст']
+    else:
+        if file.endswith('.xlsx'):
+            return {'source': source, 'output': output, 'excel': file}
+        else:
+            return ['УПС!', 'Указанный файл недопустимого формата (необходимо .xlsx)']

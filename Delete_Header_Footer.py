@@ -23,8 +23,10 @@ class DeleteHeaderFooter(QThread):
         QThread.__init__(self)
         self.path = incoming_data['path']
         self.name_executor = incoming_data['name_executor']
+        self.post_executor = incoming_data['post_executor']
         self.logging = incoming_data['logging']
         self.q = incoming_data['q']
+        self.default_path = incoming_data['default_path']
         self.event = threading.Event()
 
     def run(self):
@@ -34,6 +36,44 @@ class DeleteHeaderFooter(QThread):
             self.status.emit('Старт')
             self.progress.emit(current_progress)
             percent = 100/len(os.listdir(self.path))
+            # self.logging.info('Извлекаем шапку для копирования')
+            # temp_docx = os.path.join(str(self.default_path) + '\\', 'Образец.docx')
+            # temp_zip = os.path.join(str(self.default_path) + '\\', 'Образец.docx' + ".zip")
+            # temp_folder = os.path.join(str(self.default_path) + '\\', "template")
+            # if os.path.exists(temp_zip):
+            #     shutil.rmtree(temp_zip)
+            # if os.path.exists(temp_folder):
+            #     shutil.rmtree(temp_folder)
+            # if os.path.exists(str(self.default_path) + '\\zip'):
+            #     shutil.rmtree(str(self.default_path) + '\\zip')
+            # os.rename(temp_docx, temp_zip)
+            # os.mkdir(str(self.default_path) + '\\zip')
+            # self.logging.info('Извлекаем архив')
+            # with zipfile.ZipFile(temp_zip) as my_document:
+            #     my_document.extractall(temp_folder)
+            # pages_xml = os.path.join(temp_folder, "word", "document.xml")
+            # tree = etree.parse(pages_xml)
+            # root = tree.getroot()
+            # j = 0
+            # self.logging.info('Получаем тэг для копирования')
+            # for i, e in reversed(list(enumerate(root[0]))):
+            #     if e.tag.rpartition('}')[2] == 'sectPr':
+            #         j = i
+            #         break
+            # header = copy.deepcopy(root[0][j])
+            # self.logging.info('Собираем и удаляем архив')
+            # os.remove(temp_zip)
+            # shutil.make_archive(temp_zip.replace(".zip", ""), 'zip', temp_folder)
+            # os.rename(temp_zip, temp_docx)  # rename zip file to docx
+            # while True:
+            #     try:
+            #         shutil.rmtree(temp_folder)
+            #         shutil.rmtree(str(self.default_path) + '\\zip')
+            #         break
+            #     except OSError as es:
+            #         self.logging.error(es)
+            #         self.logging.error(traceback.format_exc())
+            #         self.logging.info('Ошибка с удалением, пробуем ещё раз')
             for element in os.listdir(self.path):
                 self.logging.info('Обезличиваем документ ' + element)
                 self.status.emit('Обезличиваем документ ' + element)
@@ -60,7 +100,7 @@ class DeleteHeaderFooter(QThread):
                     if e.tag.rpartition('}')[2] != 'sectPr' and len(e):
                         j = i
                         break
-                header = copy.deepcopy(root[0][j][0])
+                header = copy.deepcopy(root[0][j][0][0])
                 self.logging.info('Собираем и удаляем архив')
                 os.remove(temp_zip)
                 shutil.make_archive(temp_zip.replace(".zip", ""), 'zip', temp_folder)
@@ -74,6 +114,7 @@ class DeleteHeaderFooter(QThread):
                         self.logging.error(es)
                         self.logging.error(traceback.format_exc())
                         self.logging.info('Ошибка с удалением, пробуем ещё раз')
+                # print(header)
                 self.logging.info('Работаем с ворд документом')
                 doc = docx.Document(self.path + '\\' + element)  # Открываем
 
@@ -82,16 +123,16 @@ class DeleteHeaderFooter(QThread):
                     p = par._element
                     p.getparent().remove(p)
                     p._p = p._element = None
-
-                for paragraph in doc.sections[0].first_page_header.paragraphs:
-                    if 'Экз.' in paragraph.text:
-                        paragraph_del(paragraph)
-                        break
-                    paragraph_del(paragraph)
-                # doc.sections[0].first_page_header.paragraphs[0].text = None
-                # p = doc.sections[0].first_page_header.paragraphs[0]._element
-                # p.getparent().remove(p)
-                # p._p = p._element = None
+                #
+                # for paragraph in doc.sections[0].first_page_header.paragraphs:
+                #     if 'Экз.' in paragraph.text:
+                #         paragraph_del(paragraph)
+                #         break
+                #     paragraph_del(paragraph)
+                doc.sections[0].first_page_header.paragraphs[0].text = None
+                p = doc.sections[0].first_page_header.paragraphs[0]._element
+                p.getparent().remove(p)
+                p._p = p._element = None
                 number = doc.sections[0].first_page_footer.paragraphs[0].text
                 doc.sections[0].first_page_footer.paragraphs[0].text = None
                 doc.sections[0].footer.paragraphs[0].text = None
@@ -148,38 +189,49 @@ class DeleteHeaderFooter(QThread):
                                 run.font.size = Pt(size)
                         break
                 if 'Заключение' in name:
+                    post_executor = self.post_executor[0]
                     name_executor = self.name_executor[0]
                 elif 'Протокол' in name:
+                    post_executor = self.post_executor[1]
                     name_executor = self.name_executor[1]
                 else:
+                    post_executor = self.post_executor[2]
                     name_executor = self.name_executor[2]
-                for e in reversed(list(doc.paragraphs)):
-                    if 'специальных' in e.text:
-                        text = e.text.strip()
-                        if e.runs[0].font.size is None:
-                            size = e.style.font.size.pt
-                        else:
-                            size = e.runs[0].font.size.pt
-                        name_person = text.rpartition(' ')[2]
-                        name_person = text[len(text) - (5 + len(name_person)):len(text)]
-                        e.add_run('\n\nВыписка верна\n\n' + re.sub(name_person, name_executor, text.strip()))
-                        for run in e.runs:
-                            run.font.size = Pt(size)
-                        break
+                doc.add_paragraph('\nВыписка верна\n\n' + post_executor + '\t\t\t\t' + name_executor)
+                size = 12
+                doc.paragraphs[len(doc.paragraphs) - 1].alignment = WD_PARAGRAPH_ALIGNMENT.LEFT  # Выравниваем
+                for run in doc.paragraphs[len(doc.paragraphs) - 1].runs:
+                    run.font.size = Pt(size)
+                    run.font.name = 'Times New Roman'
+                # for e in reversed(list(doc.paragraphs)):
+                #     if 'специальных' in e.text:
+                #         text = e.text.strip()
+                #         if e.runs[0].font.size is None:
+                #             size = e.style.font.size.pt
+                #         else:
+                #             size = e.runs[0].font.size.pt
+                #         name_person = text.rpartition(' ')[2]
+                #         name_person = text[len(text) - (5 + len(name_person)):len(text)]
+                #         e.add_run('\n\nВыписка верна\n\n' + re.sub(name_person, name_executor, text.strip()))
+                #         for run in e.runs:
+                #             run.font.size = Pt(size)
+                #         break
                 doc.save(self.path + '\\' + element)
                 doc = docx.Document(self.path + '\\' + element)  # Открываем
                 self.logging.info('Удаляем лишние параграфы в конце документа')
                 sectPrs = doc._element.xpath(".//w:pPr/w:sectPr")
                 for sectPr in sectPrs:
                     sectPr.getparent().remove(sectPr)
-                for para in doc.paragraphs[len(doc.paragraphs):0:-1]:
-                    if len(para.text) in [0, 1]:
-                        p = para._element
-                        p.getparent().remove(p)
-                        p._p = p._element = None
-                    else:
-                        break
                 doc.save(self.path + '\\' + element)
+                # doc = docx.Document(self.path + '\\' + element)  # Открываем
+                # for para in doc.paragraphs[len(doc.paragraphs):0:-1]:
+                #     if len(para.text) in [0, 1]:
+                #         p = para._element
+                #         p.getparent().remove(p)
+                #         p._p = p._element = None
+                #     else:
+                #         break
+                # doc.save(self.path + '\\' + element)
                 self.logging.info('Извлекаем архив и добавляем шапку')
                 os.rename(temp_docx, temp_zip)
                 os.mkdir(self.path + '\\zip')
@@ -188,24 +240,34 @@ class DeleteHeaderFooter(QThread):
                 pages_xml = os.path.join(temp_folder, "word", "document.xml")
                 tree = etree.parse(pages_xml)
                 root = tree.getroot()
-                root[0][-1].append(header)
+                for i, e in reversed(list(enumerate(root[0]))):
+                    if e.tag.rpartition('}')[2] == 'sectPr':
+                        e.getparent().replace(e, header)
+                        break
                 tree.write(os.path.join(temp_folder, "word", "document.xml"), encoding="UTF-8", xml_declaration=True)
                 self.logging.info('Удаляем архив')
                 os.remove(temp_zip)
                 shutil.make_archive(temp_zip.replace(".zip", ""), 'zip', temp_folder)
                 os.rename(temp_zip, temp_docx)  # rename zip file to docx
-                shutil.rmtree(temp_folder)
-                shutil.rmtree(self.path + '\\zip')
-                doc = docx.Document(self.path + '\\' + element)  # Открываем
-                self.logging.info('Удаляем лишние параграфы в шапке')
-                for para in reversed(list(doc.sections[0].first_page_header.paragraphs)):
-                    if len(para.text) in [0, 1]:
-                        p = para._element
-                        p.getparent().remove(p)
-                        p._p = p._element = None
-                    else:
+                while True:
+                    try:
+                        shutil.rmtree(temp_folder)
+                        shutil.rmtree(self.path + '\\zip')
                         break
-                doc.save(self.path + '\\' + element)
+                    except OSError as es:
+                        self.logging.error(es)
+                        self.logging.error(traceback.format_exc())
+                        self.logging.info('Ошибка с удалением, пробуем ещё раз')
+                # doc = docx.Document(self.path + '\\' + element)  # Открываем
+                # self.logging.info('Удаляем лишние параграфы в шапке')
+                # for para in reversed(list(doc.sections[0].first_page_header.paragraphs)):
+                #     if len(para.text) in [0, 1]:
+                #         p = para._element
+                #         p.getparent().remove(p)
+                #         p._p = p._element = None
+                #     else:
+                #         break
+                # doc.save(self.path + '\\' + element)
                 current_progress += percent
                 self.progress.emit(current_progress)
             self.logging.info("Конец работы программы")
