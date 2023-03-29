@@ -4,7 +4,7 @@ import pandas as pd
 from openpyxl import load_workbook
 
 
-def file_parcing(path, logging, status, progress, per, cp):
+def file_parcing(path, logging, status, progress, per, cp, no_freq_lim):
     list_file = os.listdir(path)
     # Сохраним нужное нам описание режимов.
     logging.info("Читаем txt и сохраняем режимы для " + path)
@@ -121,7 +121,8 @@ def file_parcing(path, logging, status, progress, per, cp):
                                                  file + ' в режиме '
                                                  + sheet + ' на частоте ' + str(round(frq, 4)) +
                                                  ' шум указан как текстовое значение')
-                            if (type(s) is float or type(s) is int) and (type(n) is float or type(n) is int):
+                            if (type(s) is float or type(s) is int) and\
+                                    (type(n) is float or type(n) is int) and (no_freq_lim is False):
                                 if s < n:
                                     error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
                                                  file + ' в режиме ' +
@@ -161,7 +162,7 @@ def file_parcing(path, logging, status, progress, per, cp):
                         name_sheet = sheet.lower()
                     df = pd.read_excel(path + '\\' + file, sheet_name=sheet, header=None)
                     if type(df.iloc[0, 0]) == str:
-                        with open(path + '\\txt\\' + book_name + '\\' + name_sheet + '.txt', 'w') as f:
+                        with open(path + '\\txt\\' + book_name + '\\' + name_sheet + '.txt', 'w'):
                             pass
                     else:
                         if sheet.lower() != 'описание':

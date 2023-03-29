@@ -16,6 +16,7 @@ class FileParcing(QThread):
         self.path = incoming_data['path']
         self.all_progress = incoming_data['progress']
         self.group_file = incoming_data['group_file']
+        self.no_freq_lim = incoming_data['no_freq_lim']
         self.logging = incoming_data['logging']
         self.q = incoming_data['q']
         self.event = threading.Event()
@@ -34,7 +35,7 @@ class FileParcing(QThread):
                 for folder in os.listdir(self.path):
                     if os.path.isdir(self.path + '\\' + folder):
                         err = file_parcing(self.path + '\\' + folder, self.logging, self.status, self.progress, percent,
-                                           current_progress)
+                                           current_progress, self.no_freq_lim)
                         if err['error']:
                             error_path.append(self.path + '\\' + folder)
                             for element in err['error']:
@@ -43,7 +44,8 @@ class FileParcing(QThread):
                             succsess_path.append(self.path + '\\' + folder)
                         current_progress = err['cp']
             else:
-                err = file_parcing(self.path, self.logging, self.status, self.progress, percent, current_progress)
+                err = file_parcing(self.path, self.logging, self.status, self.progress, percent,
+                                   current_progress, self.no_freq_lim)
                 if err['error']:
                     errors = err['error']
                     error_path.append(self.path)

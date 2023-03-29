@@ -8,10 +8,11 @@ from PyQt5.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor
 import Main
 import logging
 import about
-from PyQt5.QtCore import (QTranslator, QLocale, QLibraryInfo, QDir, QEvent, Qt)
-from PyQt5.QtWidgets import (QMainWindow, QApplication, QFileDialog, QMessageBox, QDialog)
-from checked import (checked_zone_checked, checked_file_parcing, checked_generation_pemi, checked_delete_header_footer,
-                     checked_hfe_generation, checked_hfi_generation, checked_application_data, checked_lf_data)
+from PyQt5.QtCore import QTranslator, QLocale, QLibraryInfo, QDir
+from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox, QDialog
+from checked import (checked_zone_checked, checked_file_parcing, checked_generation_pemi,
+                     checked_delete_header_footer, checked_hfe_generation, checked_hfi_generation,
+                     checked_application_data, checked_lf_data)
 from rewrite_settings import rewrite
 from Default import DefaultWindow
 from Zone_Check import ZoneChecked
@@ -38,7 +39,7 @@ def about():  # Открываем окно с описанием
 class SyntaxHighlighter(QSyntaxHighlighter):
     def __init__(self, parent):
         super(SyntaxHighlighter, self).__init__(parent)
-        self._highlight_lines = dict()
+        self._highlight_lines = {}
 
     def highlight_line(self, line, fmt):
         if isinstance(line, int) and line >= 0 and isinstance(fmt, QTextCharFormat):
@@ -47,7 +48,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
             self.rehighlightBlock(tb)
 
     def clear_highlight(self):
-        self._highlight_lines = dict()
+        self._highlight_lines = {}
         self.rehighlight()
 
     def highlightBlock(self, text):
@@ -57,12 +58,12 @@ class SyntaxHighlighter(QSyntaxHighlighter):
             self.setFormat(0, len(text), fmt)
 
 
-def highlighter(plainTextEdit):
-    _highlighter = SyntaxHighlighter(plainTextEdit.document())
+def highlighter(plain_text_edit):
+    _highlighter = SyntaxHighlighter(plain_text_edit.document())
     fmt = QTextCharFormat()
     fmt.setBackground(QColor("#E1E1E1"))
     _highlighter.clear_highlight()
-    for i in range(len(plainTextEdit.toPlainText().split('\n'))):
+    for i in range(len(plain_text_edit.toPlainText().split('\n'))):
         if i % 2 == 0:
             _highlighter.highlight_line(i, fmt)
 
@@ -279,49 +280,49 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
     def copy_application(self):
         application = checked_application_data(self.lineEdit_path_example, self.lineEdit_path_finish_folder_example,
                                                self.lineEdit_number_position, self.lineEdit_quantity_document)
-        if type(application) == list:
+        if isinstance(application, list):
             self.on_message_changed(application[0], application[1])
             return
-        else:  # Если всё прошло запускаем поток
-            application['logging'], application['q'] = logging, self.q
-            self.thread = GenerateCopyApplication(application)
-            self.thread.progress.connect(self.progressBar.setValue)
-            self.thread.status.connect(self.show_mess)
-            self.thread.messageChanged.connect(self.on_message_changed)
-            self.thread.errors.connect(self.errors)
-            self.thread.start()
+        # Если всё прошло запускаем поток
+        application['logging'], application['q'] = logging, self.q
+        self.thread = GenerateCopyApplication(application)
+        self.thread.progress.connect(self.progressBar.setValue)
+        self.thread.status.connect(self.show_mess)
+        self.thread.messageChanged.connect(self.on_message_changed)
+        self.thread.errors.connect(self.errors)
+        self.thread.start()
 
     def generate_pemi(self):
         generate = checked_generation_pemi(self.lineEdit_path_original_file, self.lineEdit_path_finish_folder,
                                            self.lineEdit_complect_number_pemi, self.lineEdit_complect_quant_pemi,
                                            self.checkBox_freq_restrict.isChecked(), self.lineEdit_path_freq_restrict)
-        if type(generate) == list:
+        if isinstance(generate, list):
             self.on_message_changed(generate[0], generate[1])
             return
-        else:  # Если всё прошло запускаем поток
-            generate['logging'], generate['q'] = logging, self.q
-            self.thread = GenerationFile(generate)
-            self.thread.progress.connect(self.progressBar.setValue)
-            self.thread.status.connect(self.show_mess)
-            self.thread.messageChanged.connect(self.on_message_changed)
-            self.thread.errors.connect(self.errors)
-            self.thread.start()
+        # Если всё прошло запускаем поток
+        generate['logging'], generate['q'] = logging, self.q
+        self.thread = GenerationFile(generate)
+        self.thread.progress.connect(self.progressBar.setValue)
+        self.thread.status.connect(self.show_mess)
+        self.thread.messageChanged.connect(self.on_message_changed)
+        self.thread.errors.connect(self.errors)
+        self.thread.start()
 
     def generate_hfe(self):
         generate = checked_hfe_generation(self.lineEdit_path_file_HFE, self.lineEdit_complect_quant_HFE,
                                           self.checkBox_required_values_HFE, self.lineEdit_frequency,
                                           self.lineEdit_level)
-        if type(generate) == list:
+        if isinstance(generate, list):
             self.on_message_changed(generate[0], generate[1])
             return
-        else:  # Если всё прошло запускаем поток
-            generate['logging'], generate['q'] = logging, self.q
-            self.thread = HFEGeneration(generate)
-            self.thread.progress.connect(self.progressBar.setValue)
-            self.thread.status.connect(self.show_mess)
-            self.thread.messageChanged.connect(self.on_message_changed)
-            self.thread.errors.connect(self.errors)
-            self.thread.start()
+        # Если всё прошло запускаем поток
+        generate['logging'], generate['q'] = logging, self.q
+        self.thread = HFEGeneration(generate)
+        self.thread.progress.connect(self.progressBar.setValue)
+        self.thread.status.connect(self.show_mess)
+        self.thread.messageChanged.connect(self.on_message_changed)
+        self.thread.errors.connect(self.errors)
+        self.thread.start()
 
     def generate_hfi(self):
         generate = checked_hfi_generation(self.lineEdit_path_file_HFI, self.lineEdit_imposition_freq,
@@ -329,32 +330,32 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                                           [self.checkBox_power_supply.isChecked(),
                                            self.checkBox_symmetrical.isChecked(),
                                            self.checkBox_asymetriacal.isChecked()])
-        if type(generate) == list:
+        if isinstance(generate, list):
             self.on_message_changed(generate[0], generate[1])
             return
-        else:  # Если всё прошло запускаем поток
-            generate['logging'], generate['q'] = logging, self.q
-            self.thread = HFIGeneration(generate)
-            self.thread.progress.connect(self.progressBar.setValue)
-            self.thread.status.connect(self.show_mess)
-            self.thread.messageChanged.connect(self.on_message_changed)
-            self.thread.errors.connect(self.errors)
-            self.thread.start()
+        # Если всё прошло запускаем поток
+        generate['logging'], generate['q'] = logging, self.q
+        self.thread = HFIGeneration(generate)
+        self.thread.progress.connect(self.progressBar.setValue)
+        self.thread.status.connect(self.show_mess)
+        self.thread.messageChanged.connect(self.on_message_changed)
+        self.thread.errors.connect(self.errors)
+        self.thread.start()
 
     def generate_lf(self):
         generate = checked_lf_data(self.lineEdit_path_start_folder_lf, self.lineEdit_path_finish_folder_lf,
                                    self.lineEdit_path_file_excel_lf)
-        if type(generate) == list:
+        if isinstance(generate, list):
             self.on_message_changed(generate[0], generate[1])
             return
-        else:  # Если всё прошло запускаем поток
-            generate['logging'], generate['q'] = logging, self.q
-            self.thread = LFGeneration(generate)
-            self.thread.progress.connect(self.progressBar.setValue)
-            self.thread.status.connect(self.show_mess)
-            self.thread.messageChanged.connect(self.on_message_changed)
-            self.thread.errors.connect(self.errors)
-            self.thread.start()
+        # Если всё прошло запускаем поток
+        generate['logging'], generate['q'] = logging, self.q
+        self.thread = LFGeneration(generate)
+        self.thread.progress.connect(self.progressBar.setValue)
+        self.thread.status.connect(self.show_mess)
+        self.thread.messageChanged.connect(self.on_message_changed)
+        self.thread.errors.connect(self.errors)
+        self.thread.start()
 
     def parcing_file(self):
         self.plainTextEdit_succsess_order.clear()
@@ -363,19 +364,21 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.groupBox_error_order.setStyleSheet("")
         self.plainTextEdit_errors.clear()
         self.groupBox_errors.setStyleSheet("")
-        group_file = True if self.checkBox_group_parcing.isChecked() else False
+        group_file = self.checkBox_group_parcing.isChecked()
+        no_freq_lim = self.checkBox_no_freq_limit.isChecked()
         folder = checked_file_parcing(self.lineEdit_path_parser, group_file)
-        if type(folder) == list:
+        if isinstance(folder, list):
             self.on_message_changed(folder[0], folder[1])
             return
-        else:  # Если всё прошло запускаем поток
-            folder['group_file'], folder['logging'], folder['q'] = group_file, logging, self.q
-            self.thread = FileParcing(folder)
-            self.thread.progress.connect(self.progressBar.setValue)
-            self.thread.status.connect(self.show_mess)
-            self.thread.errors.connect(self.errors)
-            self.thread.messageChanged.connect(self.on_message_changed)
-            self.thread.start()
+        # Если всё прошло запускаем поток
+        folder['group_file'], folder['no_freq_lim'] = group_file, no_freq_lim
+        folder['logging'], folder['q'] = logging, self.q
+        self.thread = FileParcing(folder)
+        self.thread.progress.connect(self.progressBar.setValue)
+        self.thread.status.connect(self.show_mess)
+        self.thread.errors.connect(self.errors)
+        self.thread.messageChanged.connect(self.on_message_changed)
+        self.thread.start()
 
     def errors(self):
         text = self.q.get_nowait()
@@ -405,45 +408,45 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.on_message_changed('УПС!', '\n'.join(text['errors_gen']))
 
     def checked_zone(self):
-        department = True if self.groupBox_FSB.isChecked() else False
-        win_lin = True if self.checkBox_win_lin.isChecked() else False
-        one_table = True if self.checkBox_first_table.isChecked() else False
+        department = self.groupBox_FSB.isChecked()
+        win_lin = self.checkBox_win_lin.isChecked()
+        one_table = self.checkBox_first_table.isChecked()
         zone = [self.lineEdit_stationary_FSB, self.lineEdit_carry_FSB, self.lineEdit_wear_FSB, self.lineEdit_r1_FSB,
                 self.lineEdit_r1s_FSB] \
             if department else [self.lineEdit_stationary_FSTEK, self.lineEdit_carry_FSTEK,
                                 self.lineEdit_wear_FSTEK, self.lineEdit_r1_FSTEK]
         zone_all = checked_zone_checked(self.lineEdit_path_check, self.lineEdit_table_number, zone)
-        if type(zone_all) == list:
+        if isinstance(zone_all, list):
             self.on_message_changed(zone_all[0], zone_all[1])
             return
-        else:  # Если всё прошло запускаем поток
-            if self.checkBox_win_lin.isChecked():
-                zone = {i + 5: zone_all[i] for i in zone_all}
-                zone_all = {**zone_all, **zone}
-            zone = {'path_check': self.lineEdit_path_check.text().strip(),
-                    'table_number': self.lineEdit_table_number.text().strip(), 'department': department,
-                    'win_lin': win_lin, 'zone_all': zone_all, 'one_table': one_table, 'logging': logging, 'q': self.q}
-            self.thread = ZoneChecked(zone)
-            self.thread.progress.connect(self.progressBar.setValue)
-            self.thread.status.connect(self.show_mess)
-            self.thread.messageChanged.connect(self.on_message_changed)
-            self.thread.start()
+        # Если всё прошло запускаем поток
+        if self.checkBox_win_lin.isChecked():
+            zone = {i + 5: zone_all[i] for i in zone_all}
+            zone_all = {**zone_all, **zone}
+        zone = {'path_check': self.lineEdit_path_check.text().strip(),
+                'table_number': self.lineEdit_table_number.text().strip(), 'department': department,
+                'win_lin': win_lin, 'zone_all': zone_all, 'one_table': one_table, 'logging': logging, 'q': self.q}
+        self.thread = ZoneChecked(zone)
+        self.thread.progress.connect(self.progressBar.setValue)
+        self.thread.status.connect(self.show_mess)
+        self.thread.messageChanged.connect(self.on_message_changed)
+        self.thread.start()
 
     def delete_header_footer(self):
         output = checked_delete_header_footer(self.lineEdit_path_original_extract, self.lineEdit_conclusion_post,
                                               self.lineEdit_conclusion_name, self.lineEdit_protocol_post,
                                               self.lineEdit_protocol_name, self.lineEdit_prescription_post,
                                               self.lineEdit_prescription_name)
-        if type(output) == list:
+        if isinstance(output, list):
             self.on_message_changed(output[0], output[1])
             return
-        else:  # Если всё прошло запускаем поток
-            output['logging'], output['q'], output['default_path'] = logging, self.q, self.path_for_default
-            self.thread = DeleteHeaderFooter(output)
-            self.thread.progress.connect(self.progressBar.setValue)
-            self.thread.status.connect(self.show_mess)
-            self.thread.messageChanged.connect(self.on_message_changed)
-            self.thread.start()
+        # Если всё прошло запускаем поток
+        output['logging'], output['q'], output['default_path'] = logging, self.q, self.path_for_default
+        self.thread = DeleteHeaderFooter(output)
+        self.thread.progress.connect(self.progressBar.setValue)
+        self.thread.status.connect(self.show_mess)
+        self.thread.messageChanged.connect(self.on_message_changed)
+        self.thread.start()
 
     def pause_thread(self):
         if self.q.empty():
