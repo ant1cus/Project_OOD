@@ -296,11 +296,12 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         generate = checked_generation_pemi(self.lineEdit_path_original_file, self.lineEdit_path_finish_folder,
                                            self.lineEdit_complect_number_pemi, self.lineEdit_complect_quant_pemi,
                                            self.checkBox_freq_restrict.isChecked(), self.lineEdit_path_freq_restrict)
+        no_freq_lim = self.checkBox_no_limit_freq_gen.isChecked()
         if isinstance(generate, list):
             self.on_message_changed(generate[0], generate[1])
             return
         # Если всё прошло запускаем поток
-        generate['logging'], generate['q'] = logging, self.q
+        generate['logging'], generate['q'], generate['no_freq_lim'] = logging, self.q, no_freq_lim
         self.thread = GenerationFile(generate)
         self.thread.progress.connect(self.progressBar.setValue)
         self.thread.status.connect(self.show_mess)

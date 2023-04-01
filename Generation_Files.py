@@ -30,6 +30,7 @@ class GenerationFile(QThread):
         self.complect_quant = incoming_data['complect_quant']
         self.name_mode = incoming_data['name_mode']
         self.restrict_file = incoming_data['restrict_file']
+        self.no_freq_lim = incoming_data['no_freq_lim']
         self.logging = incoming_data['logging']
         self.q = incoming_data['q']
         self.event = threading.Event()
@@ -105,14 +106,13 @@ class GenerationFile(QThread):
                     df = pd.DataFrame(columns=['frq', 'signal', 'noise'])
                     for i, row in enumerate(df_out[element].sort_values(by='frq').itertuples(index=False)):
                         if random.random() > (1-row[5]):
-                            if row[1] == row[2]:
-                                s = random.uniform(row[1] + 1, row[2] - 1)
-                            else:
-                                s = random.uniform(row[1], row[2])
-                            if row[3] == row[4]:
-                                n = random.uniform(row[3] + 1, row[4] - 1)
-                            else:
-                                n = random.uniform(row[3], row[4])
+                            s = random.uniform(row[1], row[2])
+                            n = random.uniform(row[3], row[4])
+                            if self.no_freq_lim is False:
+                                if row[1] == row[2]:
+                                    s = random.uniform(row[1] + 1, row[2] - 1)
+                                if row[3] == row[4]:
+                                    n = random.uniform(row[3] + 1, row[4] - 1)
                             if self.restrict_file:
                                 df_limit = pd.read_csv(self.restrict_file, sep='\t', names=['Mode', 'Freq', 'Lim'])
                                 df_limit = df_limit.replace({',': '.'}, regex=True)
@@ -122,10 +122,11 @@ class GenerationFile(QThread):
                                             if (s - n) > float(r[2]):
                                                 s = float(n) + float(r[2]) - random.uniform(0.01, 0.1)
                                             break
-                            if s < n:
-                                s, n = n, s
-                            if s == n:
-                                s = s + 0.5
+                            if self.no_freq_lim is False:
+                                if s < n:
+                                    s, n = n, s
+                                if s == n:
+                                    s = s + 0.5
                             df = pd.concat([df, pd.DataFrame({'frq': [row[0]], 'signal': [s], 'noise': [n]})], axis=0)
                     df = df.round({'frq': 4, 'signal': 2, 'noise': 2})
                     df_sheet[element] = df
