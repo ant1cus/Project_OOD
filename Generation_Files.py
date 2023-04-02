@@ -41,7 +41,8 @@ class GenerationFile(QThread):
         self.status.emit('Старт')
         self.progress.emit(current_progress)
         percent = 100/(2*(len(os.listdir(self.source)) - 1) + 2*int(self.complect_quant))
-        error = file_parcing(self.source, self.logging, self.status, self.progress, percent, current_progress)
+        error = file_parcing(self.source, self.logging, self.status, self.progress, percent, current_progress,
+                             self.no_freq_lim)
         quant_doc = len(os.listdir(self.source)) - 2
         errors = False
         if error['error']:
@@ -97,6 +98,7 @@ class GenerationFile(QThread):
                                                                                     'min_n': [col[2].min()],
                                                                                     'quant_frq': [df[el]/quant_doc]})],
                                                     axis=0)
+            print(df_out)
             for complect_number in self.complect:
                 self.logging.info('Генерация файла ' + str(complect_number))
                 self.status.emit('Генерация файла ' + str(complect_number))
@@ -106,13 +108,14 @@ class GenerationFile(QThread):
                     df = pd.DataFrame(columns=['frq', 'signal', 'noise'])
                     for i, row in enumerate(df_out[element].sort_values(by='frq').itertuples(index=False)):
                         if random.random() > (1-row[5]):
-                            s = random.uniform(row[1], row[2])
-                            n = random.uniform(row[3], row[4])
-                            if self.no_freq_lim is False:
-                                if row[1] == row[2]:
-                                    s = random.uniform(row[1] + 1, row[2] - 1)
-                                if row[3] == row[4]:
-                                    n = random.uniform(row[3] + 1, row[4] - 1)
+                            if row[1] == row[2]:
+                                s = random.uniform(row[1] + 1, row[2] - 1)
+                            else:
+                                s = random.uniform(row[1], row[2])
+                            if row[3] == row[4]:
+                                n = random.uniform(row[3] + 1, row[4] - 1)
+                            else:
+                                n = random.uniform(row[3], row[4])
                             if self.restrict_file:
                                 df_limit = pd.read_csv(self.restrict_file, sep='\t', names=['Mode', 'Freq', 'Lim'])
                                 df_limit = df_limit.replace({',': '.'}, regex=True)
@@ -145,7 +148,6 @@ class GenerationFile(QThread):
             self.status.emit('Создаём файл описания')
             with open(self.output + '\\Описание.txt', mode='w', encoding='utf-8-sig') as f:
                 f.write('\n'.join([el for el in mode]).rstrip())
-        file_parcing(self.output, self.logging, self.status, self.progress, percent, current_progress)
         if errors:
             self.logging.info("Выводим ошибки")
             self.q.put({'errors_gen': errors})
@@ -153,6 +155,8 @@ class GenerationFile(QThread):
             self.status.emit('В файлах присутствуют ошибки')
             self.progress.emit(0)
         else:
+            file_parcing(self.output, self.logging, self.status, self.progress, percent, current_progress,
+                         self.no_freq_lim)
             self.progress.emit(100)
             self.logging.info("Конец работы программы")
             self.status.emit('Готово')

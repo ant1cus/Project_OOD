@@ -174,7 +174,8 @@ class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки п
 
     def add_button_clicked(self, number):  # Если кликнули по кнопке
         self.name[number].setEnabled(True)  # Делаем активным для изменения
-        self.button_open[number].setEnabled(True)  # Неактивный
+        if number in self.button_open.values():
+            self.button_open[number].setEnabled(True)  # Неактивный
         self.name[number].setStyleSheet("QLineEdit {"
                                         "border-style: solid;"
                                         "border-width: 1px;"
