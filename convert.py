@@ -161,10 +161,12 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim):
                     for sheet in name:
                         if re.findall(r'_lin', sheet) or re.findall(r'_linux', sheet):
                             name_sheet = sheet.upper()
-                        else:
+                        elif re.findall(r'_win', sheet) or re.findall(r'_windows', sheet):
                             name_sheet = sheet.lower()
+                        else:
+                            name_sheet = sheet
                         df = pd.read_excel(path + '\\' + file, sheet_name=sheet, header=None)
-                        if type(df.iloc[0, 0]) == str:
+                        if df.empty or type(df.iloc[0, 0]) == str:
                             with open(path + '\\txt\\' + book_name + '\\' + name_sheet + '.txt', 'w'):
                                 pass
                         else:

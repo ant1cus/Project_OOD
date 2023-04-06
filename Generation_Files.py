@@ -77,14 +77,18 @@ class GenerationFile(QThread):
                             if os.stat(r"./" + el).st_size != 0:
                                 df = pd.read_csv(el, sep='\t', header=None)
                                 if 1 in df.columns:
-                                    mode[el[:-4].lower()] = mode[el[:-4].lower()].append(df)
+                                    mode[el[:-4].lower()] = pd.concat([mode[el[:-4].lower()], df])
                                 else:
-                                    mode[el[:-4].lower()] = mode[el[:-4].lower()].append(pd.Series(), ignore_index=True)
+                                    mode[el[:-4].lower()] = pd.concat([mode[el[:-4].lower()],
+                                                                       pd.Series(dtype='object')])
                             else:
-                                mode[el[:-4].lower()] = mode[el[:-4].lower()].append(pd.Series(), ignore_index=True)
+                                mode[el[:-4].lower()] = pd.concat([mode[el[:-4].lower()], pd.Series(dtype='object')])
                         else:
                             if description.empty:
-                                description = pd.read_csv(el, sep='\t', header=None)
+                                try:
+                                    description = pd.read_csv(el, sep='\t', header=None)
+                                except BaseException:
+                                    description = pd.DataFrame()
                     current_progress += percent
                     self.progress.emit(current_progress)
                 for element in mode:
@@ -130,8 +134,10 @@ class GenerationFile(QThread):
                                         s, n = n, s
                                     if s == n:
                                         s = s + 0.5
-                                df = pd.concat([df, pd.DataFrame({'frq': [row[0]], 'signal': [s], 'noise': [n]})], axis=0)
-                        df = df.round({'frq': 4, 'signal': 2, 'noise': 2})
+                                df = pd.concat([df, pd.DataFrame({'frq': [round(row[0], 4)], 'signal': [round(s, 2)],
+                                                                  'noise': [round(n, 2)]})], axis=0)
+                        # df = df.round({'frq': 4, 'signal': 2, 'noise': 2})
+                        # print(df.round({'frq': 4, 'signal': 2, 'noise': 2}))
                         df_sheet[element] = df
                     for sheet_name in df_sheet.keys():
                         if 'описание' in sheet_name.lower():

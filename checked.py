@@ -158,7 +158,7 @@ def checked_generation_pemi(source_file, output_file, complect_number, complect_
                     name_mode = [line.rstrip().lower() for line in name_mode if line]
     error = []
     for file_exel in sorted(list(filter(lambda x: x.endswith('.xlsx'), os.listdir(output)))):
-        if file_exel[:-4] in complect:
+        if file_exel[:-5] in complect:
             return ['УПС!', 'В указанной папке уже есть такие исходники']
         wb = load_workbook(source + '\\' + file_exel)  # Откроем книгу.
         name = wb.sheetnames  # Список листов.
