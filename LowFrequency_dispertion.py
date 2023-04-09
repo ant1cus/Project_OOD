@@ -94,7 +94,7 @@ class LFGeneration(QThread):
                 self.logging.info('Сохраняем документ')
                 doc.save(self.path_new + '\\' + element)
                 current_progress += percent
-                self.progress.emit(current_progress)
+                self.progress.emit(int(current_progress))
             self.logging.info("Конец работы программы")
             self.progress.emit(100)
             self.status.emit('Готово')

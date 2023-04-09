@@ -172,7 +172,7 @@ class ZoneChecked(QThread):
                                         self.logging.info("Сохраняем документ")
                                         doc.save(os.path.abspath(self.path) + '\\' + i)
                             progress = progress + percent_
-                            self.progress.emit(progress)
+                            self.progress.emit(int(progress))
                     else:
                         self.logging.info("Считываем зоны")
                         for j in range(0, 4, 1):
@@ -247,7 +247,7 @@ class ZoneChecked(QThread):
                                         self.logging.info("Сохраняем документ")
                                         doc.save(os.path.abspath(self.path) + '\\' + i)
                                 progress = progress + percent_
-                                self.progress.emit(progress)
+                                self.progress.emit(int(progress))
                     self.logging.info("Добавляем результаты")
                     self.status.emit('Добавляем результаты документа ' + str(i))
                     if void == 1:

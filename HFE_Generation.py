@@ -43,7 +43,7 @@ class HFEGeneration(QThread):
                         gen = "%.4f" % float(generation)
                         print('{0:<} {1:>} {2:>} {3:>}'.format('-', j, gen, '0'), file=f)
                 current_progress += percent
-                self.pbar.setValue(current_progress)
+                self.progress.emit(int(current_progress))
             self.logging.info("Конец работы программы")
             self.progress.emit(100)
             self.status.emit('Готово')

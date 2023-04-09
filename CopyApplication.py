@@ -38,7 +38,7 @@ class GenerateCopyApplication(QThread):
                 os.rename(self.path + '\\' + name, self.path + '\\' + name_suff + ' ' + str(self.position_num) +
                           '.' + str(number) + '.docx')
                 current_progress += percent
-                self.progress.emit(current_progress)
+                self.progress.emit(int(current_progress))
             self.logging.info("Конец работы программы")
             self.progress.emit(100)
             self.status.emit('Готово')

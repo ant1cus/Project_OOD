@@ -31,6 +31,7 @@ class GenerationFile(QThread):
         self.name_mode = incoming_data['name_mode']
         self.restrict_file = incoming_data['restrict_file']
         self.no_freq_lim = incoming_data['no_freq_lim']
+        self.no_excel_file = incoming_data['no_excel_file']
         self.logging = incoming_data['logging']
         self.q = incoming_data['q']
         self.event = threading.Event()
@@ -90,7 +91,7 @@ class GenerationFile(QThread):
                                 except BaseException:
                                     description = pd.DataFrame()
                     current_progress += percent
-                    self.progress.emit(current_progress)
+                    self.progress.emit(int(current_progress))
                 for element in mode:
                     if 0 in mode[element].columns:
                         df = mode[element][0].value_counts()
@@ -106,7 +107,6 @@ class GenerationFile(QThread):
                 for complect_number in self.complect:
                     self.logging.info('Генерация файла ' + str(complect_number))
                     self.status.emit('Генерация файла ' + str(complect_number))
-                    wb = pd.ExcelWriter(self.output + '\\' + str(complect_number) + '.xlsx')
                     df_sheet = {}
                     for element in df_out:
                         df = pd.DataFrame(columns=['frq', 'signal', 'noise'])
@@ -139,21 +139,37 @@ class GenerationFile(QThread):
                         # df = df.round({'frq': 4, 'signal': 2, 'noise': 2})
                         # print(df.round({'frq': 4, 'signal': 2, 'noise': 2}))
                         df_sheet[element] = df
+
+                    # функция для создания txt или excel файла
+                    def create_file(data_for_create, path_for_create, sheet_for_create, wb_for_create):
+                        if self.no_excel_file:
+                            data_for_create.to_csv(path_for_create + sheet_for_create + '.txt',
+                                                   header=False, index=False, sep='\t', mode='a')
+                        else:
+                            data_for_create.to_excel(wb_for_create, sheet_name=sheet_for_create,
+                                                     index=False, header=False)
+                    path_txt = self.output + '\\' + str(complect_number) + '\\'
+                    wb = False
+                    if self.no_excel_file:
+                        os.makedirs(self.output + '\\' + str(complect_number))
+                    else:
+                        wb = pd.ExcelWriter(self.output + '\\' + str(complect_number) + '.xlsx')
                     for sheet_name in df_sheet.keys():
                         if 'описание' in sheet_name.lower():
-                            description.to_excel(wb, sheet_name=sheet_name, index=False, header=False)
+                            create_file(description, path_txt, sheet_name, wb)
+                        elif df_sheet[sheet_name].empty:
+                            create_file(pd.Series('Не обнаружено'), path_txt, sheet_name, wb)
                         else:
-                            if df_sheet[sheet_name].empty:
-                                pd.Series('Не обнаружено').to_excel(wb, sheet_name=sheet_name, index=False, header=False)
-                            else:
-                                df_sheet[sheet_name].to_excel(wb, sheet_name=sheet_name, index=False, header=False)
-                    wb.save()
+                            create_file(df_sheet[sheet_name], path_txt, sheet_name, wb)
+                    if self.no_excel_file is False:
+                        wb.save()
                     current_progress += percent
-                    self.progress.emit(current_progress)
+                    self.progress.emit(int(current_progress))
                 self.logging.info('Создаём файл описания')
                 self.status.emit('Создаём файл описания')
-                with open(self.output + '\\Описание.txt', mode='w', encoding='utf-8-sig') as f:
-                    f.write('\n'.join([el for el in mode]).rstrip())
+                if self.no_excel_file is False:
+                    with open(self.output + '\\Описание.txt', mode='w', encoding='utf-8-sig') as f:
+                        f.write('\n'.join([el for el in mode]).rstrip())
             if errors:
                 self.logging.info("Выводим ошибки")
                 self.q.put({'errors_gen': errors})

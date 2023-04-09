@@ -150,7 +150,7 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim):
                 for e in error:
                     output_error.append(e)
                 wb.close()
-                progress.emit(cp)
+                progress.emit(int(cp))
             else:
                 status.emit('Создаем txt файлы для документа ' + file)
                 logging.info("Ошибок нет, записываем в txt")
@@ -178,7 +178,7 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim):
                             df.to_csv(path + '\\txt\\' + book_name + '\\' + name_sheet + '.txt',
                                       index=None, sep='\t', mode='w', header=None)
                 wb.close()
-                progress.emit(cp)
+                progress.emit(int(cp))
         return {'error': output_error, 'cp': cp}
     except BaseException as es:
         logging.error(es)

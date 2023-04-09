@@ -51,7 +51,7 @@ class HFIGeneration(QThread):
                 if self.mode[2]:
                     create(mode_name[2], self.freq, ref_lvl, self.path + '\\' + str(i))
                 current_progress += percent
-                self.pbar.setValue(current_progress)
+                self.progress.emit(int(current_progress))
             self.logging.info("Конец работы программы")
             self.progress.emit(100)
             self.status.emit('Готово')

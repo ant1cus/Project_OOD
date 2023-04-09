@@ -52,7 +52,7 @@ def checked_zone_checked(line_edit_path_check, line_edit_table_number, zone):
 def checked_file_parcing(dir_path, group_file):
     def folder_checked(p):
         errors = []
-        txt_files = filter(lambda x: x.endswith('.txt'), os.listdir(p))
+        txt_files = list(filter(lambda x: x.endswith('.txt'), os.listdir(p)))
         excel_files = [x for x in os.listdir(p) if x.endswith('.xlsx')]
         if 'Описание.txt' not in txt_files and 'описание.txt' not in txt_files:
             errors.append('Нет файла с описанием режимов (' + p + ')')

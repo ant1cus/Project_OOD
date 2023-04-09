@@ -289,7 +289,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         application['logging'], application['q'] = logging, self.q
         self.thread = GenerateCopyApplication(application)
         self.thread.progress.connect(self.progressBar.setValue)
-        self.thread.status.connect(self.show_mess)
+        self.thread.status.connect(self.statusBar().showMessage)
         self.thread.messageChanged.connect(self.on_message_changed)
         self.thread.errors.connect(self.errors)
         self.thread.start()
@@ -299,14 +299,16 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                                            self.lineEdit_complect_number_pemi, self.lineEdit_complect_quant_pemi,
                                            self.checkBox_freq_restrict.isChecked(), self.lineEdit_path_freq_restrict)
         no_freq_lim = self.checkBox_no_limit_freq_gen.isChecked()
+        no_excel_file = self.checkBox_no_excel_generation.isChecked()
         if isinstance(generate, list):
             self.on_message_changed(generate[0], generate[1])
             return
         # Если всё прошло запускаем поток
-        generate['logging'], generate['q'], generate['no_freq_lim'] = logging, self.q, no_freq_lim
+        generate['logging'], generate['q'] = logging, self.q
+        generate['no_freq_lim'], generate['no_excel_file'] = no_freq_lim, no_excel_file
         self.thread = GenerationFile(generate)
         self.thread.progress.connect(self.progressBar.setValue)
-        self.thread.status.connect(self.show_mess)
+        self.thread.status.connect(self.statusBar().showMessage)
         self.thread.messageChanged.connect(self.on_message_changed)
         self.thread.errors.connect(self.errors)
         self.thread.start()
@@ -322,7 +324,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         generate['logging'], generate['q'] = logging, self.q
         self.thread = HFEGeneration(generate)
         self.thread.progress.connect(self.progressBar.setValue)
-        self.thread.status.connect(self.show_mess)
+        self.thread.status.connect(self.statusBar().showMessage)
         self.thread.messageChanged.connect(self.on_message_changed)
         self.thread.errors.connect(self.errors)
         self.thread.start()
@@ -340,7 +342,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         generate['logging'], generate['q'] = logging, self.q
         self.thread = HFIGeneration(generate)
         self.thread.progress.connect(self.progressBar.setValue)
-        self.thread.status.connect(self.show_mess)
+        self.thread.status.connect(self.statusBar().showMessage)
         self.thread.messageChanged.connect(self.on_message_changed)
         self.thread.errors.connect(self.errors)
         self.thread.start()
@@ -355,7 +357,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         generate['logging'], generate['q'] = logging, self.q
         self.thread = LFGeneration(generate)
         self.thread.progress.connect(self.progressBar.setValue)
-        self.thread.status.connect(self.show_mess)
+        self.thread.status.connect(self.statusBar().showMessage)
         self.thread.messageChanged.connect(self.on_message_changed)
         self.thread.errors.connect(self.errors)
         self.thread.start()
@@ -378,7 +380,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         folder['logging'], folder['q'] = logging, self.q
         self.thread = FileParcing(folder)
         self.thread.progress.connect(self.progressBar.setValue)
-        self.thread.status.connect(self.show_mess)
+        self.thread.status.connect(self.statusBar().showMessage)
         self.thread.errors.connect(self.errors)
         self.thread.messageChanged.connect(self.on_message_changed)
         self.thread.start()
@@ -431,7 +433,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 'win_lin': win_lin, 'zone_all': zone_all, 'one_table': one_table, 'logging': logging, 'q': self.q}
         self.thread = ZoneChecked(zone)
         self.thread.progress.connect(self.progressBar.setValue)
-        self.thread.status.connect(self.show_mess)
+        self.thread.status.connect(self.statusBar().showMessage)
         self.thread.messageChanged.connect(self.on_message_changed)
         self.thread.start()
 
@@ -447,7 +449,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         output['logging'], output['q'], output['default_path'] = logging, self.q, self.path_for_default
         self.thread = DeleteHeaderFooter(output)
         self.thread.progress.connect(self.progressBar.setValue)
-        self.thread.status.connect(self.show_mess)
+        self.thread.status.connect(self.statusBar().showMessage)
         self.thread.messageChanged.connect(self.on_message_changed)
         self.thread.start()
 
@@ -455,9 +457,6 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         if self.q.empty():
             self.statusBar().showMessage(self.statusBar().currentMessage() + ' (прерывание процесса, подождите...)')
             self.q.put(True)
-
-    def show_mess(self, value):  # Вывод значения в статус бар
-        self.statusBar().showMessage(value)
 
     def on_message_changed(self, title, description):
         if title == 'УПС!':
