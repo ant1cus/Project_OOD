@@ -41,29 +41,29 @@ class ZoneChecked(QThread):
         docs = natsorted(docs)
         percent = 100 / len(docs)
         void = 0
-        e = []
+        errors_for_excel = []
         self.logging.info("Проходимся по списку")
         if self.department:
             percent_ = percent / 10 if self.win_lin else percent / 5
         else:
             percent_ = percent / 4
         try:
-            for i in docs:
+            for name_doc in docs:
                 if self.pause_threading():
                     return
-                self.logging.info("Документ " + str(i) + " в работе")
-                self.status.emit('Проверяем документ ' + i)
-                if '~' not in i:
+                self.logging.info("Документ " + str(name_doc) + " в работе")
+                self.status.emit('Проверяем документ ' + name_doc)
+                if '~' not in name_doc:
                     # Для того, что бы не съезжала заливка ее нужно добавлять каждый раз для каждой ячейки
                     shading_elm = []
                     string = {}  # Для записи непроходящих частот
                     shading_index = 0  # Счетчик для заливки
-                    doc = docx.Document(i)
+                    doc = docx.Document(name_doc)
                     table = doc.tables[int(self.table) - 1]  # Таблица для проверки (общая)
                     if void == 1:
-                        e.append('\n')
+                        errors_for_excel.append('\n')
                         void = 2
-                    errors = [i.partition(' ')[2][:-5]]
+                    errors = [name_doc.rpartition(' ')[2][:-5]]
                     win_lin = 10 if self.win_lin else 5  # Если 2 системы
                     zone = 0
                     self.logging.info("Считываем зоны")
@@ -100,11 +100,11 @@ class ZoneChecked(QThread):
                                 zone = table.cell(j, 2).text.replace(',', '.')
 
                             if void == 0:  # Добавляем имена диапазонов
-                                e.append('\t')
+                                errors_for_excel.append('\t')
                                 for k in zone_name:
-                                    e.append(k)
+                                    errors_for_excel.append(k)
                                 void = 2
-                                e.append('\n')
+                                errors_for_excel.append('\n')
                             void = 1
                             try:
                                 errors.append(round(float(zone), 1))
@@ -113,7 +113,7 @@ class ZoneChecked(QThread):
                                     errors.append(zone)
                             if self.one_table is False and '<' not in zone:  # Если нужно проверять таблицу
                                 self.logging.info("Проверяем и красим таблицу")
-                                self.status.emit('Проверяем и закрашиваем таблицу в документе ' + str(i))
+                                self.status.emit('Проверяем и закрашиваем таблицу в документе ' + str(name_doc))
                                 if j in self.zone:
                                     # Условия проверки
                                     if (float(self.zone[j]) < float(zone)) and (float(self.zone[j]) != 0):
@@ -170,7 +170,7 @@ class ZoneChecked(QThread):
                                                 except BaseException:
                                                     break
                                         self.logging.info("Сохраняем документ")
-                                        doc.save(os.path.abspath(self.path) + '\\' + i)
+                                        doc.save(os.path.abspath(self.path) + '\\' + name_doc)
                             progress = progress + percent_
                             self.progress.emit(int(progress))
                     else:
@@ -181,11 +181,11 @@ class ZoneChecked(QThread):
                             zone = table.cell(j + 1, 1).text.replace(',', '.')
 
                             if void == 0:
-                                e.append('\t')
+                                errors_for_excel.append('\t')
                                 for k in zone_name[:-1]:
-                                    e.append(k)
+                                    errors_for_excel.append(k)
                                 void = 2
-                                e.append('\n')
+                                errors_for_excel.append('\n')
                             void = 1
                             try:
                                 errors.append(int(zone))
@@ -197,7 +197,7 @@ class ZoneChecked(QThread):
                                         errors.append(zone)
                             if self.one_table is False:
                                 self.logging.info("Проверяем и красим таблицу")
-                                self.status.emit('Проверяем и закрашиваем таблицу в документе ' + str(i))
+                                self.status.emit('Проверяем и закрашиваем таблицу в документе ' + str(name_doc))
                                 if j in self.zone:
                                     # Условия проверки
                                     if (float(self.zone[j]) < float(zone)) and (float(self.zone[j]) != 0):
@@ -245,19 +245,19 @@ class ZoneChecked(QThread):
                                             if flag_for_exit:
                                                 break
                                         self.logging.info("Сохраняем документ")
-                                        doc.save(os.path.abspath(self.path) + '\\' + i)
+                                        doc.save(os.path.abspath(self.path) + '\\' + name_doc)
                                 progress = progress + percent_
                                 self.progress.emit(int(progress))
                     self.logging.info("Добавляем результаты")
-                    self.status.emit('Добавляем результаты документа ' + str(i))
+                    self.status.emit('Добавляем результаты документа ' + str(name_doc))
                     if void == 1:
                         for el in errors:
                             if type(el) != dict:
-                                e.append(str(el))
+                                errors_for_excel.append(str(el))
                             else:
-                                e.append(el)
+                                errors_for_excel.append(el)
                         if len(string) > 0:
-                            e.append(string)
+                            errors_for_excel.append(string)
         except BaseException as es:
             self.logging.error(es)
             self.logging.error(traceback.format_exc())
@@ -274,7 +274,7 @@ class ZoneChecked(QThread):
         try:
             if self.pause_threading():
                 return
-            e.append('\n')
+            errors_for_excel.append('\n')
             self.logging.info("Формируем excel")
             self.status.emit('Формируем отчёт')
             if self.department:
@@ -287,7 +287,7 @@ class ZoneChecked(QThread):
             wb = openpyxl.Workbook()
             ws = wb.active
             i, j = 1, 1
-            for el in e:
+            for el in errors_for_excel:
                 if i != 1 and el != 'Windows' and el != 'Linux':  # Чтобы отдельно заполнять первый столбец
                     if el == '\n':  # Если новая строка (используется как разделитель)
                         pass

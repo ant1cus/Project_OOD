@@ -96,7 +96,9 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim):
                         for i, row in enumerate(df.itertuples(index=False)):
                             try:  # Try/except блок для отлова листов с надписью «не обнаружено»
                                 frq, s, n = row[0], row[1], row[2]
-                                if type(frq) is str:
+                                # if type(frq) is str:
+                                if isinstance(frq, str):
+                                    frq = float(frq.replace(',', '.'))
                                     error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' + file +
                                                  ' в режиме ' + sheet +
                                                  ' в строке ' + str(i + 1) + ' записано текстовое значение!')
