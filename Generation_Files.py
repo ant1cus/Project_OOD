@@ -1,17 +1,9 @@
 import os
 import random
 import threading
-
-import docx
-import openpyxl
-import re
 import traceback
 
 import pandas as pd
-import numpy as np
-from natsort import natsorted
-from docx.oxml.ns import nsdecls
-from docx.oxml import parse_xml
 from PyQt5.QtCore import QThread, pyqtSignal
 from convert import file_parcing
 
@@ -32,8 +24,10 @@ class GenerationFile(QThread):
         self.restrict_file = incoming_data['restrict_file']
         self.no_freq_lim = incoming_data['no_freq_lim']
         self.no_excel_file = incoming_data['no_excel_file']
+        self.db_diff = incoming_data['3db_difference']
         self.logging = incoming_data['logging']
-        self.q = incoming_data['q']
+        self.queue = incoming_data['queue']
+        self.default_path = incoming_data['default_path']
         self.event = threading.Event()
 
     def run(self):
@@ -120,6 +114,17 @@ class GenerationFile(QThread):
                                     n = random.uniform(row[3] + 1, row[4] - 1)
                                 else:
                                     n = random.uniform(row[3], row[4])
+                                if self.db_diff and (s-n) < 3:
+                                    while True:
+                                        s = s + 0.1
+                                        n = n - 0.1 if (n > row[4]) else n
+                                        if (s-n) > 3:
+                                            break
+                                if self.no_freq_lim is False:
+                                    if s < n:
+                                        s, n = n, s
+                                    if s == n:
+                                        s = s + 0.5
                                 if self.restrict_file:
                                     df_limit = pd.read_csv(self.restrict_file, sep='\t', names=['Mode', 'Freq', 'Lim'])
                                     df_limit = df_limit.replace({',': '.'}, regex=True)
@@ -129,11 +134,6 @@ class GenerationFile(QThread):
                                                 if (s - n) > float(r[2]):
                                                     s = float(n) + float(r[2]) - random.uniform(0.01, 0.1)
                                                 break
-                                if self.no_freq_lim is False:
-                                    if s < n:
-                                        s, n = n, s
-                                    if s == n:
-                                        s = s + 0.5
                                 df = pd.concat([df, pd.DataFrame({'frq': [round(row[0], 4)], 'signal': [round(s, 2)],
                                                                   'noise': [round(n, 2)]})], axis=0)
                         # df = df.round({'frq': 4, 'signal': 2, 'noise': 2})
@@ -172,7 +172,7 @@ class GenerationFile(QThread):
                         f.write('\n'.join([el for el in mode]).rstrip())
             if errors:
                 self.logging.info("Выводим ошибки")
-                self.q.put({'errors_gen': errors})
+                self.queue.put({'errors_gen': errors})
                 self.errors.emit()
                 self.status.emit('В файлах присутствуют ошибки')
                 self.progress.emit(0)
@@ -182,13 +182,13 @@ class GenerationFile(QThread):
                 self.progress.emit(100)
                 self.logging.info("Конец работы программы")
                 self.status.emit('Готово')
-            os.chdir('C:\\')
+            os.chdir(self.default_path)
             return
         except BaseException as es:
             self.logging.error(es)
             self.logging.error(traceback.format_exc())
             self.progress.emit(0)
             self.status.emit('Ошибка!')
-            os.chdir('C:\\')
+            os.chdir(self.default_path)
             return
 

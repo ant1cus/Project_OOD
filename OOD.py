@@ -1,4 +1,6 @@
+import datetime
 import json
+import os
 import pathlib
 import queue
 import sys
@@ -73,10 +75,13 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.q = queue.Queue(maxsize=1)
-        logging.basicConfig(filename="my_log.log",
+        self.queue = queue.Queue(maxsize=1)
+        filename = str(datetime.date.today()) + '_logs.log'
+        os.makedirs(pathlib.Path('logs'), exist_ok=True)
+        filemode = 'a' if pathlib.Path('logs', filename).is_file() else 'w'
+        logging.basicConfig(filename=pathlib.Path('logs', filename),
                             level=logging.DEBUG,
-                            filemode="w",
+                            filemode=filemode,
                             format="%(asctime)s - %(levelname)s - %(funcName)s: %(lineno)d - %(message)s")
         self.pushButton_open_zone_check.clicked.connect((lambda: self.browse(1)))
         self.pushButton_open_parser.clicked.connect((lambda: self.browse(2)))
@@ -116,7 +121,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.tabWidget.tabBarClicked.connect(self.tab_click)
         self.tabWidget.tabCloseRequested.connect(lambda index: self.tabWidget.removeTab(index))
         self.start_name = False
-        self.path_for_default = pathlib.Path.cwd()  # Путь для файла настроек
+        self.default_path = pathlib.Path.cwd()  # Путь для файла настроек
         # Имена в файле
         self.name_list = {'checked-path_check': 'Путь к дир. с файлами', 'checked-table_number': 'Номер таблицы',
                           'checked-stationary_FSB': 'Стац. ФСБ', 'checked-carry_FSB': 'Воз. ФСБ',
@@ -183,9 +188,9 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         for tab in range(0, self.tabWidget.tabBar().count()):
             if self.tabWidget.widget(tab).objectName() not in self.tab_order.values():
                 self.tab_order[str(len(self.tab_order))] = self.tabWidget.widget(tab).objectName()
-                rewrite(self.path_for_default, self.tab_order, visible='tab_order')
+                rewrite(self.default_path, self.tab_order, visible='tab_order')
                 self.tab_visible[str(self.tabWidget.widget(tab).objectName())] = True
-                rewrite(self.path_for_default, self.tab_visible, visible='tab_visible')
+                rewrite(self.default_path, self.tab_visible, visible='tab_visible')
             self.tab_for_paint[self.tabWidget.widget(tab).objectName()] = self.tabWidget.widget(tab)
         self.tabWidget.clear()
         for tab in self.tab_order:
@@ -216,7 +221,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             if tab[1] == self.start_name:
                 self.tab_order[str(index)], self.tab_order[tab[0]] = self.tab_order[tab[0]], self.tab_order[str(index)]
                 break
-        rewrite(self.path_for_default, self.tab_order, order='tab_order')
+        rewrite(self.default_path, self.tab_order, order='tab_order')
 
     def tab_click(self, index):
         self.start_name = self.tab_order[str(index)]
@@ -231,11 +236,11 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                         self.tabWidget.addTab(self.tab_for_paint[el], self.name_tab[el])
                     if self.tab_visible[el] is False:
                         self.tab_visible[el] = True
-                        rewrite(self.path_for_default, self.tab_visible, visible='tab_visible')
+                        rewrite(self.default_path, self.tab_visible, visible='tab_visible')
                 else:
                     if self.tab_visible[el]:
                         self.tab_visible[el] = False
-                        rewrite(self.path_for_default, self.tab_visible, visible='tab_visible')
+                        rewrite(self.default_path, self.tab_visible, visible='tab_visible')
 
     def default_date(self, d):
         for i, el in enumerate(self.name_list):
@@ -244,7 +249,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
 
     def default_settings(self):  # Запускаем окно с настройками по умолчанию.
         self.close()
-        window_add = DefaultWindow(self, self.path_for_default)
+        window_add = DefaultWindow(self, self.default_path)
         window_add.show()
 
     def group_box_change_state(self, state):
@@ -286,7 +291,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.on_message_changed(application[0], application[1])
             return
         # Если всё прошло запускаем поток
-        application['logging'], application['q'] = logging, self.q
+        application['logging'], application['queue'] = logging, self.queue
+        application['default_path'] = self.default_path
         self.thread = GenerateCopyApplication(application)
         self.thread.progress.connect(self.progressBar.setValue)
         self.thread.status.connect(self.statusBar().showMessage)
@@ -300,12 +306,14 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                                            self.checkBox_freq_restrict.isChecked(), self.lineEdit_path_freq_restrict)
         no_freq_lim = self.checkBox_no_limit_freq_gen.isChecked()
         no_excel_file = self.checkBox_no_excel_generation.isChecked()
+        db_differeence = self.checkBox_3db_difference.isChecked()
         if isinstance(generate, list):
             self.on_message_changed(generate[0], generate[1])
             return
         # Если всё прошло запускаем поток
-        generate['logging'], generate['q'] = logging, self.q
+        generate['logging'], generate['queue'] = logging, self.queue
         generate['no_freq_lim'], generate['no_excel_file'] = no_freq_lim, no_excel_file
+        generate['3db_difference'], generate['default_path'] = db_differeence, self.default_path
         self.thread = GenerationFile(generate)
         self.thread.progress.connect(self.progressBar.setValue)
         self.thread.status.connect(self.statusBar().showMessage)
@@ -321,7 +329,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.on_message_changed(generate[0], generate[1])
             return
         # Если всё прошло запускаем поток
-        generate['logging'], generate['q'] = logging, self.q
+        generate['logging'], generate['queue'] = logging, self.queue
+        generate['default_path'] = self.default_path
         self.thread = HFEGeneration(generate)
         self.thread.progress.connect(self.progressBar.setValue)
         self.thread.status.connect(self.statusBar().showMessage)
@@ -339,7 +348,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.on_message_changed(generate[0], generate[1])
             return
         # Если всё прошло запускаем поток
-        generate['logging'], generate['q'] = logging, self.q
+        generate['logging'], generate['queue'] = logging, self.queue
+        generate['default_path'] = self.default_path
         self.thread = HFIGeneration(generate)
         self.thread.progress.connect(self.progressBar.setValue)
         self.thread.status.connect(self.statusBar().showMessage)
@@ -354,7 +364,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.on_message_changed(generate[0], generate[1])
             return
         # Если всё прошло запускаем поток
-        generate['logging'], generate['q'] = logging, self.q
+        generate['logging'], generate['queue'] = logging, self.queue
+        generate['default_path'] = self.default_path
         self.thread = LFGeneration(generate)
         self.thread.progress.connect(self.progressBar.setValue)
         self.thread.status.connect(self.statusBar().showMessage)
@@ -377,7 +388,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             return
         # Если всё прошло запускаем поток
         folder['group_file'], folder['no_freq_lim'] = group_file, no_freq_lim
-        folder['logging'], folder['q'] = logging, self.q
+        folder['logging'], folder['queue'] = logging, self.queue
+        folder['default_path'] = self.default_path
         self.thread = FileParcing(folder)
         self.thread.progress.connect(self.progressBar.setValue)
         self.thread.status.connect(self.statusBar().showMessage)
@@ -386,7 +398,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.thread.start()
 
     def errors(self):
-        text = self.q.get_nowait()
+        text = self.queue.get_nowait()
         if 'Прошедшие заказы:' in text:
             self.groupBox_succsess_order.setStyleSheet('''
             QGroupBox {border: 0.5px solid;
@@ -429,8 +441,9 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             zone = {i + 5: zone_all[i] for i in zone_all}
             zone_all = {**zone_all, **zone}
         zone = {'path_check': self.lineEdit_path_check.text().strip(),
-                'table_number': self.lineEdit_table_number.text().strip(), 'department': department,
-                'win_lin': win_lin, 'zone_all': zone_all, 'one_table': one_table, 'logging': logging, 'q': self.q}
+                'table_number': self.lineEdit_table_number.text().strip(), 'department': department, 'win_lin': win_lin,
+                'zone_all': zone_all, 'one_table': one_table, 'logging': logging, 'queue': self.queue,
+                'default_path': self.default_path}
         self.thread = ZoneChecked(zone)
         self.thread.progress.connect(self.progressBar.setValue)
         self.thread.status.connect(self.statusBar().showMessage)
@@ -446,7 +459,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.on_message_changed(output[0], output[1])
             return
         # Если всё прошло запускаем поток
-        output['logging'], output['q'], output['default_path'] = logging, self.q, self.path_for_default
+        output['logging'], output['queue'] = logging, self.queue
+        output['default_path'] = self.default_path
         self.thread = DeleteHeaderFooter(output)
         self.thread.progress.connect(self.progressBar.setValue)
         self.thread.status.connect(self.statusBar().showMessage)
@@ -454,9 +468,9 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.thread.start()
 
     def pause_thread(self):
-        if self.q.empty():
+        if self.queue.empty():
             self.statusBar().showMessage(self.statusBar().currentMessage() + ' (прерывание процесса, подождите...)')
-            self.q.put(True)
+            self.queue.put(True)
 
     def on_message_changed(self, title, description):
         if title == 'УПС!':

@@ -19,7 +19,8 @@ class GenerateCopyApplication(QThread):
         self.position_num = incoming_data['position_num']
         self.quantity = incoming_data['quantity']
         self.logging = incoming_data['logging']
-        self.q = incoming_data['q']
+        self.queue = incoming_data['queue']
+        self.default_path = incoming_data['default_path']
         self.event = threading.Event()
 
     def run(self):
@@ -42,12 +43,12 @@ class GenerateCopyApplication(QThread):
             self.logging.info("Конец работы программы")
             self.progress.emit(100)
             self.status.emit('Готово')
-            os.chdir('C:\\')
+            os.chdir(self.default_path)
             return
         except BaseException as es:
             self.logging.error(es)
             self.logging.error(traceback.format_exc())
             self.progress.emit(0)
             self.status.emit('Ошибка!')
-            os.chdir('C:\\')
+            os.chdir(self.default_path)
             return

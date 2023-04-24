@@ -18,7 +18,8 @@ class FileParcing(QThread):
         self.group_file = incoming_data['group_file']
         self.no_freq_lim = incoming_data['no_freq_lim']
         self.logging = incoming_data['logging']
-        self.q = incoming_data['q']
+        self.queue = incoming_data['queue']
+        self.default_path = incoming_data['default_path7']
         self.event = threading.Event()
 
     def run(self):
@@ -52,26 +53,26 @@ class FileParcing(QThread):
                 else:
                     succsess_path.append(self.path)
             if succsess_path:
-                self.q.put({'Прошедшие заказы:': '\n'.join(succsess_path)})
+                self.queue.put({'Прошедшие заказы:': '\n'.join(succsess_path)})
                 self.errors.emit()
             if error_path:
-                self.q.put({'Заказы с ошибками:': '\n'.join(error_path)})
+                self.queue.put({'Заказы с ошибками:': '\n'.join(error_path)})
                 self.errors.emit()
             if errors:
                 self.logging.info("Выводим ошибки")
-                self.q.put({'errors': errors})
+                self.queue.put({'errors': errors})
                 self.errors.emit()
                 self.status.emit('В файлах присутствуют ошибки')
             else:
                 self.logging.info("Конец работы программы")
                 self.status.emit('Готово')
-            os.chdir('C:\\')
+            os.chdir(self.default_path)
             return
         except BaseException as es:
             self.logging.error(es)
             self.logging.error(traceback.format_exc())
             self.progress.emit(0)
             self.status.emit('Ошибка!')
-            os.chdir('C:\\')
+            os.chdir(self.default_path)
             return
 

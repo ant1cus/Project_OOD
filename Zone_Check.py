@@ -25,7 +25,8 @@ class ZoneChecked(QThread):
         self.zone = incoming_data['zone_all']
         self.one_table = incoming_data['one_table']
         self.logging = incoming_data['logging']
-        self.q = incoming_data['q']
+        self.queue = incoming_data['queue']
+        self.default_path = incoming_data['default_path']
         self.event = threading.Event()
 
     def run(self):
@@ -378,7 +379,7 @@ class ZoneChecked(QThread):
             progress = 100
             self.progress.emit(progress)
             self.status.emit('Готово!')
-            os.chdir('C://')
+            os.chdir(self.default_path)
             return
         except BaseException as es:
             self.logging.error(es)
@@ -386,17 +387,17 @@ class ZoneChecked(QThread):
             progress = 0
             self.progress.emit(progress)
             self.status.emit('Ошибка!')
-            os.chdir('C://')
+            os.chdir(self.default_path)
             return
 
     def pause_threading(self):
-        question = False if self.q.empty() else self.q.get_nowait()
+        question = False if self.queue.empty() else self.queue.get_nowait()
         if question:
             self.messageChanged.emit('Вопрос?', 'Проверка остановлена пользователем. Нажмите «Да» для продолжения'
                                                 ' или «Нет» для прерывания')
             self.event.wait()
             self.event.clear()
-            if self.q.get_nowait():
+            if self.queue.get_nowait():
                 self.status.emit('Прервано пользователем')
                 self.progress.emit(0)
                 return True
