@@ -6,7 +6,7 @@ import pandas as pd
 from openpyxl import load_workbook
 
 
-def file_parcing(path, logging, status, progress, per, cp, no_freq_lim):
+def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_path):
     try:
         list_file = os.listdir(path)
         # Сохраним нужное нам описание режимов.
@@ -70,7 +70,7 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim):
                             worksheet = wb[name[elem]]  # выбираем лист с именем
                             worksheet.title = x  # переименовываем лист
                     logging.info("Сохраняем книгу с новыми названиями")
-                    wb.save(filename=file)  # сохраняем книгу
+                    wb.save(filename=path + '\\' + file)  # сохраняем книгу
                     wb.close()
                     break
             logging.info("Открываем книгу ещё раз если закрыли её в предыдущем цикле")  # Проверить надо ли
@@ -187,5 +187,5 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim):
         logging.error(traceback.format_exc())
         progress.emit(0)
         status.emit('Ошибка!')
-        os.chdir('C:\\')
+        os.chdir(default_path)
         return
