@@ -123,35 +123,67 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.start_name = False
         self.default_path = pathlib.Path.cwd()  # Путь для файла настроек
         # Имена в файле
-        self.name_list = {'checked-path_check': 'Путь к дир. с файлами', 'checked-table_number': 'Номер таблицы',
-                          'checked-stationary_FSB': 'Стац. ФСБ', 'checked-carry_FSB': 'Воз. ФСБ',
-                          'checked-wear_FSB': 'Нос. ФСБ', 'checked-r1_FSB': 'r1 ФСБ', 'checked-r1s_FSB': 'r1` ФСБ',
-                          'checked-stationary_FSTEK': 'Стац. ФСТЭК', 'checked-carry_FSTEK': 'Воз. ФСТЭК',
-                          'checked-wear_FSTEK': 'Нос. ФСТЭК', 'checked-r1_FSTEK': 'r1 ФСТЭК',
-                          'parser-path_parser': 'Путь к дир. с файлами',
-                          'extract-path_original_extract': 'Путь к дир. с файлами',
-                          'extract-conclusion_post': 'Должность заключение',
-                          'extract-conclusion_name': 'ФИО заключение',
-                          'extract-protocol_post': 'Должность протокол', 'extract-protocol_name': 'ФИО протокол',
-                          'extract-prescription_post': 'Должность предписание',
-                          'extract-prescription_name': 'ФИО предписание',
-                          'gen_pemi-path_original_file': 'Путь к дир. с исходниками',
-                          'gen_pemi-path_finish_folder': 'Путь к дир. для генерации',
-                          'gen_pemi-path_freq_restrict': 'Путь к файлу ограничений',
-                          'gen_pemi-complect_quant_pemi': 'Количество комплектов',
-                          'gen_pemi-complect_number_pemi': 'Номера комплектов',
-                          'HFE-path_file_HFE': 'Путь к дир. с файлами',
-                          'HFE-complect_quant_HFE': 'Количество комплектов',
-                          'HFE-frequency': 'Частота', 'HFE-level': 'Уровень',
-                          'HFI-path_file_HFI': 'Путь к дир. с файлами',
-                          'HFI-complect_quant_HFI': 'Количество комплектов',
-                          'HFI-imposition_freq': 'Частота навязывания', 'application-path_example': 'Путь к файлу',
-                          'application-path_finish_folder_example': 'Путь к конечной дир.',
-                          'application-number_position': 'Номер позиции',
-                          'application-quantity_document': 'Количество комплектов',
-                          'LF-path_start_folder': 'Путь к начальной дир.',
-                          'LF-path_finish_folder': 'Путь к конечной дир.',
-                          'LF-path_file_excel': 'Путь к файлу генератору'}
+        self.name_list = {'checked-path_check': ['Путь к дир. с файлами', self.lineEdit_path_check],
+                          'checked-table_number': ['Номер таблицы', self.lineEdit_table_number],
+                          'checked-checkBox_first_table': ['Только 1 таб.', self.checkBox_first_table],
+                          'checked-groupBox_FSB': ['Проверка ФСБ', self.groupBox_FSB],
+                          'checked-checkBox_win_lin': ['Windows + Linux', self.checkBox_win_lin],
+                          'checked-stationary_FSB': ['Стац. ФСБ', self.lineEdit_stationary_FSB],
+                          'checked-carry_FSB': ['Воз. ФСБ', self.lineEdit_carry_FSB],
+                          'checked-wear_FSB': ['Нос. ФСБ', self.lineEdit_wear_FSB],
+                          'checked-r1_FSB': ['r1 ФСБ', self.lineEdit_r1_FSB],
+                          'checked-r1s_FSB': ['r1` ФСБ', self.lineEdit_r1s_FSB],
+                          'checked-groupBox_FSTEK': ['Проверка ФСТЭК', self.groupBox_FSTEK],
+                          'checked-stationary_FSTEK': ['Стац. ФСТЭК', self.lineEdit_stationary_FSTEK],
+                          'checked-carry_FSTEK': ['Воз. ФСТЭК', self.lineEdit_carry_FSTEK],
+                          'checked-wear_FSTEK': ['Нос. ФСТЭК', self.lineEdit_wear_FSTEK],
+                          'checked-r1_FSTEK': ['r1 ФСТЭК', self.lineEdit_r1_FSTEK],
+                          'parser-path_parser': ['Путь к дир. с файлами', self.lineEdit_path_parser],
+                          'parser-checkBox_group_parcing': ['Пакетный парсинг', self.checkBox_group_parcing],
+                          'parser-checkBox_no_freq_limit': ['Без ограничения частот', self.checkBox_no_freq_limit],
+                          'extract-path_original_extract': ['Путь к дир. с файлами',
+                                                            self.lineEdit_path_original_extract],
+                          'extract-groupBox_value_for_extract': ['Значения для выписки',
+                                                                 self.groupBox_value_for_extract],
+                          'extract-conclusion_post': ['Должность заключение', self.lineEdit_conclusion_post],
+                          'extract-conclusion_name': ['ФИО заключение', self.lineEdit_conclusion_name],
+                          'extract-protocol_post': ['Должность протокол', self.lineEdit_protocol_post],
+                          'extract-protocol_name': ['ФИО протокол', self.lineEdit_protocol_name],
+                          'extract-prescription_post': ['Должность предписание', self.lineEdit_prescription_post],
+                          'extract-prescription_name': ['ФИО предписание', self.lineEdit_prescription_name],
+                          'gen_pemi-path_original_file': ['Путь к дир. с исходниками',
+                                                          self.lineEdit_path_original_file],
+                          'gen_pemi-path_finish_folder': ['Путь к дир. для генерации',
+                                                          self.lineEdit_path_finish_folder],
+                          'gen_pemi-checkBox_freq_restrict': ['Файл ограничения частот', self.checkBox_freq_restrict],
+                          'gen_pemi-path_freq_restrict': ['Путь к файлу ограничений', self.lineEdit_path_freq_restrict],
+                          'gen_pemi-checkBox_no_excel_generation': ['Не генерировать excel',
+                                                                    self.checkBox_no_excel_generation],
+                          'gen_pemi-checkBox_no_limit_freq_gen': ['Без ограничения знач.',
+                                                                  self.checkBox_no_limit_freq_gen],
+                          'gen_pemi-checkBox_3db_difference': ['Разница 3 дБ', self.checkBox_3db_difference],
+                          'gen_pemi-complect_quant_pemi': ['Количество комплектов', self.lineEdit_complect_quant_pemi],
+                          'gen_pemi-complect_number_pemi': ['Номера комплектов', self.lineEdit_complect_number_pemi],
+                          'HFE-path_file_HFE': ['Путь к дир. с файлами', self.lineEdit_path_file_HFE],
+                          'HFE-complect_quant_HFE': ['Количество комплектов', self.lineEdit_complect_quant_HFE],
+                          'HFE-checkBox_required_values_HFE': ['Значения вручную', self.checkBox_required_values_HFE],
+                          'HFE-frequency': ['Частота', self.lineEdit_frequency],
+                          'HFE-level': ['Уровень', self.lineEdit_level],
+                          'HFI-path_file_HFI': ['Путь к дир. с файлами', self.lineEdit_path_file_HFI],
+                          'HFI-complect_quant_HFI': ['Количество комплектов', self.lineEdit_complect_quant_HFE],
+                          'HFI-checkBox_imposition_freq': ['Ручной ввод частоты', self.checkBox_imposition_freq],
+                          'HFI-imposition_freq': ['Частота навязывания', self.lineEdit_imposition_freq],
+                          'HFI-checkBox_power_supply': ['Питание', self.checkBox_power_supply],
+                          'HFI-checkBox_symetrical': ['Симметричка', self.checkBox_symetrical],
+                          'HFI-checkBox_asymetriacal': ['Не симметричка', self.checkBox_asymetriacal],
+                          'application-path_example': ['Путь к файлу', self.lineEdit_path_example],
+                          'application-path_finish_folder_example': ['Путь к конечной дир.',
+                                                                     self.lineEdit_path_finish_folder_example],
+                          'application-number_position': ['Номер позиции', self.lineEdit_number_position],
+                          'application-quantity_document': ['Количество комплектов', self.lineEdit_quantity_document],
+                          'LF-path_start_folder': ['Путь к начальной дир.', self.lineEdit_path_start_folder_lf],
+                          'LF-path_finish_folder': ['Путь к конечной дир.', self.lineEdit_path_finish_folder_lf],
+                          'LF-path_file_excel': ['Путь к файлу генератору', self.lineEdit_path_file_excel_lf]}
         # Грузим значения по умолчанию
         self.name_tab = {"tab_zone_checked": "Проверка зон", "tab_parser": "Парсер txt",
                          "tab_exctract": "Обезличивание", "tab_gen_application": "Генератор приложений",
@@ -199,21 +231,21 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 self.tabWidget.addTab(self.tab_for_paint[self.tab_order[tab]], self.name_tab[self.tab_order[tab]])
         self.tabWidget.tabBar().setCurrentIndex(0)
         # Линии для заполнения
-        self.line = [self.lineEdit_path_check, self.lineEdit_table_number, self.lineEdit_stationary_FSB,
-                     self.lineEdit_carry_FSB, self.lineEdit_wear_FSB, self.lineEdit_r1_FSB, self.lineEdit_r1s_FSB,
-                     self.lineEdit_stationary_FSTEK, self.lineEdit_carry_FSTEK, self.lineEdit_wear_FSTEK,
-                     self.lineEdit_r1_FSTEK, self.lineEdit_path_parser, self.lineEdit_path_original_extract,
-                     self.lineEdit_conclusion_post, self.lineEdit_conclusion_name, self.lineEdit_protocol_post,
-                     self.lineEdit_protocol_name, self.lineEdit_prescription_post, self.lineEdit_prescription_name,
-                     self.lineEdit_path_original_file, self.lineEdit_path_finish_folder,
-                     self.lineEdit_path_freq_restrict, self.lineEdit_complect_quant_pemi,
-                     self.lineEdit_complect_number_pemi, self.lineEdit_path_file_HFE,
-                     self.lineEdit_complect_quant_HFE, self.lineEdit_frequency, self.lineEdit_level,
-                     self.lineEdit_path_file_HFI, self.lineEdit_complect_quant_HFI, self.lineEdit_imposition_freq,
-                     self.lineEdit_path_example, self.lineEdit_path_finish_folder_example,
-                     self.lineEdit_number_position, self.lineEdit_quantity_document,
-                     self.lineEdit_path_start_folder_lf, self.lineEdit_path_finish_folder_lf,
-                     self.lineEdit_path_file_excel_lf]
+        # self.line = [self.lineEdit_path_check, self.lineEdit_table_number, self.lineEdit_stationary_FSB,
+        #              self.lineEdit_carry_FSB, self.lineEdit_wear_FSB, self.lineEdit_r1_FSB, self.lineEdit_r1s_FSB,
+        #              self.lineEdit_stationary_FSTEK, self.lineEdit_carry_FSTEK, self.lineEdit_wear_FSTEK,
+        #              self.lineEdit_r1_FSTEK, self.lineEdit_path_parser, self.lineEdit_path_original_extract,
+        #              self.lineEdit_conclusion_post, self.lineEdit_conclusion_name, self.lineEdit_protocol_post,
+        #              self.lineEdit_protocol_name, self.lineEdit_prescription_post, self.lineEdit_prescription_name,
+        #              self.lineEdit_path_original_file, self.lineEdit_path_finish_folder,
+        #              self.lineEdit_path_freq_restrict, self.lineEdit_complect_quant_pemi,
+        #              self.lineEdit_complect_number_pemi, self.lineEdit_path_file_HFE,
+        #              self.lineEdit_complect_quant_HFE, self.lineEdit_frequency, self.lineEdit_level,
+        #              self.lineEdit_path_file_HFI, self.lineEdit_complect_quant_HFI, self.lineEdit_imposition_freq,
+        #              self.lineEdit_path_example, self.lineEdit_path_finish_folder_example,
+        #              self.lineEdit_number_position, self.lineEdit_quantity_document,
+        #              self.lineEdit_path_start_folder_lf, self.lineEdit_path_finish_folder_lf,
+        #              self.lineEdit_path_file_excel_lf]
         self.default_date(self.data)
 
     def tab_(self, index):
@@ -242,10 +274,15 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                         self.tab_visible[el] = False
                         rewrite(self.default_path, self.tab_visible, visible='tab_visible')
 
-    def default_date(self, d):
-        for i, el in enumerate(self.name_list):
-            if el in d:
-                self.line[i].setText(d[el])  # Помещаем значение
+    def default_date(self, incoming_data):
+        for element in self.name_list:
+            if element in incoming_data:
+                if 'checkBox' in element or 'groupBox' in element:
+                    self.name_list[element][1].setChecked(True) if incoming_data[element] \
+                        else self.name_list[element][1].setChecked(False)
+                else:
+                    self.name_list[element][1].setText(incoming_data[element])
+                # self.line[i].setText(d[el])  # Помещаем значение
 
     def default_settings(self):  # Запускаем окно с настройками по умолчанию.
         self.close()

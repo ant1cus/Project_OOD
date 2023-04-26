@@ -44,48 +44,13 @@ class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки п
         self.path_for_default = path
         self.parent = parent
         # Имена
-        self.name_list = {'checked-path_check': 'Путь к дир. с файлами', 'checked-table_number': 'Номер таблицы',
-                          'checked-stationary_FSB': 'Стац. ФСБ', 'checked-carry_FSB': 'Воз. ФСБ',
-                          'checked-wear_FSB': 'Нос. ФСБ', 'checked-r1_FSB': 'r1 ФСБ', 'checked-r1s_FSB': 'r1` ФСБ',
-                          'checked-stationary_FSTEK': 'Стац. ФСТЭК', 'checked-carry_FSTEK': 'Воз. ФСТЭК',
-                          'checked-wear_FSTEK': 'Нос. ФСТЭК', 'checked-r1_FSTEK': 'r1 ФСТЭК',
-                          'parser-path_parser': 'Путь к дир. с файлами',
-                          'extract-path_original_extract': 'Путь к дир. с файлами',
-                          'extract-conclusion_post': 'Должность заключение',
-                          'extract-conclusion_name': 'ФИО заключение',
-                          'extract-protocol_post': 'Должность протокол', 'extract-protocol_name': 'ФИО протокол',
-                          'extract-prescription_post': 'Должность предписание',
-                          'extract-prescription_name': 'ФИО предписание',
-                          'gen_pemi-path_original_file': 'Путь к дир. с исходниками',
-                          'gen_pemi-path_finish_folder': 'Путь к дир. для генерации',
-                          'gen_pemi-path_freq_restrict': 'Путь к файлу ограничений',
-                          'gen_pemi-complect_quant_pemi': 'Количество комплектов',
-                          'gen_pemi-complect_number_pemi': 'Номера комплектов',
-                          'HFE-path_file_HFE': 'Путь к дир. с файлами',
-                          'HFE-complect_quant_HFE': 'Количество комплектов',
-                          'HFE-frequency': 'Частота', 'HFE-level': 'Уровень',
-                          'HFI-path_file_HFI': 'Путь к дир. с файлами',
-                          'HFI-complect_quant_HFI': 'Количество комплектов',
-                          'HFI-imposition_freq': 'Частота навязывания', 'application-path_example': 'Путь к файлу',
-                          'application-path_finish_folder_example': 'Путь к конечной дир.',
-                          'application-number_position': 'Номер позиции',
-                          'application-quantity_document': 'Количество комплектов',
-                          'LF-path_start_folder': 'Путь к начальной дир.',
-                          'LF-path_finish_folder': 'Путь к конечной дир.',
-                          'LF-path_file_excel': 'Путь к файлу генератору'}
         # self.name_list = {'checked-path_check': 'Путь к дир. с файлами', 'checked-table_number': 'Номер таблицы',
-        #                   'checked-checkBox_first_table': 'Только 1 таб.', 'checked-groupBox_FSB': 'Проверка ФСБ',
-        #                   'checked-checkBox_win_lin': 'Windows + Linux',
         #                   'checked-stationary_FSB': 'Стац. ФСБ', 'checked-carry_FSB': 'Воз. ФСБ',
         #                   'checked-wear_FSB': 'Нос. ФСБ', 'checked-r1_FSB': 'r1 ФСБ', 'checked-r1s_FSB': 'r1` ФСБ',
-        #                   'checked-groupBox_FSTEK': 'Проверка ФСТЭК',
         #                   'checked-stationary_FSTEK': 'Стац. ФСТЭК', 'checked-carry_FSTEK': 'Воз. ФСТЭК',
         #                   'checked-wear_FSTEK': 'Нос. ФСТЭК', 'checked-r1_FSTEK': 'r1 ФСТЭК',
         #                   'parser-path_parser': 'Путь к дир. с файлами',
-        #                   'parser-checkBox_group_parcing': 'Пакетный парсинг',
-        #                   'parser-checkBox_no_freq_limit': 'Без ограничения частот',
         #                   'extract-path_original_extract': 'Путь к дир. с файлами',
-        #                   'extract-groupBox_value_for_extract': 'Значения для выписки',
         #                   'extract-conclusion_post': 'Должность заключение',
         #                   'extract-conclusion_name': 'ФИО заключение',
         #                   'extract-protocol_post': 'Должность протокол', 'extract-protocol_name': 'ФИО протокол',
@@ -108,6 +73,51 @@ class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки п
         #                   'LF-path_start_folder': 'Путь к начальной дир.',
         #                   'LF-path_finish_folder': 'Путь к конечной дир.',
         #                   'LF-path_file_excel': 'Путь к файлу генератору'}
+        self.name_list = {'checked-path_check': 'Путь к дир. с файлами', 'checked-table_number': 'Номер таблицы',
+                          'checked-checkBox_first_table': 'Только 1 таб.', 'checked-groupBox_FSB': 'Проверка ФСБ',
+                          'checked-checkBox_win_lin': 'Windows + Linux',
+                          'checked-stationary_FSB': 'Стац. ФСБ', 'checked-carry_FSB': 'Воз. ФСБ',
+                          'checked-wear_FSB': 'Нос. ФСБ', 'checked-r1_FSB': 'r1 ФСБ', 'checked-r1s_FSB': 'r1` ФСБ',
+                          'checked-groupBox_FSTEK': 'Проверка ФСТЭК',
+                          'checked-stationary_FSTEK': 'Стац. ФСТЭК', 'checked-carry_FSTEK': 'Воз. ФСТЭК',
+                          'checked-wear_FSTEK': 'Нос. ФСТЭК', 'checked-r1_FSTEK': 'r1 ФСТЭК',
+                          'parser-path_parser': 'Путь к дир. с файлами',
+                          'parser-checkBox_group_parcing': 'Пакетный парсинг',
+                          'parser-checkBox_no_freq_limit': 'Без ограничения частот',
+                          'extract-path_original_extract': 'Путь к дир. с файлами',
+                          'extract-groupBox_value_for_extract': 'Значения для выписки',
+                          'extract-conclusion_post': 'Должность заключение',
+                          'extract-conclusion_name': 'ФИО заключение',
+                          'extract-protocol_post': 'Должность протокол', 'extract-protocol_name': 'ФИО протокол',
+                          'extract-prescription_post': 'Должность предписание',
+                          'extract-prescription_name': 'ФИО предписание',
+                          'gen_pemi-path_original_file': 'Путь к дир. с исходниками',
+                          'gen_pemi-path_finish_folder': 'Путь к дир. для генерации',
+                          'gen_pemi-checkBox_freq_restrict': 'Файл ограничения частот',
+                          'gen_pemi-path_freq_restrict': 'Путь к файлу ограничений',
+                          'gen_pemi-checkBox_no_excel_generation': 'Не генерировать excel',
+                          'gen_pemi-checkBox_no_limit_freq_gen': 'Без ограничения знач.',
+                          'gen_pemi-checkBox_3db_difference': 'Разница 3 дБ',
+                          'gen_pemi-complect_quant_pemi': 'Количество комплектов',
+                          'gen_pemi-complect_number_pemi': 'Номера комплектов',
+                          'HFE-path_file_HFE': 'Путь к дир. с файлами',
+                          'HFE-complect_quant_HFE': 'Количество комплектов',
+                          'HFE-checkBox_required_values_HFE': 'Значения вручную',
+                          'HFE-frequency': 'Частота', 'HFE-level': 'Уровень',
+                          'HFI-path_file_HFI': 'Путь к дир. с файлами',
+                          'HFI-complect_quant_HFI': 'Количество комплектов',
+                          'HFI-checkBox_imposition_freq': 'Ручной ввод частоты',
+                          'HFI-imposition_freq': 'Частота навязывания',
+                          'HFI-checkBox_power_supply': 'Питание',
+                          'HFI-checkBox_symetrical': 'Симметричка',
+                          'HFI-checkBox_asymetriacal': 'Не симметричка',
+                          'application-path_example': 'Путь к файлу',
+                          'application-path_finish_folder_example': 'Путь к конечной дир.',
+                          'application-number_position': 'Номер позиции',
+                          'application-quantity_document': 'Количество комплектов',
+                          'LF-path_start_folder': 'Путь к начальной дир.',
+                          'LF-path_finish_folder': 'Путь к конечной дир.',
+                          'LF-path_file_excel': 'Путь к файлу генератору'}
         self.name_box = [self.groupBox_checked, self.groupBox_parcing, self.groupBox_exctracting,
                          self.groupBox_gen_pemi, self.groupBox_gen_hfe, self.groupBox_gen_hfi,
                          self.groupBox_application, self.groupBox_gen_LF]
@@ -200,22 +210,6 @@ class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки п
                     self.name[num].setText(directory[0])
             else:  # Если директории
                 self.name[num].setText(directory)
-        # directory = None
-        # if num in [2, 6, 7, 8]:  # Если необходимо открыть файл
-        #     directory = QFileDialog.getOpenFileName(self, "Find Files", QDir.currentPath())
-        # elif num in [0, 1, 3, 4, 5]:  # Если необходимо открыть директорию
-        #     directory = QFileDialog.getExistingDirectory(self, "Find Files", QDir.currentPath())
-        # # Список линий
-        # line = [self.lineEdit_path_old, self.lineEdit_path_new, self.lineEdit_path_file_num,
-        #         self.lineEdit_path_account, self.lineEdit_path_form_27_create,
-        #         self.lineEdit_path_old_print, self.lineEdit_path_form_27_print, self.lineEdit_path_account_numbers,
-        #         self.lineEdit_path_add_account_numbers]
-        # if directory:  # Если нажать кнопку отркыть в диалоге выбора
-        #     if num in [2, 6, 7, 8]:  # Если файлы
-        #         if directory[0]:  # Если есть файл, чтобы не очищалось поле
-        #             line[num].setText(directory[0])
-        #     else:  # Если директории
-        #         line[num].setText(directory)
 
     def add_button_clicked(self, number):  # Если кликнули по кнопке
         self.name[number].setEnabled(True)  # Делаем активным для изменения
@@ -232,7 +226,7 @@ class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки п
 
     def accept(self):  # Если нажали кнопку принять
         for i, el in enumerate(self.name_list):  # Пробегаем значения
-            if 'checkBox' in el:
+            if 'checkBox' in el or 'groupBox' in el:
                 self.data[el] = True if self.combo[i].currentIndex() == 0 else False
             else:
                 if self.name[i].isEnabled():  # Если виджет активный (означает потенциальное изменение)
