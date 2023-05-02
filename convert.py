@@ -173,6 +173,7 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_
                                 pass
                         else:
                             if sheet.lower() != 'описание':
+                                df = df.drop(df.columns[[i for i in df.columns.tolist() if i > 2]], axis=1)
                                 if [0, 1, 2] in df.columns.tolist():
                                     df = df[[0, 1, 2]]
                                 df = df.dropna()
