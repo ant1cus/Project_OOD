@@ -1,4 +1,5 @@
 import os
+import pathlib
 import random
 import threading
 import traceback
@@ -38,7 +39,7 @@ class GenerationFile(QThread):
             self.progress.emit(current_progress)
             percent = 100/(2*(len(os.listdir(self.source)) - 1) + 2*int(self.complect_quant))
             error = file_parcing(self.source, self.logging, self.status, self.progress, percent, current_progress,
-                                 self.no_freq_lim)
+                                 self.no_freq_lim, self.default_path)
             quant_doc = len(os.listdir(self.source)) - 2
             errors = False
             if error['error']:
@@ -153,7 +154,7 @@ class GenerationFile(QThread):
                     if self.no_excel_file:
                         os.makedirs(self.output + '\\' + str(complect_number))
                     else:
-                        wb = pd.ExcelWriter(self.output + '\\' + str(complect_number) + '.xlsx')
+                        wb = pd.ExcelWriter(str(pathlib.Path(self.output, str(complect_number) + '.xlsx')))
                     for sheet_name in df_sheet.keys():
                         if 'описание' in sheet_name.lower():
                             create_file(description, path_txt, sheet_name, wb)
@@ -162,7 +163,7 @@ class GenerationFile(QThread):
                         else:
                             create_file(df_sheet[sheet_name], path_txt, sheet_name, wb)
                     if self.no_excel_file is False:
-                        wb.save()
+                        wb.close()
                     current_progress += percent
                     self.progress.emit(int(current_progress))
                 self.logging.info('Создаём файл описания')
@@ -178,7 +179,7 @@ class GenerationFile(QThread):
                 self.progress.emit(0)
             else:
                 file_parcing(self.output, self.logging, self.status, self.progress, percent, current_progress,
-                             self.no_freq_lim)
+                             self.no_freq_lim, self.default_path)
                 self.progress.emit(100)
                 self.logging.info("Конец работы программы")
                 self.status.emit('Готово')

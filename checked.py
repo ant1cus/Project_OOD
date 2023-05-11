@@ -150,17 +150,29 @@ def checked_generation_pemi(source_file, output_file, complect_number, complect_
         if os.stat(source + '\\' + file).st_size == 0:
             return ['УПС!', 'Файл с описанием режимов пуст']
         else:
-            with open(source + '\\' + file, mode='r') as f:
-                name_mode = f.readlines()
-                if ' ' in name_mode:
-                    return ['УПС!', 'Пробелы в названии режимов в файле «Описание»']
-                else:
-                    name_mode = [line.rstrip().lower() for line in name_mode if line]
+            try:
+                with open(str(pathlib.Path(source, file)), mode='r', encoding='utf-8') as f:
+                    name_mode = f.readlines()
+                    if ' ' in name_mode:
+                        return ['УПС!', 'Пробелы в названии режимов в файле «Описание»']
+                    else:
+                        name_mode = [line.rstrip().lower() for line in name_mode if line]
+            except UnicodeDecodeError:
+                with open(str(pathlib.Path(source, file)), mode='r') as f:
+                    name_mode = f.readlines()
+                    if ' ' in name_mode:
+                        return ['УПС!', 'Пробелы в названии режимов в файле «Описание»']
+                    else:
+                        name_mode = [line.rstrip().lower() for line in name_mode if line]
     error = []
     for file_exel in sorted(list(filter(lambda x: x.endswith('.xlsx'), os.listdir(output)))):
-        if file_exel[:-5] in complect:
-            return ['УПС!', 'В указанной папке уже есть такие исходники']
-        wb = load_workbook(source + '\\' + file_exel)  # Откроем книгу.
+        if int(file_exel[:-5]) in complect:
+            error.append(file_exel)
+    if error:
+        return ['УПС!', 'В указанной папке уже есть такие исходники:\n' + '\n'.join(error)]
+    error = []
+    for file_exel in sorted(list(filter(lambda x: x.endswith('.xlsx'), os.listdir(source)))):
+        wb = load_workbook(str(pathlib.Path(source, file_exel)))  # Откроем книгу.
         name = wb.sheetnames  # Список листов.
         for name_exel in name:
             if name_exel.lower() not in name_mode:
@@ -324,3 +336,57 @@ def checked_lf_data(source_folder, output_folder, excel_file):
             return {'source': source, 'output': output, 'excel': file}
         else:
             return ['УПС!', 'Указанный файл недопустимого формата (необходимо .xlsx)']
+
+
+def checked_generation_cc(start_folder, finish_folder, complect_number, complect_quantity):
+
+    source = start_folder.text().strip()
+    if not source:
+        return ['УПС!', 'Путь к исходным файлам пуст']
+    if os.path.isfile(source):
+        return ['УПС!', 'Указанный путь к исходным файлам не является директорией']
+    output = finish_folder.text().strip()
+    if not output:
+        return ['УПС!', 'Путь к создаваемым файлам пуст']
+    if os.path.isfile(output):
+        return ['УПС!', 'Указанный путь к создаваемым файлам не является директорией']
+    if len([True for el in pathlib.Path(source).iterdir() if el.is_dir()]) > 1:
+            return ['УПС!', 'В указанной директории слишком много папок']
+    complect_num = complect_number.text().strip()
+    if not complect_num:
+        return ['УПС!', 'Не указаны номера комплектов']
+    for i in complect_num:
+        if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ' ', '-', ',', '.')):
+            return ['УПС!', 'Есть лишние символы в номерах комплектов']
+    complect_num = complect_num.replace(' ', '').replace(',', '.')
+    if complect_num[0] == '.' or complect_num[0] == '-':
+        return ['УПС!', 'Первый символ введён не верно']
+    if complect_num[-1] == '.' or complect_num[-1] == '-':
+        return ['УПС!', 'Последний символ введён не верно']
+    for i in range(len(complect_num)):
+        if complect_num[i] == '.' or complect_num[i] == '-':
+            if complect_num[i + 1] == '.' or complect_num[i + 1] == '-':
+                return ['УПС!', 'Два разделителя номеров подряд']
+    complect = []
+    for element in complect_num.split('.'):
+        if '-' in element:
+            num1, num2 = int(element.partition('-')[0]), int(element.partition('-')[2])
+            if num1 >= num2:
+                return ['УПС!', 'Диапазон номеров комплектов указан не верно']
+            else:
+                for el in range(num1, num2 + 1):
+                    complect.append(el)
+        else:
+            complect.append(element)
+    complect.sort()
+    if len(complect) != len(set(complect)):
+        return ['УПС!', 'Есть повторения в номерах комплектов']
+    complect_quant = complect_quantity.text()
+    if not complect_quant:
+        return ['УПС!', 'Не указано количество комплектов']
+    for i in complect_quant:
+        if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')):
+            return ['УПС!', 'Не правильно указано количество комплектов']
+    if len(complect) != int(complect_quant):
+        return ['УПС!', 'Указанные номера не совпадают с количеством генерируемых комплектов']
+    return {'source': source, 'output': output, 'complect': complect, 'complect_quant': complect_quant}
