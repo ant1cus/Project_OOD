@@ -97,7 +97,8 @@ class GenerationFile(QThread):
                                                                                         'min_s': [col[1].min()],
                                                                                         'max_n': [col[2].max()],
                                                                                         'min_n': [col[2].min()],
-                                                                                        'quant_frq': [df[el]/quant_doc]})],
+                                                                                        'quant_frq':
+                                                                                            [df[el]/quant_doc]})],
                                                         axis=0)
                 for complect_number in self.complect:
                     self.logging.info('Генерация файла ' + str(complect_number))
@@ -159,7 +160,8 @@ class GenerationFile(QThread):
                         if 'описание' in sheet_name.lower():
                             create_file(description, path_txt, sheet_name, wb)
                         elif df_sheet[sheet_name].empty:
-                            create_file(pd.Series('Не обнаружено'), path_txt, sheet_name, wb)
+                            data_for_write = pd.Series() if self.no_excel_file else pd.Series('Не обнаружено')
+                            create_file(data_for_write, path_txt, sheet_name, wb)
                         else:
                             create_file(df_sheet[sheet_name], path_txt, sheet_name, wb)
                     if self.no_excel_file is False:

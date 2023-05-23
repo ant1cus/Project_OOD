@@ -4,6 +4,7 @@ import os
 import pathlib
 import queue
 import sys
+import traceback
 
 from PyQt5.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor
 
@@ -173,20 +174,20 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                           'gen_pemi-checkBox_no_limit_freq_gen': ['Без ограничения знач.',
                                                                   self.checkBox_no_limit_freq_gen],
                           'gen_pemi-checkBox_3db_difference': ['Разница 3 дБ', self.checkBox_3db_difference],
-                          'gen_pemi-complect_quant_pemi': ['Количество комплектов', self.lineEdit_complect_quant_pemi],
-                          'gen_pemi-complect_number_pemi': ['Номера комплектов', self.lineEdit_complect_number_pemi],
+                          'gen_pemi-set_quant_pemi': ['Количество комплектов', self.lineEdit_complect_quant_pemi],
+                          'gen_pemi-set_number_pemi': ['Номера комплектов', self.lineEdit_complect_number_pemi],
                           'HFE-path_file_HFE': ['Путь к дир. с файлами', self.lineEdit_path_file_HFE],
-                          'HFE-complect_quant_HFE': ['Количество комплектов', self.lineEdit_complect_quant_HFE],
+                          'HFE-set_quant_HFE': ['Количество комплектов', self.lineEdit_complect_quant_HFE],
                           'HFE-checkBox_required_values_HFE': ['Значения вручную', self.checkBox_required_values_HFE],
                           'HFE-frequency': ['Частота', self.lineEdit_frequency],
                           'HFE-level': ['Уровень', self.lineEdit_level],
                           'HFI-path_file_HFI': ['Путь к дир. с файлами', self.lineEdit_path_file_HFI],
-                          'HFI-complect_quant_HFI': ['Количество комплектов', self.lineEdit_complect_quant_HFE],
+                          'HFI-set_quant_HFI': ['Количество комплектов', self.lineEdit_complect_quant_HFE],
                           'HFI-checkBox_imposition_freq': ['Ручной ввод частоты', self.checkBox_imposition_freq],
                           'HFI-imposition_freq': ['Частота навязывания', self.lineEdit_imposition_freq],
                           'HFI-checkBox_power_supply': ['Питание', self.checkBox_power_supply],
-                          'HFI-checkBox_symetrical': ['Симметричка', self.checkBox_symetrical],
-                          'HFI-checkBox_asymetriacal': ['Не симметричка', self.checkBox_asymetriacal],
+                          'HFI-checkBox_symmetrical': ['Симметричка', self.checkBox_symetrical],
+                          'HFI-checkBox_asymmetriacal': ['Не симметричка', self.checkBox_asymetriacal],
                           'application-path_file_example': ['Путь к файлу', self.lineEdit_path_start_example],
                           'application-path_folder_finish_example': ['Путь к конечной дир.',
                                                                      self.lineEdit_path_finish_example],
@@ -196,7 +197,9 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                           'LF-path_folder_finish': ['Путь к конечной дир.', self.lineEdit_path_finish_folder_lf],
                           'LF-path_file_excel': ['Путь к файлу генератору', self.lineEdit_path_file_excel_lf],
                           'CC-path_folder_start': ['Путь к файлам спектра', self.lineEdit_path_folder_start_cc],
-                          'CC-path_folder_finish': ['Путь к конечной папке', self.lineEdit_path_folder_finish_cc]}
+                          'CC-path_folder_finish': ['Путь к конечной папке', self.lineEdit_path_folder_finish_cc],
+                          'CC-set_quantity': ['Количество комплектов', self.lineEdit_complect_quantity_cc],
+                          'CC-set_numbers': ['Номера комплектов', self.lineEdit_complect_number_cc]}
         # Грузим значения по умолчанию
         self.name_tab = {"tab_zone_checked": "Проверка зон", "tab_parser": "Парсер txt",
                          "tab_exctract": "Обезличивание", "tab_gen_application": "Генератор приложений",
@@ -323,7 +326,6 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.groupBox_FSB.setChecked(False)
 
     def browse(self, line_edit):  # Для кнопки открыть
-        directory = None
         if 'folder' in self.sender().objectName():  # Если необходимо открыть директорию
             directory = QFileDialog.getExistingDirectory(self, "Открыть папку", QDir.currentPath())
         else:  # Если необходимо открыть файл
@@ -335,117 +337,172 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             line_edit.setText(directory)
 
     def copy_application(self):
-        application = checked_application_data(self.lineEdit_path_start_example, self.lineEdit_path_finish_example,
-                                               self.lineEdit_number_position, self.lineEdit_quantity_document)
-        if isinstance(application, list):
-            self.on_message_changed(application[0], application[1])
-            return
-        # Если всё прошло запускаем поток
-        application['logging'], application['queue'] = logging, self.queue
-        application['default_path'] = self.default_path
-        self.thread = GenerateCopyApplication(application)
-        self.thread.progress.connect(self.progressBar.setValue)
-        self.thread.status.connect(self.statusBar().showMessage)
-        self.thread.messageChanged.connect(self.on_message_changed)
-        self.thread.errors.connect(self.errors)
-        self.thread.start()
+        try:
+            logging.info('----------------Запускаем copy_application----------------')
+            logging.info('Проверка данных')
+            application = checked_application_data(self.lineEdit_path_start_example, self.lineEdit_path_finish_example,
+                                                   self.lineEdit_number_position, self.lineEdit_quantity_document)
+            if isinstance(application, list):
+                logging.info('Обнаружены ошибки данных')
+                self.on_message_changed(application[0], application[1])
+                return
+            # Если всё прошло запускаем поток
+            logging.info('Запуск на выполнение')
+            application['logging'], application['queue'] = logging, self.queue
+            application['default_path'] = self.default_path
+            self.thread = GenerateCopyApplication(application)
+            self.thread.progress.connect(self.progressBar.setValue)
+            self.thread.status.connect(self.statusBar().showMessage)
+            self.thread.messageChanged.connect(self.on_message_changed)
+            self.thread.errors.connect(self.errors)
+            self.thread.start()
+        except BaseException as exception:
+            logging.error('Ошибка copy_application')
+            logging.error(exception)
+            logging.error(traceback.format_exc())
 
     def generate_pemi(self):
-        generate = checked_generation_pemi(self.lineEdit_path_start_pemi, self.lineEdit_path_finish_pemi,
-                                           self.lineEdit_complect_number_pemi, self.lineEdit_complect_quant_pemi,
-                                           self.checkBox_freq_restrict.isChecked(), self.lineEdit_path_freq_restrict)
-        no_freq_lim = self.checkBox_no_limit_freq_gen.isChecked()
-        no_excel_file = self.checkBox_no_excel_generation.isChecked()
-        db_differeence = self.checkBox_3db_difference.isChecked()
-        if isinstance(generate, list):
-            self.on_message_changed(generate[0], generate[1])
-            return
-        # Если всё прошло запускаем поток
-        generate['logging'], generate['queue'] = logging, self.queue
-        generate['no_freq_lim'], generate['no_excel_file'] = no_freq_lim, no_excel_file
-        generate['3db_difference'], generate['default_path'] = db_differeence, self.default_path
-        self.thread = GenerationFile(generate)
-        self.thread.progress.connect(self.progressBar.setValue)
-        self.thread.status.connect(self.statusBar().showMessage)
-        self.thread.messageChanged.connect(self.on_message_changed)
-        self.thread.errors.connect(self.errors)
-        self.thread.start()
+        try:
+            logging.info('----------------Запускаем generate_pemi----------------')
+            logging.info('Проверка данных')
+            generate = checked_generation_pemi(self.lineEdit_path_start_pemi, self.lineEdit_path_finish_pemi,
+                                               self.lineEdit_complect_number_pemi, self.lineEdit_complect_quant_pemi,
+                                               self.checkBox_freq_restrict.isChecked(),
+                                               self.lineEdit_path_freq_restrict)
+            no_freq_lim = self.checkBox_no_limit_freq_gen.isChecked()
+            no_excel_file = self.checkBox_no_excel_generation.isChecked()
+            db_differeence = self.checkBox_3db_difference.isChecked()
+            if isinstance(generate, list):
+                logging.info('Обнаружены ошибки данных')
+                self.on_message_changed(generate[0], generate[1])
+                return
+            # Если всё прошло запускаем поток
+            logging.info('Запуск на выполнение')
+            generate['logging'], generate['queue'] = logging, self.queue
+            generate['no_freq_lim'], generate['no_excel_file'] = no_freq_lim, no_excel_file
+            generate['3db_difference'], generate['default_path'] = db_differeence, self.default_path
+            self.thread = GenerationFile(generate)
+            self.thread.progress.connect(self.progressBar.setValue)
+            self.thread.status.connect(self.statusBar().showMessage)
+            self.thread.messageChanged.connect(self.on_message_changed)
+            self.thread.errors.connect(self.errors)
+            self.thread.start()
+        except BaseException as exception:
+            logging.error('Ошибка generate_pemi')
+            logging.error(exception)
+            logging.error(traceback.format_exc())
 
     def generate_hfe(self):
-        generate = checked_hfe_generation(self.lineEdit_path_file_HFE, self.lineEdit_complect_quant_HFE,
-                                          self.checkBox_required_values_HFE, self.lineEdit_frequency,
-                                          self.lineEdit_level)
-        if isinstance(generate, list):
-            self.on_message_changed(generate[0], generate[1])
-            return
-        # Если всё прошло запускаем поток
-        generate['logging'], generate['queue'] = logging, self.queue
-        generate['default_path'] = self.default_path
-        self.thread = HFEGeneration(generate)
-        self.thread.progress.connect(self.progressBar.setValue)
-        self.thread.status.connect(self.statusBar().showMessage)
-        self.thread.messageChanged.connect(self.on_message_changed)
-        self.thread.errors.connect(self.errors)
-        self.thread.start()
+        try:
+            logging.info('----------------Запускаем generate_hfe----------------')
+            logging.info('Проверка данных')
+            generate = checked_hfe_generation(self.lineEdit_path_file_HFE, self.lineEdit_complect_quant_HFE,
+                                              self.checkBox_required_values_HFE, self.lineEdit_frequency,
+                                              self.lineEdit_level)
+            if isinstance(generate, list):
+                logging.info('Обнаружены ошибки данных')
+                self.on_message_changed(generate[0], generate[1])
+                return
+            # Если всё прошло запускаем поток
+            logging.info('Запуск на выполнение')
+            generate['logging'], generate['queue'] = logging, self.queue
+            generate['default_path'] = self.default_path
+            self.thread = HFEGeneration(generate)
+            self.thread.progress.connect(self.progressBar.setValue)
+            self.thread.status.connect(self.statusBar().showMessage)
+            self.thread.messageChanged.connect(self.on_message_changed)
+            self.thread.errors.connect(self.errors)
+            self.thread.start()
+        except BaseException as exception:
+            logging.error('Ошибка generate_hfe')
+            logging.error(exception)
+            logging.error(traceback.format_exc())
 
     def generate_hfi(self):
-        generate = checked_hfi_generation(self.lineEdit_path_file_HFI, self.lineEdit_imposition_freq,
-                                          self.lineEdit_complect_quant_HFI,
-                                          [self.checkBox_power_supply.isChecked(),
-                                           self.checkBox_symetrical.isChecked(),
-                                           self.checkBox_asymetriacal.isChecked()])
-        if isinstance(generate, list):
-            self.on_message_changed(generate[0], generate[1])
-            return
-        # Если всё прошло запускаем поток
-        generate['logging'], generate['queue'] = logging, self.queue
-        generate['default_path'] = self.default_path
-        self.thread = HFIGeneration(generate)
-        self.thread.progress.connect(self.progressBar.setValue)
-        self.thread.status.connect(self.statusBar().showMessage)
-        self.thread.messageChanged.connect(self.on_message_changed)
-        self.thread.errors.connect(self.errors)
-        self.thread.start()
+        try:
+            logging.info('----------------Запускаем generate_hfi----------------')
+            logging.info('Проверка данных')
+            generate = checked_hfi_generation(self.lineEdit_path_file_HFI, self.lineEdit_imposition_freq,
+                                              self.lineEdit_complect_quant_HFI,
+                                              [self.checkBox_power_supply.isChecked(),
+                                               self.checkBox_symetrical.isChecked(),
+                                               self.checkBox_asymetriacal.isChecked()])
+            if isinstance(generate, list):
+                logging.info('Обнаружены ошибки данных')
+                self.on_message_changed(generate[0], generate[1])
+                return
+            # Если всё прошло запускаем поток
+            logging.info('Запуск на выполнение')
+            generate['logging'], generate['queue'] = logging, self.queue
+            generate['default_path'] = self.default_path
+            self.thread = HFIGeneration(generate)
+            self.thread.progress.connect(self.progressBar.setValue)
+            self.thread.status.connect(self.statusBar().showMessage)
+            self.thread.messageChanged.connect(self.on_message_changed)
+            self.thread.errors.connect(self.errors)
+            self.thread.start()
+        except BaseException as exception:
+            logging.error('Ошибка generate_hfi')
+            logging.error(exception)
+            logging.error(traceback.format_exc())
 
     def generate_lf(self):
-        generate = checked_lf_data(self.lineEdit_path_start_folder_lf, self.lineEdit_path_finish_folder_lf,
-                                   self.lineEdit_path_file_excel_lf)
-        if isinstance(generate, list):
-            self.on_message_changed(generate[0], generate[1])
-            return
-        # Если всё прошло запускаем поток
-        generate['logging'], generate['queue'] = logging, self.queue
-        generate['default_path'] = self.default_path
-        self.thread = LFGeneration(generate)
-        self.thread.progress.connect(self.progressBar.setValue)
-        self.thread.status.connect(self.statusBar().showMessage)
-        self.thread.messageChanged.connect(self.on_message_changed)
-        self.thread.errors.connect(self.errors)
-        self.thread.start()
+        try:
+            logging.info('----------------Запускаем generate_lf----------------')
+            logging.info('Проверка данных')
+            generate = checked_lf_data(self.lineEdit_path_start_folder_lf, self.lineEdit_path_finish_folder_lf,
+                                       self.lineEdit_path_file_excel_lf)
+            if isinstance(generate, list):
+                logging.info('Обнаружены ошибки данных')
+                self.on_message_changed(generate[0], generate[1])
+                return
+            # Если всё прошло запускаем поток
+            logging.info('Запуск на выполнение')
+            generate['logging'], generate['queue'] = logging, self.queue
+            generate['default_path'] = self.default_path
+            self.thread = LFGeneration(generate)
+            self.thread.progress.connect(self.progressBar.setValue)
+            self.thread.status.connect(self.statusBar().showMessage)
+            self.thread.messageChanged.connect(self.on_message_changed)
+            self.thread.errors.connect(self.errors)
+            self.thread.start()
+        except BaseException as exception:
+            logging.error('Ошибка generate_lf')
+            logging.error(exception)
+            logging.error(traceback.format_exc())
 
     def parcing_file(self):
-        self.plainTextEdit_succsess_order.clear()
-        self.groupBox_succsess_order.setStyleSheet("")
-        self.plainTextEdit_error_order.clear()
-        self.groupBox_error_order.setStyleSheet("")
-        self.plainTextEdit_errors.clear()
-        self.groupBox_errors.setStyleSheet("")
-        group_file = self.checkBox_group_parcing.isChecked()
-        no_freq_lim = self.checkBox_no_freq_limit.isChecked()
-        folder = checked_file_parcing(self.lineEdit_path_parser, group_file)
-        if isinstance(folder, list):
-            self.on_message_changed(folder[0], folder[1])
-            return
-        # Если всё прошло запускаем поток
-        folder['group_file'], folder['no_freq_lim'] = group_file, no_freq_lim
-        folder['logging'], folder['queue'] = logging, self.queue
-        folder['default_path'] = self.default_path
-        self.thread = FileParcing(folder)
-        self.thread.progress.connect(self.progressBar.setValue)
-        self.thread.status.connect(self.statusBar().showMessage)
-        self.thread.errors.connect(self.errors)
-        self.thread.messageChanged.connect(self.on_message_changed)
-        self.thread.start()
+        try:
+            logging.info('----------------Запускаем parcing_file----------------')
+            logging.info('Проверка данных')
+            self.plainTextEdit_succsess_order.clear()
+            self.groupBox_succsess_order.setStyleSheet("")
+            self.plainTextEdit_error_order.clear()
+            self.groupBox_error_order.setStyleSheet("")
+            self.plainTextEdit_errors.clear()
+            self.groupBox_errors.setStyleSheet("")
+            group_file = self.checkBox_group_parcing.isChecked()
+            no_freq_lim = self.checkBox_no_freq_limit.isChecked()
+            folder = checked_file_parcing(self.lineEdit_path_parser, group_file)
+            if isinstance(folder, list):
+                logging.info('Обнаружены ошибки данных')
+                self.on_message_changed(folder[0], folder[1])
+                return
+            # Если всё прошло запускаем поток
+            logging.info('Запуск на выполнение')
+            folder['group_file'], folder['no_freq_lim'] = group_file, no_freq_lim
+            folder['logging'], folder['queue'] = logging, self.queue
+            folder['default_path'] = self.default_path
+            self.thread = FileParcing(folder)
+            self.thread.progress.connect(self.progressBar.setValue)
+            self.thread.status.connect(self.statusBar().showMessage)
+            self.thread.errors.connect(self.errors)
+            self.thread.messageChanged.connect(self.on_message_changed)
+            self.thread.start()
+        except BaseException as exception:
+            logging.error('Ошибка parcing_file')
+            logging.error(exception)
+            logging.error(traceback.format_exc())
 
     def errors(self):
         text = self.queue.get_nowait()
@@ -475,63 +532,90 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.on_message_changed('УПС!', '\n'.join(text['errors_gen']))
 
     def checked_zone(self):
-        department = self.groupBox_FSB.isChecked()
-        win_lin = self.checkBox_win_lin.isChecked()
-        one_table = self.checkBox_first_table.isChecked()
-        zone = [self.lineEdit_stationary_FSB, self.lineEdit_carry_FSB, self.lineEdit_wear_FSB, self.lineEdit_r1_FSB,
-                self.lineEdit_r1s_FSB] \
-            if department else [self.lineEdit_stationary_FSTEK, self.lineEdit_carry_FSTEK,
-                                self.lineEdit_wear_FSTEK, self.lineEdit_r1_FSTEK]
-        zone_all = checked_zone_checked(self.lineEdit_path_check, self.lineEdit_table_number, zone)
-        if isinstance(zone_all, list):
-            self.on_message_changed(zone_all[0], zone_all[1])
-            return
-        # Если всё прошло запускаем поток
-        if self.checkBox_win_lin.isChecked():
-            zone = {i + 5: zone_all[i] for i in zone_all}
-            zone_all = {**zone_all, **zone}
-        zone = {'path_check': self.lineEdit_path_check.text().strip(),
-                'table_number': self.lineEdit_table_number.text().strip(), 'department': department, 'win_lin': win_lin,
-                'zone_all': zone_all, 'one_table': one_table, 'logging': logging, 'queue': self.queue,
-                'default_path': self.default_path}
-        self.thread = ZoneChecked(zone)
-        self.thread.progress.connect(self.progressBar.setValue)
-        self.thread.status.connect(self.statusBar().showMessage)
-        self.thread.messageChanged.connect(self.on_message_changed)
-        self.thread.start()
+        try:
+            logging.info('----------------Запускаем checked_zone----------------')
+            logging.info('Проверка данных')
+            department = self.groupBox_FSB.isChecked()
+            win_lin = self.checkBox_win_lin.isChecked()
+            one_table = self.checkBox_first_table.isChecked()
+            zone = [self.lineEdit_stationary_FSB, self.lineEdit_carry_FSB, self.lineEdit_wear_FSB, self.lineEdit_r1_FSB,
+                    self.lineEdit_r1s_FSB] \
+                if department else [self.lineEdit_stationary_FSTEK, self.lineEdit_carry_FSTEK,
+                                    self.lineEdit_wear_FSTEK, self.lineEdit_r1_FSTEK]
+            zone_all = checked_zone_checked(self.lineEdit_path_check, self.lineEdit_table_number, zone)
+            if isinstance(zone_all, list):
+                logging.info('Обнаружены ошибки данных')
+                self.on_message_changed(zone_all[0], zone_all[1])
+                return
+            # Если всё прошло запускаем поток
+            logging.info('Запуск на выполнение')
+            if self.checkBox_win_lin.isChecked():
+                zone = {i + 5: zone_all[i] for i in zone_all}
+                zone_all = {**zone_all, **zone}
+            zone = {'path_check': self.lineEdit_path_check.text().strip(),
+                    'table_number': self.lineEdit_table_number.text().strip(), 'department': department,
+                    'win_lin': win_lin, 'zone_all': zone_all, 'one_table': one_table, 'logging': logging,
+                    'queue': self.queue, 'default_path': self.default_path}
+            self.thread = ZoneChecked(zone)
+            self.thread.progress.connect(self.progressBar.setValue)
+            self.thread.status.connect(self.statusBar().showMessage)
+            self.thread.messageChanged.connect(self.on_message_changed)
+            self.thread.start()
+        except BaseException as exception:
+            logging.error('Ошибка checked_zone')
+            logging.error(exception)
+            logging.error(traceback.format_exc())
 
     def delete_header_footer(self):
-        output = checked_delete_header_footer(self.lineEdit_path_start_extract, self.lineEdit_conclusion_post,
-                                              self.lineEdit_conclusion_name, self.lineEdit_protocol_post,
-                                              self.lineEdit_protocol_name, self.lineEdit_prescription_post,
-                                              self.lineEdit_prescription_name)
-        if isinstance(output, list):
-            self.on_message_changed(output[0], output[1])
-            return
-        # Если всё прошло запускаем поток
-        output['logging'], output['queue'] = logging, self.queue
-        output['default_path'] = self.default_path
-        self.thread = DeleteHeaderFooter(output)
-        self.thread.progress.connect(self.progressBar.setValue)
-        self.thread.status.connect(self.statusBar().showMessage)
-        self.thread.messageChanged.connect(self.on_message_changed)
-        self.thread.start()
+        try:
+            logging.info('----------------Запускаем delete_header_footer----------------')
+            logging.info('Проверка данных')
+            output = checked_delete_header_footer(self.lineEdit_path_start_extract, self.lineEdit_conclusion_post,
+                                                  self.lineEdit_conclusion_name, self.lineEdit_protocol_post,
+                                                  self.lineEdit_protocol_name, self.lineEdit_prescription_post,
+                                                  self.lineEdit_prescription_name)
+            if isinstance(output, list):
+                logging.info('Обнаружены ошибки данных')
+                self.on_message_changed(output[0], output[1])
+                return
+            # Если всё прошло запускаем поток
+            logging.info('Запуск на выполнение')
+            output['logging'], output['queue'] = logging, self.queue
+            output['default_path'] = self.default_path
+            self.thread = DeleteHeaderFooter(output)
+            self.thread.progress.connect(self.progressBar.setValue)
+            self.thread.status.connect(self.statusBar().showMessage)
+            self.thread.messageChanged.connect(self.on_message_changed)
+            self.thread.start()
+        except BaseException as exception:
+            logging.error('Ошибка delete_header_footer')
+            logging.error(exception)
+            logging.error(traceback.format_exc())
 
     def generate_cc(self):
-        generate = checked_generation_cc(self.lineEdit_path_folder_start_cc, self.lineEdit_path_folder_finish_cc,
-                                         self.lineEdit_complect_number_cc, self.lineEdit_complect_quantity_cc)
-        if isinstance(generate, list):
-            self.on_message_changed(generate[0], generate[1])
-            return
-        # Если всё прошло запускаем поток
-        generate['logging'], generate['queue'] = logging, self.queue
-        generate['default_path'] = self.default_path
-        self.thread = GenerationFileCC(generate)
-        self.thread.progress.connect(self.progressBar.setValue)
-        self.thread.status.connect(self.statusBar().showMessage)
-        self.thread.messageChanged.connect(self.on_message_changed)
-        self.thread.errors.connect(self.errors)
-        self.thread.start()
+        try:
+            logging.info('----------------Запускаем generate_cc----------------')
+            logging.info('Проверка данных')
+            generate = checked_generation_cc(self.lineEdit_path_folder_start_cc, self.lineEdit_path_folder_finish_cc,
+                                             self.lineEdit_complect_number_cc, self.lineEdit_complect_quantity_cc)
+            if isinstance(generate, list):
+                logging.info('Обнаружены ошибки данных')
+                self.on_message_changed(generate[0], generate[1])
+                return
+            # Если всё прошло запускаем поток
+            logging.info('Запуск на выполнение')
+            generate['logging'], generate['queue'] = logging, self.queue
+            generate['default_path'] = self.default_path
+            self.thread = GenerationFileCC(generate)
+            self.thread.progress.connect(self.progressBar.setValue)
+            self.thread.status.connect(self.statusBar().showMessage)
+            self.thread.messageChanged.connect(self.on_message_changed)
+            self.thread.errors.connect(self.errors)
+            self.thread.start()
+        except BaseException as exception:
+            logging.error('Ошибка generate_cc')
+            logging.error(exception)
+            logging.error(traceback.format_exc())
 
     def pause_thread(self):
         if self.queue.empty():
