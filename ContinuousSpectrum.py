@@ -1,14 +1,12 @@
 import os
 import pathlib
-import itertools
+import numpy as np
 import random
 import threading
 import traceback
-import math
 
 import pandas as pd
 from PyQt5.QtCore import QThread, pyqtSignal
-from convert import file_parcing
 
 
 class GenerationFileCC(QThread):
@@ -110,6 +108,10 @@ class GenerationFileCC(QThread):
                     self.logging.info('Парсим ' + file_csv + ' для ' + name_folder)
                     self.status.emit('Парсим ' + file_csv + ' для ' + name_folder)
                     df_new.drop(labels=['str'], axis=1, inplace=True)
+                print(df_new['frq'].dtype)
+                df_new = df.astype({'frq': np.float})
+                print(df_new['frq'].dtype)
+                df_new['frq'] = df['frq']*0.000001
                 df_new.set_index('frq', inplace=True)
                 if len(index_val) != 1:
                     old_name_col = names[1]
