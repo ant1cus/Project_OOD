@@ -198,8 +198,9 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                           'LF-path_file_excel': ['Путь к файлу генератору', self.lineEdit_path_file_excel_lf],
                           'CC-path_folder_start': ['Путь к файлам спектра', self.lineEdit_path_folder_start_cc],
                           'CC-path_folder_finish': ['Путь к конечной папке', self.lineEdit_path_folder_finish_cc],
-                          'CC-set_quantity': ['Количество комплектов', self.lineEdit_complect_quantity_cc],
-                          'CC-set_numbers': ['Номера комплектов', self.lineEdit_complect_number_cc]}
+                          'CC-checkBox_cc_frequency': ['Конечная частота', self.checkBox_cc_frequency],
+                          'CC-set_frequency': ['Конечная частота (МГц)', self.lineEdit_frequency_cc],
+                          'CC-set_numbers': ['Номера комплектов', self.lineEdit_set_number_cc]}
         # Грузим значения по умолчанию
         self.name_tab = {"tab_zone_checked": "Проверка зон", "tab_parser": "Парсер txt",
                          "tab_exctract": "Обезличивание", "tab_gen_application": "Генератор приложений",
@@ -597,7 +598,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             logging.info('----------------Запускаем generate_cc----------------')
             logging.info('Проверка данных')
             generate = checked_generation_cc(self.lineEdit_path_folder_start_cc, self.lineEdit_path_folder_finish_cc,
-                                             self.lineEdit_complect_number_cc, self.lineEdit_complect_quantity_cc)
+                                             self.lineEdit_set_number_cc, self.lineEdit_frequency_cc)
             if isinstance(generate, list):
                 logging.info('Обнаружены ошибки данных')
                 self.on_message_changed(generate[0], generate[1])

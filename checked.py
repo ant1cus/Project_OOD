@@ -338,7 +338,7 @@ def checked_lf_data(source_folder, output_folder, excel_file):
             return ['УПС!', 'Указанный файл недопустимого формата (необходимо .xlsx)']
 
 
-def checked_generation_cc(start_folder, finish_folder, complect_number, complect_quantity):
+def checked_generation_cc(start_folder, finish_folder, set_number, frequency):
 
     source = start_folder.text().strip()
     if not source:
@@ -352,41 +352,41 @@ def checked_generation_cc(start_folder, finish_folder, complect_number, complect
         return ['УПС!', 'Указанный путь к создаваемым файлам не является директорией']
     if len([True for el in pathlib.Path(source).iterdir() if el.is_dir()]) > 1:
             return ['УПС!', 'В указанной директории слишком много папок']
-    complect_num = complect_number.text().strip()
-    if not complect_num:
-        return ['УПС!', 'Не указаны номера комплектов']
-    for i in complect_num:
-        if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ' ', '-', ',', '.')):
-            return ['УПС!', 'Есть лишние символы в номерах комплектов']
-    complect_num = complect_num.replace(' ', '').replace(',', '.')
-    if complect_num[0] == '.' or complect_num[0] == '-':
-        return ['УПС!', 'Первый символ введён не верно']
-    if complect_num[-1] == '.' or complect_num[-1] == '-':
-        return ['УПС!', 'Последний символ введён не верно']
-    for i in range(len(complect_num)):
-        if complect_num[i] == '.' or complect_num[i] == '-':
-            if complect_num[i + 1] == '.' or complect_num[i + 1] == '-':
-                return ['УПС!', 'Два разделителя номеров подряд']
-    complect = []
-    for element in complect_num.split('.'):
-        if '-' in element:
-            num1, num2 = int(element.partition('-')[0]), int(element.partition('-')[2])
-            if num1 >= num2:
-                return ['УПС!', 'Диапазон номеров комплектов указан не верно']
+    set_num = set_number.text().strip()
+    if set_num:
+        for i in set_num:
+            if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ' ', '-', ',', '.')):
+                return ['УПС!', 'Есть лишние символы в номерах комплектов']
+        set_num = set_num.replace(' ', '').replace(',', '.')
+        if set_num[0] == '.' or set_num[0] == '-':
+            return ['УПС!', 'Первый символ введён не верно']
+        if set_num[-1] == '.' or set_num[-1] == '-':
+            return ['УПС!', 'Последний символ введён не верно']
+        for i in range(len(set_num)):
+            if set_num[i] == '.' or set_num[i] == '-':
+                if set_num[i + 1] == '.' or set_num[i + 1] == '-':
+                    return ['УПС!', 'Два разделителя номеров подряд']
+        set_list = []
+        for element in set_num.split('.'):
+            if '-' in element:
+                num1, num2 = int(element.partition('-')[0]), int(element.partition('-')[2])
+                if num1 >= num2:
+                    return ['УПС!', 'Диапазон номеров комплектов указан не верно']
+                else:
+                    for el in range(num1, num2 + 1):
+                        set.append(el)
             else:
-                for el in range(num1, num2 + 1):
-                    complect.append(el)
+                set_list.append(element)
+        set_list.sort()
+        if len(set_list) != len(set(set_list)):
+            return ['УПС!', 'Есть повторения в номерах комплектов']
+        if len(set_list) == 1 and set_list[0] == '0':
+            set_num = False
         else:
-            complect.append(element)
-    complect.sort()
-    if len(complect) != len(set(complect)):
-        return ['УПС!', 'Есть повторения в номерах комплектов']
-    complect_quant = complect_quantity.text()
-    if not complect_quant:
-        return ['УПС!', 'Не указано количество комплектов']
-    for i in complect_quant:
-        if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')):
-            return ['УПС!', 'Не правильно указано количество комплектов']
-    if len(complect) != int(complect_quant):
-        return ['УПС!', 'Указанные номера не совпадают с количеством генерируемых комплектов']
-    return {'source': source, 'output': output, 'complect': complect, 'complect_quant': complect_quant}
+            set_num = set_list
+    freq = frequency.text()
+    if freq:
+        for i in freq:
+            if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.')):
+                return ['УПС!', 'Не правильно указана частота для ограничения (дробный разделитель - ".")']
+    return {'source': source, 'output': output, 'set': set_num, 'frequency': freq}
