@@ -338,7 +338,7 @@ def checked_lf_data(source_folder, output_folder, excel_file):
             return ['УПС!', 'Указанный файл недопустимого формата (необходимо .xlsx)']
 
 
-def checked_generation_cc(start_folder, finish_folder, set_number, frequency):
+def checked_generation_cc(start_folder, finish_folder, set_number, checkbox_frequency, frequency, checkbox_txt):
 
     source = start_folder.text().strip()
     if not source:
@@ -374,7 +374,7 @@ def checked_generation_cc(start_folder, finish_folder, set_number, frequency):
                     return ['УПС!', 'Диапазон номеров комплектов указан не верно']
                 else:
                     for el in range(num1, num2 + 1):
-                        set.append(el)
+                        set_list.append(el)
             else:
                 set_list.append(element)
         set_list.sort()
@@ -384,9 +384,10 @@ def checked_generation_cc(start_folder, finish_folder, set_number, frequency):
             set_num = False
         else:
             set_num = set_list
-    freq = frequency.text()
+    freq = frequency.text() if checkbox_frequency.isChecked() else ''
     if freq:
         for i in freq:
             if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.')):
                 return ['УПС!', 'Не правильно указана частота для ограничения (дробный разделитель - ".")']
-    return {'source': source, 'output': output, 'set': set_num, 'frequency': freq}
+    txt = checkbox_txt.isChecked()
+    return {'source': source, 'output': output, 'set': set_num, 'frequency': freq, 'only_txt': txt}

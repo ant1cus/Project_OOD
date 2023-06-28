@@ -200,7 +200,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                           'CC-path_folder_finish': ['Путь к конечной папке', self.lineEdit_path_folder_finish_cc],
                           'CC-checkBox_cc_frequency': ['Конечная частота', self.checkBox_cc_frequency],
                           'CC-set_frequency': ['Конечная частота (МГц)', self.lineEdit_frequency_cc],
-                          'CC-set_numbers': ['Номера комплектов', self.lineEdit_set_number_cc]}
+                          'CC-set_numbers': ['Номера комплектов', self.lineEdit_set_number_cc],
+                          'CC-checkBox_cc_txt': ['Генерировать только txt', self.checkBox_cc_txt]}
         # Грузим значения по умолчанию
         self.name_tab = {"tab_zone_checked": "Проверка зон", "tab_parser": "Парсер txt",
                          "tab_exctract": "Обезличивание", "tab_gen_application": "Генератор приложений",
@@ -598,7 +599,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             logging.info('----------------Запускаем generate_cc----------------')
             logging.info('Проверка данных')
             generate = checked_generation_cc(self.lineEdit_path_folder_start_cc, self.lineEdit_path_folder_finish_cc,
-                                             self.lineEdit_set_number_cc, self.lineEdit_frequency_cc)
+                                             self.lineEdit_set_number_cc, self.checkBox_cc_frequency,
+                                             self.lineEdit_frequency_cc, self.checkBox_cc_txt)
             if isinstance(generate, list):
                 logging.info('Обнаружены ошибки данных')
                 self.on_message_changed(generate[0], generate[1])

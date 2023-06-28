@@ -20,13 +20,16 @@ class GenerationFileCC(QThread):
         self.output = incoming_data['output']
         self.set = incoming_data['set']
         self.frequency = incoming_data['frequency']
+        self.only_txt = incoming_data['only_txt']
         self.logging = incoming_data['logging']
         self.queue = incoming_data['queue']
         self.default_path = incoming_data['default_path']
         self.event = threading.Event()
         self.percent_progress = 0
+        self.gen_txt = pd.DataFrame()
+        self.name_txt = ''
 
-    def parcing(self, current_progress, path, generation, name_folder):
+    def parcing(self, current_progress, path, path_txt, generation, name_folder):
         def write_gen(df_gen, name_file, mode):
             for num_set in self.set:
                 self.logging.info('Запись генерируемых файлов ' + name_file + ' ' + str(num_set))
@@ -62,6 +65,8 @@ class GenerationFileCC(QThread):
         for file_csv in [file for file in os.listdir(str(pathlib.Path(path)))
                          if file.lower().endswith('.csv')]:
             name = file_csv.partition('_')[0] + '.txt'
+            if self.only_txt:
+                self.name_txt = name
             self.logging.info('Парсим ' + file_csv + ' для ' + name_folder)
             self.status.emit('Парсим ' + file_csv + ' для ' + name_folder)
             if 'sig' in file_csv.lower():
@@ -90,7 +95,7 @@ class GenerationFileCC(QThread):
                     delimiter = False
                     index_start += 1
                 df_old = df[index_start: values + 1]
-                if generation and self.set:
+                if generation and self.set and self.only_txt is False:
                     write_gen(df_old, file_csv, False)
                     self.logging.info('Парсим ' + file_csv + ' для ' + name_folder)
                     self.status.emit('Парсим ' + file_csv + ' для ' + name_folder)
@@ -104,7 +109,7 @@ class GenerationFileCC(QThread):
                 df_new = df_new.apply(pd.to_numeric, errors='coerce')
                 df_new.interpolate(inplace=True)
                 df_write = pd.concat([df_write, df_new])
-                if generation and self.set:
+                if generation and self.set and self.only_txt is False:
                     write_gen(df_new, file_csv, True)
                     self.logging.info('Парсим ' + file_csv + ' для ' + name_folder)
                     self.status.emit('Парсим ' + file_csv + ' для ' + name_folder)
@@ -138,10 +143,14 @@ class GenerationFileCC(QThread):
         if all_data_df.shape[1] > 2:
             col_name = [j + str(i) for i in range(0, 12) for j in ['sig', 'noise']]
             all_data_df = all_data_df[col_name]
-        path_dir = pathlib.Path(path, name)
+        path_dir = pathlib.Path(path_txt)
+        path_dir.mkdir(parents=True, exist_ok=True)
+        path_dir = pathlib.Path(path_txt, name)
         path_dir.touch()
         self.logging.info('Запись текстового файла ' + name)
         all_data_df.to_csv(str(path_dir), header=None, sep='\t', mode='w', float_format="%.8f")
+        if self.only_txt:
+            self.gen_txt = all_data_df
         return current_progress
 
     def run(self):
@@ -154,24 +163,38 @@ class GenerationFileCC(QThread):
                 progress += 1 if file_csv.lower().endswith('.csv') else 0
             self.logging.info('Создание папок для конечных файлов')
             quant_set = 0
-            if self.set:
+            if self.set and self.only_txt is False:
                 for number_set in self.set:
                     quant_set += 1
                     path_dir = pathlib.Path(self.output, str(number_set))
                     os.makedirs(path_dir, exist_ok=True)
+            elif self.set and self.only_txt:
+                quant_set += len(self.set)
             progress += progress*quant_set
             self.percent_progress = 100 / progress
             self.logging.info('Входные данные:')
             self.logging.info('0' + '"|"' + str(self.source) + '"|"' + 'True' + '"|"' +
                               str(pathlib.PurePath(self.source).name) + '.txt' + '"|"' + str(self.source))
-            current_progress = self.parcing(0, self.source, True, 'исходного файла')
-            if self.set:
+            current_progress = self.parcing(0, self.source, str(pathlib.Path(self.source, 'txt')),
+                                            True, 'исходного файла')
+            if self.set and self.only_txt:
+                self.logging.info('Генерация без excel')
+                for folder in self.set:
+                    self.logging.info('Запись текстового файла ' + str(folder))
+                    gen_df = self.gen_txt.apply(lambda x: random.uniform(x * 0.95, x * 1.05))
+                    path_df = pathlib.Path(self.output, 'txt', str(folder))
+                    path_df.mkdir(parents=True, exist_ok=True)
+                    path_df = pathlib.Path(self.output, 'txt', str(folder), self.name_txt)
+                    gen_df.to_csv(str(path_df), header=None, sep='\t', mode='w', float_format="%.8f")
+            elif self.set:
+                self.logging.info('Генерация c excel')
                 for folder in os.listdir(str(pathlib.Path(self.output))):
                     self.logging.info('Входные данные:')
                     self.logging.info(str(current_progress) + '"|"' + str(pathlib.Path(self.output, str(folder))) +
                                       '"|"' + 'False' + '"|"' + str(folder) + '.txt' + '"|"' + str(folder))
                     current_progress = self.parcing(current_progress,
                                                     str(pathlib.Path(self.output, str(folder))),
+                                                    str(pathlib.Path(self.output, 'txt', str(folder))),
                                                     False, str(folder))
 
             self.progress.emit(100)
