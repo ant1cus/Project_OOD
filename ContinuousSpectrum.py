@@ -82,6 +82,8 @@ class GenerationFileCC(QThread):
                 df = pd.read_csv(str(pathlib.Path(path, file_csv)), delimiter=',',
                                  encoding="unicode_escape", header=None, names=names)
                 delimiter = True
+            if str(df.iloc[1, 1]) != '1.4':
+                df.iloc[1, 1] = '1.4'
             index_val = df[df['frq'] == 'Values'].index.to_list()
             index_trace = df[df['frq'] == 'Trace'].index.to_list()
             if len(index_trace) > len(index_val):
@@ -125,6 +127,8 @@ class GenerationFileCC(QThread):
                     df_new.rename(columns={old_name_col: new_name_col}, inplace=True)
                 df_to_concat = df_new if df_to_concat.empty else df_to_concat.join(df_new)
             self.logging.info('Перезапись файла ' + file_csv)
+            # if str(df_write.iloc[1, 1]) != '1.4':
+            #     df_write.iloc[1, 1] = '1.4'
             df_write.to_csv(str(pathlib.Path(path, file_csv)), sep=';',
                             header=False, index=False, encoding="ANSI")
             if add_index == 0:
@@ -189,13 +193,14 @@ class GenerationFileCC(QThread):
             elif self.set:
                 self.logging.info('Генерация c excel')
                 for folder in os.listdir(str(pathlib.Path(self.output))):
-                    self.logging.info('Входные данные:')
-                    self.logging.info(str(current_progress) + '"|"' + str(pathlib.Path(self.output, str(folder))) +
-                                      '"|"' + 'False' + '"|"' + str(folder) + '.txt' + '"|"' + str(folder))
-                    current_progress = self.parcing(current_progress,
-                                                    str(pathlib.Path(self.output, str(folder))),
-                                                    str(pathlib.Path(self.output, 'txt', str(folder))),
-                                                    False, str(folder))
+                    if os.path.isdir(str(pathlib.Path(self.output, folder))) and 'txt' not in folder:
+                        self.logging.info('Входные данные:')
+                        self.logging.info(str(current_progress) + '"|"' + str(pathlib.Path(self.output, str(folder))) +
+                                          '"|"' + 'False' + '"|"' + str(folder) + '.txt' + '"|"' + str(folder))
+                        current_progress = self.parcing(current_progress,
+                                                        str(pathlib.Path(self.output, str(folder))),
+                                                        str(pathlib.Path(self.output, 'txt', str(folder))),
+                                                        False, str(folder))
 
             self.progress.emit(100)
             self.logging.info("Конец работы программы")
