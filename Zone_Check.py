@@ -178,7 +178,7 @@ class ZoneChecked(QThread):
                                     shading_index = color_cell(table_3, shading_index, x, name, flag_for_exit, False)
                                     x = 0
                                     name = ''
-                                    flag_for_exit = 1  # Для прерывания цикла
+                                    flag_for_exit = 1
                                     table_pwr = doc.tables[3] if self.win_lin else doc.tables[4]
                                     shading_index = color_cell(table_pwr, shading_index, x, name, flag_for_exit, True)
                                     # for row in table_3.rows:
