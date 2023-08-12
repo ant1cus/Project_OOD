@@ -338,7 +338,8 @@ def checked_lf_data(source_folder, output_folder, excel_file):
             return ['УПС!', 'Указанный файл недопустимого формата (необходимо .xlsx)']
 
 
-def checked_generation_cc(start_folder, finish_folder, set_number, checkbox_frequency, frequency, checkbox_txt):
+def checked_generation_cc(start_folder, finish_folder, set_number, checkbox_frequency, frequency, checkbox_txt,
+                          checkbox_dispersion, lineedit_dispersion):
 
     source = start_folder.text().strip()
     if not source:
@@ -390,4 +391,10 @@ def checked_generation_cc(start_folder, finish_folder, set_number, checkbox_freq
             if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.')):
                 return ['УПС!', 'Не правильно указана частота для ограничения (дробный разделитель - ".")']
     txt = checkbox_txt.isChecked()
-    return {'source': source, 'output': output, 'set': set_num, 'frequency': freq, 'only_txt': txt}
+    dispersion = lineedit_dispersion.text() if checkbox_dispersion.isChecked() else ''
+    if dispersion:
+        for i in dispersion:
+            if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.')):
+                return ['УПС!', 'Не правильно указан разброс (только цифры, дробный разделитель - ".")']
+    return {'source': source, 'output': output, 'set': set_num, 'frequency': freq, 'only_txt': txt,
+            "dispersion": float(dispersion)}

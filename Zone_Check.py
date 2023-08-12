@@ -142,7 +142,8 @@ class ZoneChecked(QThread):
                                                             # Имя системы
                                                             cc_name = re.findall(r"\(([^)]*)\)", cc_cell.text)[0]
                                                             if pwr:
-                                                                cc_name += '_pwr'
+                                                                cc_name = 'Power' if len(cc_name) > 10 else\
+                                                                    cc_name + '_pwr'
                                                     if cc_flag:  # Если нужно в цикл
                                                         if cc_tc.right == 1 and cc_tc.left == 0:
                                                             frq = float(cc_cell.text.replace(',', '.'))  # Частота.

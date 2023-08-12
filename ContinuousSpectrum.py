@@ -21,6 +21,7 @@ class GenerationFileCC(QThread):
         self.set = incoming_data['set']
         self.frequency = incoming_data['frequency']
         self.only_txt = incoming_data['only_txt']
+        self.dispersion = incoming_data['dispersion']
         self.logging = incoming_data['logging']
         self.queue = incoming_data['queue']
         self.default_path = incoming_data['default_path']
@@ -52,7 +53,8 @@ class GenerationFileCC(QThread):
                     df_gen[2] = ""
                 df_to_write = df_gen
                 if mode:
-                    df_to_write[1] = df_to_write[1].apply(lambda x: random.uniform(x * 0.95, x * 1.05))
+                    df_to_write[1] = df_to_write[1].apply(lambda x: random.uniform(x * (1 - self.dispersion/100),
+                                                                                   x * (1 + self.dispersion/100)))
                 df_write_new = pd.concat([df_gen_old, df_to_write])
                 df_write_new.to_csv(path_dir_gen, sep=';',
                                     header=False, index=False, encoding="ANSI")

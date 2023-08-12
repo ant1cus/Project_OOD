@@ -201,7 +201,9 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                           'CC-checkBox_cc_frequency': ['Конечная частота', self.checkBox_cc_frequency],
                           'CC-set_frequency': ['Конечная частота (МГц)', self.lineEdit_frequency_cc],
                           'CC-set_numbers': ['Номера комплектов', self.lineEdit_set_number_cc],
-                          'CC-checkBox_cc_txt': ['Генерировать только txt', self.checkBox_cc_txt]}
+                          'CC-checkBox_cc_txt': ['Генерировать только txt', self.checkBox_cc_txt],
+                          'CC-checkBox_cc_dispersion': ['Включить разброс значений', self.checkBox_cc_dispersion],
+                          'CC-dispersion': ['Разброс значений (%)', self.lineEdit_cc_dispersion]}
         # Грузим значения по умолчанию
         self.name_tab = {"tab_zone_checked": "Проверка зон", "tab_parser": "Парсер txt",
                          "tab_exctract": "Обезличивание", "tab_gen_application": "Генератор приложений",
@@ -252,26 +254,9 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 self.name_action[self.tab_order[tab]].setChecked(True)
                 self.tabWidget.addTab(self.tab_for_paint[self.tab_order[tab]], self.name_tab[self.tab_order[tab]])
         self.tabWidget.tabBar().setCurrentIndex(0)
-        # Линии для заполнения
-        # self.line = [self.lineEdit_path_check, self.lineEdit_table_number, self.lineEdit_stationary_FSB,
-        #              self.lineEdit_carry_FSB, self.lineEdit_wear_FSB, self.lineEdit_r1_FSB, self.lineEdit_r1s_FSB,
-        #              self.lineEdit_stationary_FSTEK, self.lineEdit_carry_FSTEK, self.lineEdit_wear_FSTEK,
-        #              self.lineEdit_r1_FSTEK, self.lineEdit_path_parser, self.lineEdit_path_original_extract,
-        #              self.lineEdit_conclusion_post, self.lineEdit_conclusion_name, self.lineEdit_protocol_post,
-        #              self.lineEdit_protocol_name, self.lineEdit_prescription_post, self.lineEdit_prescription_name,
-        #              self.lineEdit_path_original_file, self.lineEdit_path_finish_folder,
-        #              self.lineEdit_path_freq_restrict, self.lineEdit_complect_quant_pemi,
-        #              self.lineEdit_complect_number_pemi, self.lineEdit_path_file_HFE,
-        #              self.lineEdit_complect_quant_HFE, self.lineEdit_frequency, self.lineEdit_level,
-        #              self.lineEdit_path_file_HFI, self.lineEdit_complect_quant_HFI, self.lineEdit_imposition_freq,
-        #              self.lineEdit_path_example, self.lineEdit_path_finish_folder_example,
-        #              self.lineEdit_number_position, self.lineEdit_quantity_document,
-        #              self.lineEdit_path_start_folder_lf, self.lineEdit_path_finish_folder_lf,
-        #              self.lineEdit_path_file_excel_lf]
         self.default_date(self.data)
 
     def tab_(self, index):
-        # print(self.tabWidget.currentIndex(), self.tabWidget.currentWidget().objectName())
         for tab in self.tab_order.items():
             if tab[1] == self.start_name and tab[1] == self.tabWidget.currentWidget().objectName():
                 self.tab_order[str(index)], self.tab_order[tab[0]] = self.tab_order[tab[0]], self.tab_order[str(index)]
@@ -308,7 +293,6 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                         else self.name_list[element][1].setChecked(False)
                 else:
                     self.name_list[element][1].setText(incoming_data[element])
-                # self.line[i].setText(d[el])  # Помещаем значение
 
     def default_settings(self):  # Запускаем окно с настройками по умолчанию.
         self.close()
@@ -600,7 +584,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             logging.info('Проверка данных')
             generate = checked_generation_cc(self.lineEdit_path_folder_start_cc, self.lineEdit_path_folder_finish_cc,
                                              self.lineEdit_set_number_cc, self.checkBox_cc_frequency,
-                                             self.lineEdit_frequency_cc, self.checkBox_cc_txt)
+                                             self.lineEdit_frequency_cc, self.checkBox_cc_txt,
+                                             self.checkBox_cc_dispersion, self.lineEdit_cc_dispersion)
             if isinstance(generate, list):
                 logging.info('Обнаружены ошибки данных')
                 self.on_message_changed(generate[0], generate[1])
