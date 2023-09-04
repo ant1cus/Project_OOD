@@ -57,7 +57,7 @@ class ZoneChecked(QThread):
                 # if '~' not in name_doc:
                 # Для того, что бы не съезжала заливка ее нужно добавлять каждый раз для каждой ячейки
                 shading_elm = []
-                string = {}  # Для записи непроходящих частот
+                string = {}  # Для записи не проходящих частот
                 shading_index = 0  # Счетчик для заливки
                 doc = docx.Document(name_doc)
                 table = doc.tables[int(self.table) - 1]  # Таблица для проверки (общая)
@@ -182,52 +182,6 @@ class ZoneChecked(QThread):
                                     flag_for_exit = 1
                                     table_pwr = doc.tables[3] if self.win_lin else doc.tables[4]
                                     shading_index = color_cell(table_pwr, shading_index, x, name, flag_for_exit, True)
-                                    # for row in table_3.rows:
-                                    #     for cell in row.cells:
-                                    #         try:
-                                    #             # Для определения позиции ячейки (tc.top, tc.bottom etc)
-                                    #             tc = cell._tc
-                                    #             # Если полностью объединена
-                                    #             if tc.right - tc.left == len(table_3.columns):
-                                    #                 if cell.text != 'Опасные сигналы не обнаружены':
-                                    #                     if self.win_lin:
-                                    #                         # Если находим имя - не прерываем цикл
-                                    #                         if len(re.findall(name_system, cell.text)):
-                                    #                             flag_for_exit = 1
-                                    #                         else:
-                                    #                             flag_for_exit = 0
-                                    #                     # Имя системы
-                                    #                     name = re.findall(r"\(([^)]*)\)", cell.text)[0]
-                                    #             if flag_for_exit:  # Если нужно в цикл
-                                    #                 if tc.right == 1 and tc.left == 0:
-                                    #                     frq = float(cell.text.replace(',', '.'))  # Частота
-                                    #                     try:
-                                    #                         x = float(table_3.cell(tc.top, range_search[j])
-                                    #                                   .text.replace(',', '.'))
-                                    #                     except BaseException:
-                                    #                         if '<' in table_3.cell(tc.top, range_search[j]).text:
-                                    #                             x = -1
-                                    #                     # Если больше, то красим через xml
-                                    #                     if x > float(self.zone[j]):
-                                    #                         string.setdefault(name, [])
-                                    #                         shading_elm.append(parse_xml(
-                                    #                             r'<w:shd {} w:fill="FFFF00"/>'.format(nsdecls('w')))
-                                    #                         )
-                                    #                         table_3.rows[tc.top].cells[0]._tc.get_or_add_tcPr().append(
-                                    #                             shading_elm[shading_index])
-                                    #                         shading_index += 1
-                                    #                         shading_elm.append(parse_xml(
-                                    #                             r'<w:shd {} w:fill="FFFF00"/>'.format(nsdecls('w')))
-                                    #                         )
-                                    #                         table_3.rows[tc.top].cells[
-                                    #                             range_search[j]]._tc.get_or_add_tcPr().append(
-                                    #                             shading_elm[shading_index])
-                                    #                         shading_index += 1
-                                    #                         if frq not in string[name]:
-                                    #                             string[name].append(frq)
-                                    #             break
-                                    #         except BaseException:
-                                    #             break
                                     self.logging.info("Сохраняем документ")
                                     doc.save(os.path.abspath(self.path) + '\\' + name_doc)
                         progress = progress + percent_

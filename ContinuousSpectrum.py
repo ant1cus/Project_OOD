@@ -53,8 +53,8 @@ class GenerationFileCC(QThread):
                     df_gen[2] = ""
                 df_to_write = df_gen
                 if mode:
-                    df_to_write[1] = df_to_write[1].apply(lambda x: random.uniform(x * (1 - self.dispersion/100),
-                                                                                   x * (1 + self.dispersion/100)))
+                    df_to_write[1] = df_to_write[1].apply(lambda x: random.uniform(x * (1 - self.dispersion / 100),
+                                                                                   x * (1 + self.dispersion / 100)))
                 df_write_new = pd.concat([df_gen_old, df_to_write])
                 df_write_new.to_csv(path_dir_gen, sep=';',
                                     header=False, index=False, encoding="ANSI")
@@ -176,7 +176,7 @@ class GenerationFileCC(QThread):
                     os.makedirs(path_dir, exist_ok=True)
             elif self.set and self.only_txt:
                 quant_set += len(self.set)
-            progress += progress*quant_set
+            progress += progress * quant_set
             self.percent_progress = 100 / progress
             self.logging.info('Входные данные:')
             self.logging.info('0' + '"|"' + str(self.source) + '"|"' + 'True' + '"|"' +
@@ -187,7 +187,8 @@ class GenerationFileCC(QThread):
                 self.logging.info('Генерация без excel')
                 for folder in self.set:
                     self.logging.info('Запись текстового файла ' + str(folder))
-                    gen_df = self.gen_txt.apply(lambda x: random.uniform(x * 0.95, x * 1.05))
+                    gen_df = self.gen_txt.apply(lambda x: random.uniform(x * (1 - self.dispersion / 100),
+                                                                         x * (1 + self.dispersion / 100)))
                     path_df = pathlib.Path(self.output, 'txt', str(folder))
                     path_df.mkdir(parents=True, exist_ok=True)
                     path_df = pathlib.Path(self.output, 'txt', str(folder), self.name_txt)

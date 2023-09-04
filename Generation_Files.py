@@ -10,7 +10,7 @@ from convert import file_parcing
 
 
 class GenerationFile(QThread):
-    progress = pyqtSignal(int)  # Сигнал для прогресс бара
+    progress = pyqtSignal(int)  # Сигнал для progress bar
     status = pyqtSignal(str)  # Сигнал для статус бара
     messageChanged = pyqtSignal(str, str)
     errors = pyqtSignal()
@@ -19,8 +19,8 @@ class GenerationFile(QThread):
         QThread.__init__(self)
         self.source = incoming_data['source']
         self.output = incoming_data['output']
-        self.complect = incoming_data['complect']
-        self.complect_quant = incoming_data['complect_quant']
+        self.set = incoming_data['set']
+        self.set_quant = incoming_data['set_quant']
         self.name_mode = incoming_data['name_mode']
         self.restrict_file = incoming_data['restrict_file']
         self.no_freq_lim = incoming_data['no_freq_lim']
@@ -37,7 +37,7 @@ class GenerationFile(QThread):
             self.logging.info('Начинаем генерировать файлы')
             self.status.emit('Старт')
             self.progress.emit(current_progress)
-            percent = 100/(2*(len(os.listdir(self.source)) - 1) + 2*int(self.complect_quant))
+            percent = 100/(2*(len(os.listdir(self.source)) - 1) + 2*int(self.set_quant))
             error = file_parcing(self.source, self.logging, self.status, self.progress, percent, current_progress,
                                  self.no_freq_lim, self.default_path)
             quant_doc = len(os.listdir(self.source)) - 2
@@ -100,9 +100,9 @@ class GenerationFile(QThread):
                                                                                         'quant_frq':
                                                                                             [df[el]/quant_doc]})],
                                                         axis=0)
-                for complect_number in self.complect:
-                    self.logging.info('Генерация файла ' + str(complect_number))
-                    self.status.emit('Генерация файла ' + str(complect_number))
+                for set_number in self.set:
+                    self.logging.info('Генерация файла ' + str(set_number))
+                    self.status.emit('Генерация файла ' + str(set_number))
                     df_sheet = {}
                     for element in df_out:
                         df = pd.DataFrame(columns=['frq', 'signal', 'noise'])
@@ -150,12 +150,12 @@ class GenerationFile(QThread):
                         else:
                             data_for_create.to_excel(wb_for_create, sheet_name=sheet_for_create,
                                                      index=False, header=False)
-                    path_txt = self.output + '\\' + str(complect_number) + '\\'
+                    path_txt = self.output + '\\' + str(set_number) + '\\'
                     wb = False
                     if self.no_excel_file:
-                        os.makedirs(self.output + '\\' + str(complect_number))
+                        os.makedirs(self.output + '\\' + str(set_number))
                     else:
-                        wb = pd.ExcelWriter(str(pathlib.Path(self.output, str(complect_number) + '.xlsx')))
+                        wb = pd.ExcelWriter(str(pathlib.Path(self.output, str(set_number) + '.xlsx')))
                     for sheet_name in df_sheet.keys():
                         if 'описание' in sheet_name.lower():
                             create_file(description, path_txt, sheet_name, wb)
