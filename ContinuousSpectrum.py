@@ -51,7 +51,7 @@ class GenerationFileCC(QThread):
                 else:
                     df_gen.columns = [0, 1]
                     df_gen[2] = ""
-                df_to_write = df_gen
+                df_to_write = df_gen.copy()
                 if mode:
                     df_to_write[1] = df_to_write[1].apply(lambda x: random.uniform(x * (1 - self.dispersion / 100),
                                                                                    x * (1 + self.dispersion / 100)))
