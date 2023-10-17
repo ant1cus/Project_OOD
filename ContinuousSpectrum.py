@@ -129,8 +129,8 @@ class GenerationFileCC(QThread):
                     df_new.rename(columns={old_name_col: new_name_col}, inplace=True)
                 df_to_concat = df_new if df_to_concat.empty else df_to_concat.join(df_new)
             self.logging.info('Перезапись файла ' + file_csv)
-            # if str(df_write.iloc[1, 1]) != '1.4':
-            #     df_write.iloc[1, 1] = '1.4'
+            if str(df_write.iloc[0, 0]) == 'sep=':  # Если при считывании эта строка первая, то будет криво писать
+                df_write.drop(labels=[0], axis=0, inplace=True)
             df_write.to_csv(str(pathlib.Path(path, file_csv)), sep=';',
                             header=False, index=False, encoding="ANSI")
             if add_index == 0:
