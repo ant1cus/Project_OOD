@@ -380,9 +380,9 @@ class ZoneChecked(QThread):
                             except TypeError:
                                 pass
                     if flag:  # Если что-то форматируется, то закрашиваем
-                        if self.win_lin:
+                        if self.win_lin and self.department:
                             for min_ in range(1, 3):  # Закрашиваем номер комплекта
-                                if type(ws.cell(i - min_, 1).value) == float:
+                                if isinstance(ws.cell(i - min_, 1).value, float):
                                     ws.cell(i - min_, 1).alignment = openpyxl.styles.Alignment(
                                         horizontal="left", vertical="center")
                                     ws.cell(i - min_, 1).fill = openpyxl.styles.PatternFill(
