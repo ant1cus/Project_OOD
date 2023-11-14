@@ -1,12 +1,13 @@
 import os
 import re
 import traceback
+import pathlib
 
 import pandas as pd
 from openpyxl import load_workbook
 
 
-def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_path):
+def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_path, twelve_sectors):
     try:
         list_file = os.listdir(path)
         # Сохраним нужное нам описание режимов.
@@ -15,20 +16,24 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_
         txt_files = filter(lambda x: x.endswith('.txt'), list_file)
         for file in sorted(txt_files):
             try:
-                with open(path + '\\' + file, mode='r', encoding="utf-8-sig") as f:
+                # with open(path + '\\' + file, mode='r', encoding="utf-8-sig") as f:
+                with open(pathlib.Path(path, file), mode='r', encoding="utf-8-sig") as f:
                     logging.info("Кодировка utf-8-sig")
                     mode_1 = f.readlines()
                     mode_1 = [line.rstrip() for line in mode_1]
             except UnicodeDecodeError:
-                with open(path + '\\' + file, mode='r') as f:
+                # with open(path + '\\' + file, mode='r') as f:
+                with open(pathlib.Path(path, file), mode='r') as f:
                     logging.info("Другая кодировка")
                     mode_1 = f.readlines()
                     mode_1 = [line.rstrip() for line in mode_1]
         mode = [x for x in mode_1 if x]
         parcing_file = []
-        if os.path.exists(path + '\\txt'):
+        # if os.path.exists(path + '\\txt'):
+        if os.path.exists(pathlib.Path(path, 'txt')):
             logging.info("Запоминаем какие папки уже есть внутри папки txt")
-            parcing_file = os.listdir(path + '\\txt')
+            parcing_file = os.listdir(pathlib.Path(path, 'txt'))
+            # parcing_file = os.listdir(path + '\\txt')
         # Работа с исходниками.
         # Отсортируем нужные нам файлы xlsx.
         exel_files = filter(lambda x: x.endswith('.xlsx') and ('~' not in x) and (x[:-4] not in parcing_file),
@@ -39,7 +44,8 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_
             status.emit('Проверяем названия рабочих листов в документе ' + file)
             error = []
             logging.info("Открываем книгу")
-            wb = load_workbook(path + '\\' + file, data_only=True)  # Откроем книгу.
+            wb = load_workbook(pathlib.Path(path, file), data_only=True)  # Откроем книгу.
+            # wb = load_workbook(path + '\\' + file, data_only=True)  # Откроем книгу.
             book_name = str(file.rsplit('.xlsx', maxsplit=1)[0])  # Определение названия exel.
             name = wb.sheetnames  # Список листов.
             pat = ['_ЦП', '.m', '.v']  # список ключевых слов для поиска в ЦП
@@ -70,11 +76,13 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_
                             worksheet = wb[name[elem]]  # выбираем лист с именем
                             worksheet.title = x  # переименовываем лист
                     logging.info("Сохраняем книгу с новыми названиями")
-                    wb.save(filename=path + '\\' + file)  # сохраняем книгу
+                    # wb.save(filename=path + '\\' + file)  # сохраняем книгу
+                    wb.save(filename=pathlib.Path(path, file))  # сохраняем книгу
                     wb.close()
                     break
             logging.info("Открываем книгу ещё раз если закрыли её в предыдущем цикле")  # Проверить надо ли
-            wb = load_workbook(path + '\\' + file, data_only=True)  # Откроем книгу.
+            # wb = load_workbook(path + '\\' + file, data_only=True)  # Откроем книгу.
+            wb = load_workbook(pathlib.Path(path, file), data_only=True)  # Откроем книгу.
             name = wb.sheetnames  # Список листов.
             logging.info("Проверяем на совпадение названий с файлом описания")
             if name != mode:  # проверяем названия на соответствия
@@ -85,12 +93,13 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_
                     if mode.count(name_isx) == 0:
                         output += str(i_out) + ') режим ' + str(name_isx) + '; '
                 error.append(output.strip(' '))
-            else:
+            elif twelve_sectors is False:
                 for sheet in name:  # Загоняем в txt.
                     status.emit('Проверяем рабочие листы в документе ' + file + ' на правильность заполнения')
                     logging.info("Проверяем документы на наличие ошибок")
                     if sheet.lower() != 'описание':
-                        df = pd.read_excel(path + '\\' + file, sheet_name=sheet, header=None)
+                        # df = pd.read_excel(path + '\\' + file, sheet_name=sheet, header=None)
+                        df = pd.read_excel(pathlib.Path(path, file), sheet_name=sheet, header=None)
                         df = df.fillna(False)
                         logging.info("Смотрим есть ли ошибки")
                         for i, row in enumerate(df.itertuples(index=False)):
@@ -157,9 +166,12 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_
                 status.emit('Создаем txt файлы для документа ' + file)
                 logging.info("Ошибок нет, записываем в txt")
                 logging.info("Создаем папку для txt файлов")
-                if os.path.exists(path + '\\txt\\' + book_name) is False:
-                    os.makedirs(path + '\\txt\\' + book_name)
-                    os.chdir(path + "\\txt\\" + book_name)
+                if os.path.exists(pathlib.Path(path,'txt', book_name)) is False:
+                    os.makedirs(pathlib.Path(path,'txt', book_name))
+                    os.chdir(pathlib.Path(path,'txt', book_name))
+                # if os.path.exists(path + '\\txt\\' + book_name) is False:
+                #     os.makedirs(path + '\\txt\\' + book_name)
+                #     os.chdir(path + "\\txt\\" + book_name)
                     for sheet in name:
                         if re.findall(r'_lin', sheet) or re.findall(r'_linux', sheet):
                             name_sheet = sheet.upper()
@@ -167,19 +179,23 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_
                             name_sheet = sheet.lower()
                         else:
                             name_sheet = sheet
-                        df = pd.read_excel(path + '\\' + file, sheet_name=sheet, header=None)
+                        # df = pd.read_excel(path + '\\' + file, sheet_name=sheet, header=None)
+                        df = pd.read_excel(pathlib.Path(path, file), sheet_name=sheet, header=None)
                         if df.empty or type(df.iloc[0, 0]) == str:
-                            with open(path + '\\txt\\' + book_name + '\\' + name_sheet + '.txt', 'w'):
+                            with open(pathlib.Path(path, 'txt', book_name, name_sheet + '.txt'), 'w'):
                                 pass
                         else:
                             if sheet.lower() != 'описание':
-                                df = df.drop(df.columns[[i for i in df.columns.tolist() if i > 2]], axis=1)
-                                if [0, 1, 2] in df.columns.tolist():
-                                    df = df[[0, 1, 2]]
+                                if twelve_sectors is False:
+                                    df = df.drop(df.columns[[i for i in df.columns.tolist() if i > 2]], axis=1)
+                                    if [0, 1, 2] in df.columns.tolist():
+                                        df = df[[0, 1, 2]]
                                 df = df.dropna()
                             df = df.round(4)
-                            df.to_csv(path + '\\txt\\' + book_name + '\\' + name_sheet + '.txt',
+                            df.to_csv(pathlib.Path(path, 'txt', book_name, name_sheet + '.txt'),
                                       index=None, sep='\t', mode='w', header=None)
+                            # df.to_csv(path + '\\txt\\' + book_name + '\\' + name_sheet + '.txt',
+                            # index=None, sep='\t', mode='w', header=None)
                 wb.close()
                 progress.emit(int(cp))
         return {'error': output_error, 'cp': cp}

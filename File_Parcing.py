@@ -6,7 +6,7 @@ from convert import file_parcing
 
 
 class FileParcing(QThread):
-    progress = pyqtSignal(int)  # Сигнал для прогресс бара
+    progress = pyqtSignal(int)  # Сигнал для progress бара
     status = pyqtSignal(str)  # Сигнал для статус бара
     messageChanged = pyqtSignal(str, str)
     errors = pyqtSignal()
@@ -17,6 +17,7 @@ class FileParcing(QThread):
         self.all_progress = incoming_data['progress']
         self.group_file = incoming_data['group_file']
         self.no_freq_lim = incoming_data['no_freq_lim']
+        self.twelve_sectors = incoming_data['12_sec']
         self.logging = incoming_data['logging']
         self.queue = incoming_data['queue']
         self.default_path = incoming_data['default_path']
@@ -36,7 +37,7 @@ class FileParcing(QThread):
                 for folder in os.listdir(self.path):
                     if os.path.isdir(self.path + '\\' + folder):
                         err = file_parcing(self.path + '\\' + folder, self.logging, self.status, self.progress, percent,
-                                           current_progress, self.no_freq_lim, self.default_path)
+                                           current_progress, self.no_freq_lim, self.default_path, self.twelve_sectors)
                         if err['error']:
                             error_path.append(self.path + '\\' + folder)
                             for element in err['error']:
@@ -46,7 +47,7 @@ class FileParcing(QThread):
                         current_progress = err['cp']
             else:
                 err = file_parcing(self.path, self.logging, self.status, self.progress, percent,
-                                   current_progress, self.no_freq_lim, self.default_path)
+                                   current_progress, self.no_freq_lim, self.default_path, self.twelve_sectors)
                 if err['error']:
                     errors = err['error']
                     error_path.append(self.path)

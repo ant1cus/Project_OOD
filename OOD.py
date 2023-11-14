@@ -152,6 +152,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                           'parser-path_folder_parser': ['Путь к дир. с файлами', self.lineEdit_path_parser],
                           'parser-checkBox_group_parcing': ['Пакетный парсинг', self.checkBox_group_parcing],
                           'parser-checkBox_no_freq_limit': ['Без ограничения частот', self.checkBox_no_freq_limit],
+                          'parser-checkBox_12_sectors': ['12 секторов', self.checkBox_12_sectors],
                           'extract-path_folder_start_extract': ['Путь к дир. с файлами',
                                                                 self.lineEdit_path_start_extract],
                           'extract-groupBox_value_for_extract': ['Значения для выписки',
@@ -469,6 +470,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.groupBox_errors.setStyleSheet("")
             group_file = self.checkBox_group_parcing.isChecked()
             no_freq_lim = self.checkBox_no_freq_limit.isChecked()
+            twelve_sectors = self.checkBox_12_sectors.isChecked()
             folder = checked_file_parcing(self.lineEdit_path_parser, group_file)
             if isinstance(folder, list):
                 logging.info('Обнаружены ошибки данных')
@@ -476,7 +478,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 return
             # Если всё прошло запускаем поток
             logging.info('Запуск на выполнение')
-            folder['group_file'], folder['no_freq_lim'] = group_file, no_freq_lim
+            folder['group_file'], folder['no_freq_lim'], folder['12_sec'] = group_file, no_freq_lim, twelve_sectors
             folder['logging'], folder['queue'] = logging, self.queue
             folder['default_path'] = self.default_path
             self.thread = FileParcing(folder)

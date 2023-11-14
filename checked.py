@@ -55,7 +55,7 @@ def checked_file_parcing(dir_path, group_file):
         if 'Описание.txt' not in txt_files and 'описание.txt' not in txt_files:
             errors.append('Нет файла с описанием режимов (' + p + ')')
         else:
-            with open(p + '\\Описание.txt', mode='r') as f:
+            with open(pathlib.Path(p, 'Описание.txt'), mode='r', encoding='utf-8') as f:
                 lines = f.readlines()
                 for line in lines:
                     if re.findall(r'\s', line.rstrip('\n')):
