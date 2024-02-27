@@ -93,67 +93,94 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_
                     if mode.count(name_isx) == 0:
                         output += str(i_out) + ') режим ' + str(name_isx) + '; '
                 error.append(output.strip(' '))
-            elif twelve_sectors is False:
+            else:
                 for sheet in name:  # Загоняем в txt.
                     status.emit('Проверяем рабочие листы в документе ' + file + ' на правильность заполнения')
                     logging.info("Проверяем документы на наличие ошибок")
                     if sheet.lower() != 'описание':
                         # df = pd.read_excel(path + '\\' + file, sheet_name=sheet, header=None)
                         df = pd.read_excel(pathlib.Path(path, file), sheet_name=sheet, header=None)
-                        df = df.fillna(False)
                         logging.info("Смотрим есть ли ошибки")
-                        for i, row in enumerate(df.itertuples(index=False)):
-                            try:  # Try/except блок для отлова листов с надписью «не обнаружено»
-                                frq, s, n = row[0], row[1], row[2]
-                                # if type(frq) is str:
-                                if isinstance(frq, str):
-                                    frq = float(frq.replace(',', '.'))
-                                    error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' + file +
-                                                 ' в режиме ' + sheet +
-                                                 ' в строке ' + str(i + 1) + ' записано текстовое значение!')
-                                if s:
-                                    if type(s) is float or type(s) is int:
-                                        if n is False:
+                        if twelve_sectors:
+                            alphabet = [chr(i) for i in range(65, 90)]
+                            df = df.fillna(0.0000001)
+                            for column in df.columns:
+                                data = df[column]
+                                try:  # Блок try для отлова текста в значениях
+                                    # if data.str.contains(',', regex=False).any():
+                                    #     error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
+                                    #                  file + ' в режиме '
+                                    #                  + sheet + ' в колонке ' + str(column) +
+                                    #                  ' есть значение с неправильным разделителем!')
+                                    if data.astype(float).all():
+                                        continue
+                                    else:
+                                        error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
+                                                     file + ' в режиме '
+                                                     + sheet + ' в колонке ' + str(column + 1) +
+                                                     ' неведомая штука (не преобразовывается ни в строку,'
+                                                     ' ни в значение)!')
+                                except ValueError:
+                                    for i, row in enumerate(df[column]):
+                                        if type(row) == str:
+                                            error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
+                                                         file + ' в режиме '
+                                                         + sheet + ' в ячейке ' + alphabet[column] + str(i + 1) +
+                                                         ' есть текстовое значение!')
+                        else:
+                            df = df.fillna(False)
+                            for i, row in enumerate(df.itertuples(index=False)):
+                                try:  # Try/except блок для отлова листов с надписью «не обнаружено»
+                                    frq, s, n = row[0], row[1], row[2]
+                                    # if type(frq) is str:
+                                    if isinstance(frq, str):
+                                        frq = float(frq.replace(',', '.'))
+                                        error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' + file +
+                                                     ' в режиме ' + sheet +
+                                                     ' в строке ' + str(i + 1) + ' записано текстовое значение!')
+                                    if s:
+                                        if isinstance(s, float) or isinstance(s, int):
+                                            if n is False:
+                                                error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
+                                                             file + ' в режиме '
+                                                             + sheet + ' на частоте ' + str(round(frq, 4)) +
+                                                             ' есть значение сигнала, но нет шума!')
+                                        else:
                                             error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
                                                          file + ' в режиме '
                                                          + sheet + ' на частоте ' + str(round(frq, 4)) +
-                                                         ' есть значение сигнала, но нет шума!')
-                                    else:
-                                        error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
-                                                     file + ' в режиме '
-                                                     + sheet + ' на частоте ' + str(round(frq, 4)) +
-                                                     ' сигнал указан как текстовое значение')
-                                if n:
-                                    if type(n) is float or type(n) is int:
-                                        if s is False:
+                                                         ' сигнал указан как текстовое значение')
+                                    if n:
+                                        if isinstance(n, float) or isinstance(n, int):
+                                            if s is False:
+                                                error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
+                                                             file + ' в режиме ' +
+                                                             sheet + ' на частоте ' + str(round(frq, 4)) +
+                                                             ' есть значение шума, но нет сигнала!')
+                                        else:
+                                            error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
+                                                         file + ' в режиме '
+                                                         + sheet + ' на частоте ' + str(round(frq, 4)) +
+                                                         ' шум указан как текстовое значение')
+                                    if (isinstance(s, float) or isinstance(s, int)) and\
+                                            (isinstance(n, float) or isinstance(n, int)) and (no_freq_lim is False):
+                                        if s < n:
                                             error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
                                                          file + ' в режиме ' +
-                                                         sheet + ' на частоте ' + str(round(frq, 4)) +
-                                                         ' есть значение шума, но нет сигнала!')
-                                    else:
-                                        error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
-                                                     file + ' в режиме '
-                                                     + sheet + ' на частоте ' + str(round(frq, 4)) +
-                                                     ' шум указан как текстовое значение')
-                                if (type(s) is float or type(s) is int) and\
-                                        (type(n) is float or type(n) is int) and (no_freq_lim is False):
-                                    if s < n:
-                                        error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
-                                                     file + ' в режиме ' +
-                                                     sheet + ' на частоте ' +
-                                                     str(round(frq, 4)) + ' значения шума больше сигнала!')
-                                    elif s == n:
-                                        error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
-                                                     file + ' в режиме ' +
-                                                     sheet + ' на частоте ' +
-                                                     str(round(frq, 4)) + ' одинаковые значения сигнала и шума!')
-                                    elif s > 100:
-                                        error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
-                                                     file + ' в режиме ' +
-                                                     sheet + ' на частоте ' +
-                                                     str(round(frq, 4)) + ' слишком большое значение сигнала!')
-                            except IndexError:
-                                pass
+                                                         sheet + ' на частоте ' +
+                                                         str(round(frq, 4)) + ' значения шума больше сигнала!')
+                                        elif s == n:
+                                            error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
+                                                         file + ' в режиме ' +
+                                                         sheet + ' на частоте ' +
+                                                         str(round(frq, 4)) + ' одинаковые значения сигнала и шума!')
+                                        elif s > 100:
+                                            error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
+                                                         file + ' в режиме ' +
+                                                         sheet + ' на частоте ' +
+                                                         str(round(frq, 4)) + ' слишком большое значение сигнала!')
+                                except IndexError:
+                                    pass
             cp = cp + per
             if error:
                 status.emit('Добавляем ошибки для документа ' + file)
@@ -166,9 +193,9 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_
                 status.emit('Создаем txt файлы для документа ' + file)
                 logging.info("Ошибок нет, записываем в txt")
                 logging.info("Создаем папку для txt файлов")
-                if os.path.exists(pathlib.Path(path,'txt', book_name)) is False:
-                    os.makedirs(pathlib.Path(path,'txt', book_name))
-                    os.chdir(pathlib.Path(path,'txt', book_name))
+                if os.path.exists(pathlib.Path(path, 'txt', book_name)) is False:
+                    os.makedirs(pathlib.Path(path, 'txt', book_name))
+                    os.chdir(pathlib.Path(path, 'txt', book_name))
                 # if os.path.exists(path + '\\txt\\' + book_name) is False:
                 #     os.makedirs(path + '\\txt\\' + book_name)
                 #     os.chdir(path + "\\txt\\" + book_name)
@@ -190,7 +217,9 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_
                                     df = df.drop(df.columns[[i for i in df.columns.tolist() if i > 2]], axis=1)
                                     if [0, 1, 2] in df.columns.tolist():
                                         df = df[[0, 1, 2]]
-                                df = df.dropna()
+                                    df = df.dropna()
+                                else:
+                                    df = df.fillna(0)
                             df = df.round(4)
                             df.to_csv(pathlib.Path(path, 'txt', book_name, name_sheet + '.txt'),
                                       index=None, sep='\t', mode='w', header=None)

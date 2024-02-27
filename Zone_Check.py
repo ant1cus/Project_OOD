@@ -186,7 +186,7 @@ class ZoneChecked(QThread):
                                     doc.save(os.path.abspath(self.path) + '\\' + name_doc)
                         progress = progress + percent_
                         self.progress.emit(int(progress))
-                else:
+                else:   # ФСТЭК
                     self.logging.info("Считываем зоны")
                     for j in range(0, 4, 1):
                         if self.pause_threading():
@@ -197,7 +197,6 @@ class ZoneChecked(QThread):
                             errors_for_excel.append('\t')
                             for k in zone_name[:-1]:
                                 errors_for_excel.append(k)
-                            void = 2
                             errors_for_excel.append('\n')
                         void = 1
                         try:
@@ -215,7 +214,8 @@ class ZoneChecked(QThread):
                                 # Условия проверки
                                 if (float(self.zone[j]) < float(zone)) and (float(self.zone[j]) != 0):
                                     flag_for_exit = False
-                                    range_search = [7, 8, 9, 10]
+                                    # range_search = [7, 8, 9, 10]
+                                    range_search = [8, 9, 10, 11]   # Столбцы для проверки (считать с 0 в Word)
                                     x = 0
                                     name = ''
                                     table_3 = doc.tables[2]
