@@ -162,8 +162,9 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_
                                                          file + ' в режиме '
                                                          + sheet + ' на частоте ' + str(round(frq, 4)) +
                                                          ' шум указан как текстовое значение')
-                                    if (isinstance(s, float) or isinstance(s, int)) and\
-                                            (isinstance(n, float) or isinstance(n, int)) and (no_freq_lim is False):
+                                    if (s and (isinstance(s, float) or isinstance(s, int))) and\
+                                            (n and (isinstance(n, float) or isinstance(n, int))) and\
+                                            (no_freq_lim is False):
                                         if s < n:
                                             error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
                                                          file + ' в режиме ' +
