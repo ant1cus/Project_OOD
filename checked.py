@@ -55,11 +55,22 @@ def checked_file_parcing(dir_path, group_file):
         if 'Описание.txt' not in txt_files and 'описание.txt' not in txt_files:
             errors.append('Нет файла с описанием режимов (' + p + ')')
         else:
-            with open(pathlib.Path(p, 'Описание.txt'), mode='r', encoding='utf-8') as f:
-                lines = f.readlines()
-                for line in lines:
-                    if re.findall(r'\s', line.rstrip('\n')):
-                        errors.append('Пробелы в названии режимов (' + p + ', ' + line.rstrip('\n') + ')')
+            try:
+                # with open(path + '\\' + file, mode='r', encoding="utf-8-sig") as f:
+                with open(pathlib.Path(p, 'Описание.txt'), mode='r', encoding='utf-8') as f:
+                    lines = f.readlines()
+            except UnicodeDecodeError:
+                # with open(path + '\\' + file, mode='r') as f:
+                with open(pathlib.Path(p, 'Описание.txt'), mode='r', encoding='ANSI') as f:
+                    lines = f.readlines()
+            for line in lines:
+                if re.findall(r'\s', line.rstrip('\n')):
+                    errors.append('Пробелы в названии режимов (' + p + ', ' + line.rstrip('\n') + ')')
+            # with open(pathlib.Path(p, 'Описание.txt'), mode='r', encoding='utf-8') as f:
+            #     lines = f.readlines()
+            #     for line in lines:
+            #         if re.findall(r'\s', line.rstrip('\n')):
+            #             errors.append('Пробелы в названии режимов (' + p + ', ' + line.rstrip('\n') + ')')
         return {'errors': errors, 'len': len(excel_files)}
     # Выбираем путь для исходников.
     path = dir_path.text().strip()
