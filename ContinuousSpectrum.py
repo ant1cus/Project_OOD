@@ -111,6 +111,7 @@ class GenerationFileCC(QThread):
                 df_new = df_new.drop(labels=[i for i in range(0, values + 1)], axis=0)
                 df_new.drop(labels=['str'], axis=1, inplace=True)
                 df_new = df_new.apply(pd.to_numeric, errors='coerce')
+                df_new.dropna(how='all', inplace=True)
                 df_new.interpolate(inplace=True)
                 df_write = pd.concat([df_write, df_new])
                 if generation and self.set and self.only_txt is False:
