@@ -14,7 +14,7 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 
 
 class DeleteHeaderFooter(QThread):
-    progress = pyqtSignal(int)  # Сигнал для прогресс бара
+    progress = pyqtSignal(int)  # Сигнал для progress bar
     status = pyqtSignal(str)  # Сигнал для статус бара
     messageChanged = pyqtSignal(str, str)
     errors = pyqtSignal()
@@ -22,8 +22,9 @@ class DeleteHeaderFooter(QThread):
     def __init__(self, incoming_data):  # Список переданных элементов.
         QThread.__init__(self)
         self.path = incoming_data['path']
-        self.name_executor = incoming_data['name_executor']
-        self.post_executor = incoming_data['post_executor']
+        self.conclusion = incoming_data['conclusion']
+        self.protocol = incoming_data['protocol']
+        self.prescription = incoming_data['prescription']
         self.logging = incoming_data['logging']
         self.queue = incoming_data['queue']
         self.default_path = incoming_data['default_path']
@@ -36,44 +37,6 @@ class DeleteHeaderFooter(QThread):
             self.status.emit('Старт')
             self.progress.emit(current_progress)
             percent = 100/len(os.listdir(self.path))
-            # self.logging.info('Извлекаем шапку для копирования')
-            # temp_docx = os.path.join(str(self.default_path) + '\\', 'Образец.docx')
-            # temp_zip = os.path.join(str(self.default_path) + '\\', 'Образец.docx' + ".zip")
-            # temp_folder = os.path.join(str(self.default_path) + '\\', "template")
-            # if os.path.exists(temp_zip):
-            #     shutil.rmtree(temp_zip)
-            # if os.path.exists(temp_folder):
-            #     shutil.rmtree(temp_folder)
-            # if os.path.exists(str(self.default_path) + '\\zip'):
-            #     shutil.rmtree(str(self.default_path) + '\\zip')
-            # os.rename(temp_docx, temp_zip)
-            # os.mkdir(str(self.default_path) + '\\zip')
-            # self.logging.info('Извлекаем архив')
-            # with zipfile.ZipFile(temp_zip) as my_document:
-            #     my_document.extractall(temp_folder)
-            # pages_xml = os.path.join(temp_folder, "word", "document.xml")
-            # tree = etree.parse(pages_xml)
-            # root = tree.getroot()
-            # j = 0
-            # self.logging.info('Получаем тэг для копирования')
-            # for i, e in reversed(list(enumerate(root[0]))):
-            #     if e.tag.rpartition('}')[2] == 'sectPr':
-            #         j = i
-            #         break
-            # header = copy.deepcopy(root[0][j])
-            # self.logging.info('Собираем и удаляем архив')
-            # os.remove(temp_zip)
-            # shutil.make_archive(temp_zip.replace(".zip", ""), 'zip', temp_folder)
-            # os.rename(temp_zip, temp_docx)  # rename zip file to docx
-            # while True:
-            #     try:
-            #         shutil.rmtree(temp_folder)
-            #         shutil.rmtree(str(self.default_path) + '\\zip')
-            #         break
-            #     except OSError as es:
-            #         self.logging.error(es)
-            #         self.logging.error(traceback.format_exc())
-            #         self.logging.info('Ошибка с удалением, пробуем ещё раз')
             for element in os.listdir(self.path):
                 self.logging.info('Обезличиваем документ ' + element)
                 self.status.emit('Обезличиваем документ ' + element)
@@ -97,9 +60,11 @@ class DeleteHeaderFooter(QThread):
                 j = 0
                 self.logging.info('Получаем тэг для копирования')
                 for i, e in reversed(list(enumerate(root[0]))):
-                    if e.tag.rpartition('}')[2] != 'sectPr' and len(e):
+                    if j == 2:
+                    # if e.tag.rpartition('}')[2] != 'sectPr' and len(e):
                         j = i
                         break
+                    j += 1
                 header = copy.deepcopy(root[0][j][0][0])
                 self.logging.info('Собираем и удаляем архив')
                 os.remove(temp_zip)
@@ -144,7 +109,7 @@ class DeleteHeaderFooter(QThread):
                             paragraph_del(paragraph)
                             break
                         paragraph_del(paragraph)
-                    doc.sections[len(doc.sections) - 1].first_page_header.is_linked_to_previous = False  # Хидер
+                    doc.sections[len(doc.sections) - 1].first_page_header.is_linked_to_previous = False  # header
                     doc.sections[len(doc.sections) - 1].first_page_footer.is_linked_to_previous = False  # Футер
                 else:
                     for paragraph in doc.sections[len(doc.sections) - 1].footer.paragraphs:
@@ -161,11 +126,22 @@ class DeleteHeaderFooter(QThread):
                 doc = docx.Document(self.path + '\\' + element)  # Открываем
                 self.logging.info('Переименовываем заголовок')
                 name = element.rpartition('.')[0]
+                size = 12
                 if 'Заключение СП' in name:
                     name = re.sub('Заключение СП', 'Заключение', name)
                 for i, paragraph in enumerate(doc.paragraphs):
+                    # if paragraph.runs[0].font.size is None:
+                    #     size = paragraph.style.font.size.pt
+                    # else:
+                    #     size = paragraph.runs[0].font.size.pt
                     if re.findall(r'«\d{2}»\s\w+\s\d{4}\s[г]\.', paragraph.text):
+                        if paragraph.runs[0].font.size is None:
+                            size = paragraph.style.font.size.pt
+                        else:
+                            size = paragraph.runs[0].font.size.pt
                         paragraph.text = re.sub(r'«\d{2}»\s\w+\s\d{4}\s[г]\.', 'date', paragraph.text)
+                        for run in paragraph.runs:
+                            run.font.size = Pt(size)
                     if re.findall(name.partition(' ')[0].upper(), paragraph.text):
                         if paragraph.runs[0].font.size is None:
                             size = paragraph.style.font.size.pt
@@ -181,7 +157,7 @@ class DeleteHeaderFooter(QThread):
                         paragraph.text = re.sub(name.partition(' ')[0].upper(),
                                                 'ВЫПИСКА ИЗ ' + name_doc.upper(),
                                                 paragraph.text)
-                        doc.paragraphs[i + 1].insert_paragraph_before('\tУч. № ' + number + ' от ' + date[0])
+                        doc.paragraphs[i + 1].insert_paragraph_before('Уч. № ' + number + ' от ' + date[0])
                         for j in [i, i + 1]:
                             doc.paragraphs[j].paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
                             for run in doc.paragraphs[j].runs:
@@ -189,16 +165,12 @@ class DeleteHeaderFooter(QThread):
                                 run.font.size = Pt(size)
                         break
                 if 'Заключение' in name:
-                    post_executor = self.post_executor[0]
-                    name_executor = self.name_executor[0]
+                    executor = self.conclusion
                 elif 'Протокол' in name:
-                    post_executor = self.post_executor[1]
-                    name_executor = self.name_executor[1]
+                    executor = self.protocol
                 else:
-                    post_executor = self.post_executor[2]
-                    name_executor = self.name_executor[2]
-                doc.add_paragraph('\nВыписка верна\n\n' + post_executor + '\t\t\t\t' + name_executor)
-                size = 12
+                    executor = self.prescription
+                doc.add_paragraph('Выписка верна\n\n' + executor)
                 doc.paragraphs[len(doc.paragraphs) - 1].alignment = WD_PARAGRAPH_ALIGNMENT.LEFT  # Выравниваем
                 for run in doc.paragraphs[len(doc.paragraphs) - 1].runs:
                     run.font.size = Pt(size)

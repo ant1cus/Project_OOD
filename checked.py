@@ -208,8 +208,7 @@ def checked_generation_pemi(source_file, output_file, set_number, set_quantity, 
             'name_mode': name_mode, 'restrict_file': restrict_file}
 
 
-def checked_delete_header_footer(path, conclusion_post, conclusion_name, protocol_post, protocol_name,
-                                 prescription_post, prescription_name):
+def checked_delete_header_footer(path):
     source = path.text().strip()
     if not source:
         return ['УПС!', 'Путь к исходным файлам пуст']
@@ -228,27 +227,7 @@ def checked_delete_header_footer(path, conclusion_post, conclusion_name, protoco
             name_file[2] = True
     if error:
         return ['УПС!', 'Файлы старого формата:\n' + '\n'.join(error)]
-    post_conclusion, post_prot, post_pre = conclusion_post.text().strip(), protocol_post.text().strip(), prescription_post.text().strip()
-    name_conclusion, name_prot, name_pre = conclusion_name.text().strip(), protocol_name.text().strip(), prescription_name.text().strip()
-    name_rus = ['заключении', 'протоколе', 'предписании']
-    error = []
-    if any([name_conclusion, name_prot, name_pre]):
-        for name, el_name, el_post in zip(name_file, [name_conclusion, name_prot, name_pre],
-                                          [post_conclusion, post_prot, post_pre]):
-            if name:
-                if re.match(r'[А-Я]\.[А-Я]\.\s[А-Я][а-я]+', el_name) is None:
-                    error.append('Имя ' + el_name + ' в ' +
-                                 name_rus[[name_conclusion, name_prot, name_pre].index(el_name)]
-                                 + ' написано неверно (Шаблон имени «И.И. Иванов»)')
-                if len(el_post) == 0:
-                    error.append('Не указана должность в ' +
-                                 name_rus[[post_conclusion, post_prot, post_pre].index(el_post)])
-        if error:
-            return ['УПС!', '\n'.join(error)]
-        return {'path': source, 'post_executor': [post_conclusion, post_prot, post_pre],
-                'name_executor': [name_conclusion, name_prot, name_pre]}
-    else:
-        return ['УПС!', 'Не указано ни одно имя']
+    return {'path': source}
 
 
 def checked_hfe_generation(path, set_value, req_val, frequency, value):
@@ -407,3 +386,46 @@ def checked_generation_cc(start_folder, finish_folder, set_number, checkbox_freq
                 return ['УПС!', 'Не правильно указан разброс (только цифры, дробный разделитель - ".")']
     return {'source': source, 'output': output, 'set': set_num, 'frequency': freq, 'only_txt': txt,
             "dispersion": float(dispersion)}
+
+
+def checked_number_instance(start_folder, finish_folder, incoming_set_number):
+    path_old = start_folder.text()
+    if not path_old:
+        return ['УПС!', 'Путь к исходным файлам пуст']
+    if os.path.isdir(path_old):
+        pass
+    else:
+        return ['УПС!', 'Указанный путь к исходным файлам не является директорией']
+    path_new = finish_folder.text()
+    if not path_new:
+        return ['УПС!', 'УПС!', 'Путь к конечным файлам пуст']
+    if os.path.isdir(path_new):
+        pass
+    else:
+        return ['УПС!', 'Указанный путь к конечным файлам не является директорией']
+    number_instance_ = incoming_set_number.text().strip()
+    for i in number_instance_:
+        if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ' ', '-', ',', '.')):
+            return ['УПС!', 'Есть лишние символы в номерах экземпляров']
+    set_num = number_instance_.replace(' ', '').replace(',', '.')
+    if set_num[0] == '.' or set_num[0] == '-':
+        return ['УПС!', 'Первый символ введён не верно']
+    if set_num[-1] == '.' or set_num[-1] == '-':
+        return ['УПС!', 'Последний символ введён не верно']
+    for i in range(len(set_num)):
+        if set_num[i] == '.' or set_num[i] == '-':
+            if set_num[i + 1] == '.' or set_num[i + 1] == '-':
+                return ['УПС!', 'Два разделителя номеров подряд']
+    set_number = []
+    for element in set_num.split('.'):
+        if '-' in element:
+            num1, num2 = int(element.partition('-')[0]), int(element.partition('-')[2])
+            if num1 >= num2:
+                return ['УПС!', 'Диапазон номеров экземпляров указан не верно']
+            else:
+                for el in range(num1, num2 + 1):
+                    set_number.append(el)
+        else:
+            set_number.append(element)
+    set_number.sort()
+    return {'path_old': path_old, 'path_new': path_new, 'set_number': set_number}

@@ -15,7 +15,7 @@ from PyQt5.QtCore import QTranslator, QLocale, QLibraryInfo, QDir
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox, QDialog
 from checked import (checked_zone_checked, checked_file_parcing, checked_generation_pemi,
                      checked_delete_header_footer, checked_hfe_generation, checked_hfi_generation,
-                     checked_application_data, checked_lf_data, checked_generation_cc)
+                     checked_application_data, checked_lf_data, checked_generation_cc, checked_number_instance)
 from rewrite_settings import rewrite
 from Default import DefaultWindow
 from Zone_Check import ZoneChecked
@@ -27,6 +27,7 @@ from HFI_Generation import HFIGeneration
 from CopyApplication import GenerateCopyApplication
 from LowFrequency_dispertion import LFGeneration
 from ContinuousSpectrum import GenerationFileCC
+from Number_Instance import ChangeNumberInstance
 
 
 class AboutWindow(QDialog, about.Ui_Dialog):  # Для отображения информации
@@ -104,6 +105,10 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.pushButton_open_folder_start_cc.clicked.connect((lambda: self.browse(self.lineEdit_path_folder_start_cc)))
         self.pushButton_open_folder_finish_cc.clicked.connect((lambda:
                                                                self.browse(self.lineEdit_path_folder_finish_cc)))
+        self.pushButton_open_folder_old_number_instance.clicked.connect(
+            (lambda: self.browse(self.lineEdit_path_folder_old_number_instance)))
+        self.pushButton_open_folder_new_number_instance.clicked.connect(
+            (lambda: self.browse(self.lineEdit_path_folder_new_number_instance)))
         self.groupBox_FSB.clicked.connect(self.group_box_change_state)
         self.groupBox_FSTEK.clicked.connect(self.group_box_change_state)
         self.pushButton_stop.clicked.connect(self.pause_thread)
@@ -116,6 +121,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.pushButton_create_application.clicked.connect(self.copy_application)
         self.pushButton_start_insert_lf.clicked.connect(self.generate_lf)
         self.pushButton_ss_start.clicked.connect(self.generate_cc)
+        self.pushButton_number_instance.clicked.connect(self.change_number_instance)
         self.action_settings_default.triggered.connect(self.default_settings)
         self.menu_about.aboutToShow.connect(about)
         self.action_zone_checked.triggered.connect(self.add_tab)
@@ -127,6 +133,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.action_gen_HFI.triggered.connect(self.add_tab)
         self.action_gen_LF.triggered.connect(self.add_tab)
         self.action_gen_cc.triggered.connect(self.add_tab)
+        self.action_number_instance.triggered.connect(self.add_tab)
         self.tabWidget.tabBar().tabMoved.connect(self.tab_)
         self.tabWidget.tabBarClicked.connect(self.tab_click)
         self.tabWidget.tabCloseRequested.connect(lambda index: self.tabWidget.removeTab(index))
@@ -157,12 +164,9 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                                                                 self.lineEdit_path_start_extract],
                           'extract-groupBox_value_for_extract': ['Значения для выписки',
                                                                  self.groupBox_value_for_extract],
-                          'extract-conclusion_post': ['Должность заключение', self.lineEdit_conclusion_post],
-                          'extract-conclusion_name': ['ФИО заключение', self.lineEdit_conclusion_name],
-                          'extract-protocol_post': ['Должность протокол', self.lineEdit_protocol_post],
-                          'extract-protocol_name': ['ФИО протокол', self.lineEdit_protocol_name],
-                          'extract-prescription_post': ['Должность предписание', self.lineEdit_prescription_post],
-                          'extract-prescription_name': ['ФИО предписание', self.lineEdit_prescription_name],
+                          'extract-conclusion': ['Заключение', self.lineEdit_conclusion],
+                          'extract-protocol': ['Протокол', self.lineEdit_protocol],
+                          'extract-prescription': ['Предписание', self.lineEdit_prescription],
                           'gen_pemi-path_folder_start': ['Путь к дир. с исходниками',
                                                          self.lineEdit_path_start_pemi],
                           'gen_pemi-path_folder_finish': ['Путь к дир. для генерации',
@@ -204,18 +208,24 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                           'CC-set_numbers': ['Номера комплектов', self.lineEdit_set_number_cc],
                           'CC-checkBox_cc_txt': ['Генерировать только txt', self.checkBox_cc_txt],
                           'CC-checkBox_cc_dispersion': ['Включить разброс значений', self.checkBox_cc_dispersion],
-                          'CC-dispersion': ['Разброс значений (%)', self.lineEdit_cc_dispersion]}
+                          'CC-dispersion': ['Разброс значений (%)', self.lineEdit_cc_dispersion],
+                          'NI-path_folder_old_number_instance': ['Путь к начальной дир.',
+                                                                 self.lineEdit_path_folder_old_number_instance],
+                          'NI-path_folder_new_number_instance': ['Путь к конечной дир.',
+                                                                 self.lineEdit_path_folder_new_number_instance],
+                          'NI-number_instance': ['Номера экземпляров', self.lineEdit_number_instance]}
         # Грузим значения по умолчанию
         self.name_tab = {"tab_zone_checked": "Проверка зон", "tab_parser": "Парсер txt",
                          "tab_exctract": "Обезличивание", "tab_gen_application": "Генератор приложений",
                          "tab_gen_pemi": "Генератор ПЭМИ", "tab_gen_HFE": "Генератор ВЧО",
-                         "tab_gen_HFI": "Генератор ВЧН", 'tab_gen_LF': 'Генератор НЧ',
-                         "tab_continuous_spectrum": 'Сплошной спектр'}
+                         "tab_gen_HFI": "Генератор ВЧН", "tab_gen_LF": "Генератор НЧ",
+                         "tab_continuous_spectrum": "Сплошной спектр", "tab_number_instance": "Номера экземпляра"}
         self.name_action = {"tab_zone_checked": self.action_zone_checked, "tab_parser": self.action_parser,
                             "tab_exctract": self.action_extract, "tab_gen_application": self.action_gen_application,
                             "tab_gen_pemi": self.action_gen_pemi, "tab_gen_HFE": self.action_gen_HFE,
                             "tab_gen_HFI": self.action_gen_HFI, 'tab_gen_LF': self.action_gen_LF,
-                            "tab_continuous_spectrum": self.action_gen_cc}
+                            "tab_continuous_spectrum": self.action_gen_cc,
+                            "tab_number_instance": self.action_number_instance}
         try:
             with open(pathlib.Path(pathlib.Path.cwd(), 'Настройки.txt'), "r", encoding='utf-8-sig') as f:
                 dict_load = json.load(f)
@@ -229,11 +239,11 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                                    {"tab_order": {'0': "tab_zone_checked", '1': "tab_parser", '2': "tab_exctract",
                                                   '3': "tab_gen_application", '4': "tab_gen_pemi", '5': "tab_gen_HFE",
                                                   '6': "tab_gen_HFI", '7': "tab_gen_LF",
-                                                  '8': "tab_continuous_spectrum"},
+                                                  '8': "tab_continuous_spectrum", '9': "tab_number_instance"},
                                     "tab_visible": {"tab_zone_checked": True, "tab_parser": True, "tab_exctract": True,
                                                     "tab_gen_application": True, "tab_gen_pemi": True,
                                                     "tab_gen_HFE": True, "tab_gen_HFI": True, "tab_gen_LF": True,
-                                                    "tab_continuous_spectrum": True}
+                                                    "tab_continuous_spectrum": True, "tab_number_instance": True}
                                     }
                                }
                 json.dump(data_insert, f, ensure_ascii=False, sort_keys=True, indent=4)
@@ -558,10 +568,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         try:
             logging.info('----------------Запускаем delete_header_footer----------------')
             logging.info('Проверка данных')
-            output = checked_delete_header_footer(self.lineEdit_path_start_extract, self.lineEdit_conclusion_post,
-                                                  self.lineEdit_conclusion_name, self.lineEdit_protocol_post,
-                                                  self.lineEdit_protocol_name, self.lineEdit_prescription_post,
-                                                  self.lineEdit_prescription_name)
+            output = checked_delete_header_footer(self.lineEdit_path_start_extract)
             if isinstance(output, list):
                 logging.info('Обнаружены ошибки данных')
                 self.on_message_changed(output[0], output[1])
@@ -570,6 +577,9 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             logging.info('Запуск на выполнение')
             output['logging'], output['queue'] = logging, self.queue
             output['default_path'] = self.default_path
+            output['conclusion'] = self.lineEdit_conclusion.text()
+            output['protocol'] = self.lineEdit_protocol.text()
+            output['prescription'] = self.lineEdit_prescription.text()
             self.thread = DeleteHeaderFooter(output)
             self.thread.progress.connect(self.progressBar.setValue)
             self.thread.status.connect(self.statusBar().showMessage)
@@ -604,6 +614,32 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.thread.start()
         except BaseException as exception:
             logging.error('Ошибка generate_cc')
+            logging.error(exception)
+            logging.error(traceback.format_exc())
+
+    def change_number_instance(self):
+        try:
+            logging.info('----------------Запускаем change_number_instance----------------')
+            logging.info('Проверка данных')
+            incoming = checked_number_instance(self.lineEdit_path_folder_old_number_instance,
+                                               self.lineEdit_path_folder_new_number_instance,
+                                               self.lineEdit_number_instance)
+            if isinstance(incoming, list):
+                logging.info('Обнаружены ошибки данных')
+                self.on_message_changed(incoming[0], incoming[1])
+                return
+            # Если всё прошло запускаем поток
+            logging.info('Запуск на выполнение')
+            incoming['logging'], incoming['queue'] = logging, self.queue
+            incoming['default_path'] = self.default_path
+            self.thread = ChangeNumberInstance(incoming)
+            self.thread.progress.connect(self.progressBar.setValue)
+            self.thread.status.connect(self.statusBar().showMessage)
+            self.thread.messageChanged.connect(self.on_message_changed)
+            self.thread.errors.connect(self.errors)
+            self.thread.start()
+        except BaseException as exception:
+            logging.error('Ошибка change_number_instance')
             logging.error(exception)
             logging.error(traceback.format_exc())
 
