@@ -5,6 +5,7 @@ import docx
 import openpyxl
 import re
 import traceback
+from itertools import groupby
 from natsort import natsorted
 from docx.oxml.ns import nsdecls
 from docx.oxml import parse_xml
@@ -317,7 +318,8 @@ class ZoneChecked(QThread):
                             if '<' in el:  # Если значения '<0.1'
                                 ws.cell(i, j).value = el  # Просто пишем
                             else:
-                                if type(el) == dict:  # Если тип словарь (если не прошло и есть значения для записи)
+                                if isinstance(el, dict):  # Если тип словарь (если не прошло и есть значения для записи)
+                                # if type(el) == dict:  # Если тип словарь (если не прошло и есть значения для записи)
                                     j_ = 0
                                     for key in el:  # Имя и значения. Форматирование.
                                         ws.cell(i, j + j_).value = key
@@ -327,7 +329,8 @@ class ZoneChecked(QThread):
                                                                                        name="Times New Roman",
                                                                                        size="11")
                                         j_ += 1
-                                        for element in sorted(el[key]):
+                                        sort_group_elem = [sge for sge, _ in groupby(sorted(el[key]))]
+                                        for element in sort_group_elem:
                                             ws.cell(i, j + j_).value = element
                                             ws.cell(i, j + j_).alignment = openpyxl.styles.Alignment(horizontal="left",
                                                                                                      vertical="center")

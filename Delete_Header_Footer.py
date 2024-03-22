@@ -3,11 +3,12 @@ import os
 import re
 import shutil
 import threading
+import time
 import traceback
 import zipfile
 
 from PyQt5.QtCore import QThread, pyqtSignal
-from docx.shared import Pt
+from docx.shared import Pt, Inches
 from lxml import etree
 import docx
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
@@ -36,8 +37,9 @@ class DeleteHeaderFooter(QThread):
             self.logging.info('Начинаем обезличивать документы')
             self.status.emit('Старт')
             self.progress.emit(current_progress)
-            percent = 100/len(os.listdir(self.path))
-            for element in os.listdir(self.path):
+            files = [file for file in os.listdir(self.path) if '~' not in file]
+            percent = 100/len(files)
+            for element in files:
                 self.logging.info('Обезличиваем документ ' + element)
                 self.status.emit('Обезличиваем документ ' + element)
                 temp_docx = os.path.join(self.path + '\\', element)
@@ -158,6 +160,9 @@ class DeleteHeaderFooter(QThread):
                                                 'ВЫПИСКА ИЗ ' + name_doc.upper(),
                                                 paragraph.text)
                         doc.paragraphs[i + 1].insert_paragraph_before('Уч. № ' + number + ' от ' + date[0])
+                        doc.paragraphs[i].paragraph_format.first_line_indent = None
+                        doc.paragraphs[i + 2].paragraph_format.first_line_indent = None
+                        doc.paragraphs[i + 3].paragraph_format.first_line_indent = None
                         for j in [i, i + 1]:
                             doc.paragraphs[j].paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
                             for run in doc.paragraphs[j].runs:
@@ -195,17 +200,19 @@ class DeleteHeaderFooter(QThread):
                 for sectPr in sectPrs:
                     sectPr.getparent().remove(sectPr)
                 doc.save(self.path + '\\' + element)
-                # doc = docx.Document(self.path + '\\' + element)  # Открываем
-                # for para in doc.paragraphs[len(doc.paragraphs):0:-1]:
-                #     if len(para.text) in [0, 1]:
-                #         p = para._element
-                #         p.getparent().remove(p)
-                #         p._p = p._element = None
-                #     else:
-                #         break
-                # doc.save(self.path + '\\' + element)
                 self.logging.info('Извлекаем архив и добавляем шапку')
-                os.rename(temp_docx, temp_zip)
+                while True:
+                    rename_chance = 1
+                    if rename_chance == 4:
+                        os.rename(temp_docx, temp_zip)
+                        break
+                    try:
+                        os.rename(temp_docx, temp_zip)
+                        break
+                    except BaseException as ex:
+                        self.logging.warning(f'Не смог переименовать файл {rename_chance} раз, ждём...')
+                        rename_chance += 1
+                        time.sleep(3)
                 os.mkdir(self.path + '\\zip')
                 with zipfile.ZipFile(temp_zip) as my_document:
                     my_document.extractall(temp_folder)
