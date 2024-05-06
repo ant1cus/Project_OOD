@@ -15,7 +15,8 @@ from PyQt5.QtCore import QTranslator, QLocale, QLibraryInfo, QDir
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox, QDialog
 from checked import (checked_zone_checked, checked_file_parcing, checked_generation_pemi,
                      checked_delete_header_footer, checked_hfe_generation, checked_hfi_generation,
-                     checked_application_data, checked_lf_data, checked_generation_cc, checked_number_instance)
+                     checked_application_data, checked_lf_data, checked_generation_cc, checked_number_instance,
+                     checked_find_files)
 from rewrite_settings import rewrite
 from Default import DefaultWindow
 from Zone_Check import ZoneChecked
@@ -28,6 +29,7 @@ from CopyApplication import GenerateCopyApplication
 from LowFrequency_dispertion import LFGeneration
 from ContinuousSpectrum import GenerationFileCC
 from Number_Instance import ChangeNumberInstance
+from Find_Files import FindingFiles
 
 
 class AboutWindow(QDialog, about.Ui_Dialog):  # Для отображения информации
@@ -109,6 +111,12 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             (lambda: self.browse(self.lineEdit_path_folder_old_number_instance)))
         self.pushButton_open_folder_new_number_instance.clicked.connect(
             (lambda: self.browse(self.lineEdit_path_folder_new_number_instance)))
+        self.pushButton_open_file_unloading_find.clicked.connect((lambda:
+                                                                  self.browse(self.lineEdit_path_file_unloading_find)))
+        self.pushButton_open_folder_start_find.clicked.connect((lambda:
+                                                                self.browse(self.lineEdit_path_folder_start_find)))
+        self.pushButton_open_folder_finish_find.clicked.connect((lambda:
+                                                                 self.browse(self.lineEdit_path_folder_finish_find)))
         self.groupBox_FSB.clicked.connect(self.group_box_change_state)
         self.groupBox_FSTEK.clicked.connect(self.group_box_change_state)
         self.pushButton_stop.clicked.connect(self.pause_thread)
@@ -122,6 +130,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.pushButton_start_insert_lf.clicked.connect(self.generate_lf)
         self.pushButton_ss_start.clicked.connect(self.generate_cc)
         self.pushButton_number_instance.clicked.connect(self.change_number_instance)
+        self.pushButton_start_find.clicked.connect(self.finding_files)
         self.action_settings_default.triggered.connect(self.default_settings)
         self.menu_about.aboutToShow.connect(about)
         self.action_zone_checked.triggered.connect(self.add_tab)
@@ -134,6 +143,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.action_gen_LF.triggered.connect(self.add_tab)
         self.action_gen_cc.triggered.connect(self.add_tab)
         self.action_number_instance.triggered.connect(self.add_tab)
+        self.action_finding_file.triggered.connect(self.add_tab)
         self.tabWidget.tabBar().tabMoved.connect(self.tab_)
         self.tabWidget.tabBarClicked.connect(self.tab_click)
         self.tabWidget.tabCloseRequested.connect(lambda index: self.tabWidget.removeTab(index))
@@ -141,7 +151,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.start_name = False
         self.default_path = pathlib.Path.cwd()  # Путь для файла настроек
         # Имена в файле
-        self.name_list = {'checked-path_folder_check': ['Путь к дир. с файлами', self.lineEdit_path_check],
+        self.name_list = {'checked-path_folder_check': ['Папка с файлами', self.lineEdit_path_check],
                           'checked-table_number': ['Номер таблицы', self.lineEdit_table_number],
                           'checked-checkBox_first_table': ['Только 1 таб.', self.checkBox_first_table],
                           'checked-groupBox_FSB': ['Проверка ФСБ', self.groupBox_FSB],
@@ -156,23 +166,23 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                           'checked-carry_FSTEK': ['Воз. ФСТЭК', self.lineEdit_carry_FSTEK],
                           'checked-wear_FSTEK': ['Нос. ФСТЭК', self.lineEdit_wear_FSTEK],
                           'checked-r1_FSTEK': ['r1 ФСТЭК', self.lineEdit_r1_FSTEK],
-                          'parser-path_folder_parser': ['Путь к дир. с файлами', self.lineEdit_path_parser],
+                          'parser-path_folder_parser': ['Папка с файлами', self.lineEdit_path_parser],
                           'parser-checkBox_group_parcing': ['Пакетный парсинг', self.checkBox_group_parcing],
                           'parser-checkBox_no_freq_limit': ['Без ограничения частот', self.checkBox_no_freq_limit],
                           'parser-checkBox_12_sectors': ['12 секторов', self.checkBox_12_sectors],
-                          'extract-path_folder_start_extract': ['Путь к дир. с файлами',
+                          'extract-path_folder_start_extract': ['Папка с файлами',
                                                                 self.lineEdit_path_start_extract],
                           'extract-groupBox_value_for_extract': ['Значения для выписки',
                                                                  self.groupBox_value_for_extract],
                           'extract-conclusion': ['Заключение', self.lineEdit_conclusion],
                           'extract-protocol': ['Протокол', self.lineEdit_protocol],
                           'extract-prescription': ['Предписание', self.lineEdit_prescription],
-                          'gen_pemi-path_folder_start': ['Путь к дир. с исходниками',
+                          'gen_pemi-path_folder_start': ['Папка с исходниками',
                                                          self.lineEdit_path_start_pemi],
-                          'gen_pemi-path_folder_finish': ['Путь к дир. для генерации',
+                          'gen_pemi-path_folder_finish': ['Папка для генерации',
                                                           self.lineEdit_path_finish_pemi],
                           'gen_pemi-checkBox_freq_restrict': ['Файл ограничения частот', self.checkBox_freq_restrict],
-                          'gen_pemi-path_file_freq_restrict': ['Путь к файлу ограничений',
+                          'gen_pemi-path_file_freq_restrict': ['Файл ограничений',
                                                                self.lineEdit_path_freq_restrict],
                           'gen_pemi-checkBox_no_excel_generation': ['Не генерировать excel',
                                                                     self.checkBox_no_excel_generation],
@@ -181,51 +191,56 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                           'gen_pemi-checkBox_3db_difference': ['Разница 3 дБ', self.checkBox_3db_difference],
                           'gen_pemi-set_quant_pemi': ['Количество комплектов', self.lineEdit_complect_quant_pemi],
                           'gen_pemi-set_number_pemi': ['Номера комплектов', self.lineEdit_complect_number_pemi],
-                          'HFE-path_file_HFE': ['Путь к дир. с файлами', self.lineEdit_path_file_HFE],
+                          'HFE-path_file_HFE': ['Папка с файлами', self.lineEdit_path_file_HFE],
                           'HFE-set_quant_HFE': ['Количество комплектов', self.lineEdit_complect_quant_HFE],
                           'HFE-checkBox_required_values_HFE': ['Значения вручную', self.checkBox_required_values_HFE],
                           'HFE-frequency': ['Частота', self.lineEdit_frequency],
                           'HFE-level': ['Уровень', self.lineEdit_level],
-                          'HFI-path_file_HFI': ['Путь к дир. с файлами', self.lineEdit_path_file_HFI],
+                          'HFI-path_file_HFI': ['Папка с файлами', self.lineEdit_path_file_HFI],
                           'HFI-set_quant_HFI': ['Количество комплектов', self.lineEdit_complect_quant_HFE],
                           'HFI-checkBox_imposition_freq': ['Ручной ввод частоты', self.checkBox_imposition_freq],
                           'HFI-imposition_freq': ['Частота навязывания', self.lineEdit_imposition_freq],
                           'HFI-checkBox_power_supply': ['Питание', self.checkBox_power_supply],
                           'HFI-checkBox_symmetrical': ['Симметричка', self.checkBox_symetrical],
                           'HFI-checkBox_asymmetriacal': ['Не симметричка', self.checkBox_asymetriacal],
-                          'application-path_file_example': ['Путь к файлу', self.lineEdit_path_start_example],
-                          'application-path_folder_finish_example': ['Путь к конечной дир.',
+                          'application-path_file_example': ['Файл', self.lineEdit_path_start_example],
+                          'application-path_folder_finish_example': ['Конечная папка',
                                                                      self.lineEdit_path_finish_example],
                           'application-number_position': ['Номер позиции', self.lineEdit_number_position],
                           'application-quantity_document': ['Количество комплектов', self.lineEdit_quantity_document],
-                          'LF-path_folder_start': ['Путь к начальной дир.', self.lineEdit_path_start_folder_lf],
-                          'LF-path_folder_finish': ['Путь к конечной дир.', self.lineEdit_path_finish_folder_lf],
-                          'LF-path_file_excel': ['Путь к файлу генератору', self.lineEdit_path_file_excel_lf],
-                          'CC-path_folder_start': ['Путь к файлам спектра', self.lineEdit_path_folder_start_cc],
-                          'CC-path_folder_finish': ['Путь к конечной папке', self.lineEdit_path_folder_finish_cc],
+                          'LF-path_folder_start': ['Начальная папка', self.lineEdit_path_start_folder_lf],
+                          'LF-path_folder_finish': ['Конечная папка', self.lineEdit_path_finish_folder_lf],
+                          'LF-path_file_excel': ['Файл генератору', self.lineEdit_path_file_excel_lf],
+                          'CC-path_folder_start': ['Файлы спектра', self.lineEdit_path_folder_start_cc],
+                          'CC-path_folder_finish': ['Конечная папка', self.lineEdit_path_folder_finish_cc],
                           'CC-checkBox_cc_frequency': ['Конечная частота', self.checkBox_cc_frequency],
                           'CC-set_frequency': ['Конечная частота (МГц)', self.lineEdit_frequency_cc],
                           'CC-set_numbers': ['Номера комплектов', self.lineEdit_set_number_cc],
                           'CC-checkBox_cc_txt': ['Генерировать только txt', self.checkBox_cc_txt],
-                          'CC-checkBox_cc_dispersion': ['Включить разброс значений', self.checkBox_cc_dispersion],
+                          'CC-checkBox_cc_dispersion': ['Включить разброс', self.checkBox_cc_dispersion],
                           'CC-dispersion': ['Разброс значений (%)', self.lineEdit_cc_dispersion],
-                          'NI-path_folder_old_number_instance': ['Путь к начальной дир.',
+                          'NI-path_folder_old_number_instance': ['Начальная папка',
                                                                  self.lineEdit_path_folder_old_number_instance],
-                          'NI-path_folder_new_number_instance': ['Путь к конечной дир.',
+                          'NI-path_folder_new_number_instance': ['Конечная папка',
                                                                  self.lineEdit_path_folder_new_number_instance],
-                          'NI-number_instance': ['Номера экземпляров', self.lineEdit_number_instance]}
+                          'NI-number_instance': ['Номера экземпляров', self.lineEdit_number_instance],
+                          'FF-path_unloading_file': ['Файл выгрузки', self.lineEdit_path_file_unloading_find],
+                          'FF-path_start_folder': ['Папка с файлами', self.lineEdit_path_folder_start_find],
+                          'FF-path_finish_folder': ['Конечная папка', self.lineEdit_path_folder_finish_find]}
         # Грузим значения по умолчанию
         self.name_tab = {"tab_zone_checked": "Проверка зон", "tab_parser": "Парсер txt",
                          "tab_exctract": "Обезличивание", "tab_gen_application": "Генератор приложений",
                          "tab_gen_pemi": "Генератор ПЭМИ", "tab_gen_HFE": "Генератор ВЧО",
                          "tab_gen_HFI": "Генератор ВЧН", "tab_gen_LF": "Генератор НЧ",
-                         "tab_continuous_spectrum": "Сплошной спектр", "tab_number_instance": "Номера экземпляра"}
+                         "tab_continuous_spectrum": "Сплошной спектр", "tab_number_instance": "Номера экземпляра",
+                         "tab_finding_files": "Поиск файлов"}
         self.name_action = {"tab_zone_checked": self.action_zone_checked, "tab_parser": self.action_parser,
                             "tab_exctract": self.action_extract, "tab_gen_application": self.action_gen_application,
                             "tab_gen_pemi": self.action_gen_pemi, "tab_gen_HFE": self.action_gen_HFE,
                             "tab_gen_HFI": self.action_gen_HFI, 'tab_gen_LF': self.action_gen_LF,
                             "tab_continuous_spectrum": self.action_gen_cc,
-                            "tab_number_instance": self.action_number_instance}
+                            "tab_number_instance": self.action_number_instance,
+                            "tab_finding_files": self.action_finding_file}
         try:
             with open(pathlib.Path(pathlib.Path.cwd(), 'Настройки.txt'), "r", encoding='utf-8-sig') as f:
                 dict_load = json.load(f)
@@ -239,11 +254,13 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                                    {"tab_order": {'0': "tab_zone_checked", '1': "tab_parser", '2': "tab_exctract",
                                                   '3': "tab_gen_application", '4': "tab_gen_pemi", '5': "tab_gen_HFE",
                                                   '6': "tab_gen_HFI", '7': "tab_gen_LF",
-                                                  '8': "tab_continuous_spectrum", '9': "tab_number_instance"},
+                                                  '8': "tab_continuous_spectrum", '9': "tab_number_instance",
+                                                  '10': "tab_finding_files"},
                                     "tab_visible": {"tab_zone_checked": True, "tab_parser": True, "tab_exctract": True,
                                                     "tab_gen_application": True, "tab_gen_pemi": True,
                                                     "tab_gen_HFE": True, "tab_gen_HFI": True, "tab_gen_LF": True,
-                                                    "tab_continuous_spectrum": True, "tab_number_instance": True}
+                                                    "tab_continuous_spectrum": True, "tab_number_instance": True,
+                                                    "tab_finding_files": True}
                                     }
                                }
                 json.dump(data_insert, f, ensure_ascii=False, sort_keys=True, indent=4)
@@ -640,6 +657,31 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.thread.start()
         except BaseException as exception:
             logging.error('Ошибка change_number_instance')
+            logging.error(exception)
+            logging.error(traceback.format_exc())
+
+    def finding_files(self):
+        try:
+            logging.info('----------------Запускаем finding_files----------------')
+            logging.info('Проверка данных')
+            find_files = checked_find_files(self.lineEdit_path_file_unloading_find,
+                                            self.lineEdit_path_folder_start_find, self.lineEdit_path_folder_finish_find)
+            if isinstance(find_files, list):
+                logging.info('Обнаружены ошибки данных')
+                self.on_message_changed(find_files[0], find_files[1])
+                return
+            # Если всё прошло запускаем поток
+            logging.info('Запуск на выполнение')
+            find_files['logging'], find_files['queue'] = logging, self.queue
+            find_files['default_path'] = self.default_path
+            self.thread = FindingFiles(find_files)
+            self.thread.progress.connect(self.progressBar.setValue)
+            self.thread.status.connect(self.statusBar().showMessage)
+            self.thread.messageChanged.connect(self.on_message_changed)
+            self.thread.errors.connect(self.errors)
+            self.thread.start()
+        except BaseException as exception:
+            logging.error('Ошибка finding_files')
             logging.error(exception)
             logging.error(traceback.format_exc())
 

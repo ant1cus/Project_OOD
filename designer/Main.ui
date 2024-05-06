@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>715</width>
-    <height>543</height>
+    <width>847</width>
+    <height>705</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,7 +18,7 @@
     <item row="0" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="toolTip">
-       <string/>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Поиск и перенос нужных файлов в папке по выгрузке&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="currentIndex">
        <number>0</number>
@@ -2227,6 +2227,76 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="tab_finding_files">
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <attribute name="title">
+        <string>Поиск файлов</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_23">
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_start_folder_find">
+          <property name="text">
+           <string>Папка с файлами</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="lineEdit_path_folder_start_find"/>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_finish_folder_find">
+          <property name="text">
+           <string>Конечная папка</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLineEdit" name="lineEdit_path_folder_finish_find"/>
+        </item>
+        <item row="0" column="2">
+         <widget class="QPushButton" name="pushButton_open_file_unloading_find">
+          <property name="text">
+           <string>Открыть</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2">
+         <widget class="QPushButton" name="pushButton_open_folder_start_find">
+          <property name="text">
+           <string>Открыть</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="lineEdit_path_file_unloading_find"/>
+        </item>
+        <item row="2" column="2">
+         <widget class="QPushButton" name="pushButton_open_folder_finish_find">
+          <property name="text">
+           <string>Открыть</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_unloading_file_find">
+          <property name="text">
+           <string>Файл выгрузки</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0" colspan="3">
+         <widget class="QPushButton" name="pushButton_start_find">
+          <property name="text">
+           <string>Поиск файлов</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </item>
     <item row="2" column="0">
@@ -2249,8 +2319,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>715</width>
-     <height>21</height>
+     <width>847</width>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_settings">
@@ -2278,6 +2348,7 @@
     <addaction name="action_gen_LF"/>
     <addaction name="action_gen_cc"/>
     <addaction name="action_number_instance"/>
+    <addaction name="action_finding_file"/>
    </widget>
    <addaction name="menu_settings"/>
    <addaction name="menu_application"/>
@@ -2358,6 +2429,9 @@
     <bool>true</bool>
    </property>
    <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="enabled">
     <bool>true</bool>
    </property>
    <property name="text">
@@ -2370,6 +2444,14 @@
    </property>
    <property name="text">
     <string>Номера экземпляра</string>
+   </property>
+  </action>
+  <action name="action_finding_file">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Поиск файлов</string>
    </property>
   </action>
  </widget>
@@ -2464,6 +2546,19 @@
   <tabstop>checkBox_cc_dispersion</tabstop>
   <tabstop>lineEdit_cc_dispersion</tabstop>
   <tabstop>pushButton_ss_start</tabstop>
+  <tabstop>lineEdit_path_folder_old_number_instance</tabstop>
+  <tabstop>pushButton_open_folder_old_number_instance</tabstop>
+  <tabstop>lineEdit_path_folder_new_number_instance</tabstop>
+  <tabstop>pushButton_open_folder_new_number_instance</tabstop>
+  <tabstop>lineEdit_number_instance</tabstop>
+  <tabstop>pushButton_number_instance</tabstop>
+  <tabstop>lineEdit_path_file_unloading_find</tabstop>
+  <tabstop>pushButton_open_file_unloading_find</tabstop>
+  <tabstop>lineEdit_path_folder_start_find</tabstop>
+  <tabstop>pushButton_open_folder_start_find</tabstop>
+  <tabstop>lineEdit_path_folder_finish_find</tabstop>
+  <tabstop>pushButton_open_folder_finish_find</tabstop>
+  <tabstop>pushButton_start_find</tabstop>
  </tabstops>
  <resources/>
  <connections>

@@ -429,3 +429,27 @@ def checked_number_instance(start_folder, finish_folder, incoming_set_number):
             set_number.append(element)
     set_number.sort()
     return {'path_old': path_old, 'path_new': path_new, 'set_number': set_number}
+
+
+def checked_find_files(unloading_file, start_folder, finish_folder):
+    file = unloading_file.text()
+    if not file:
+        return ['УПС!', 'Поле «файл с выгрузкой» пусто']
+    if os.path.isdir(file):
+        return ['УПС!', 'В поле «файл с выгрузкой» указана директория, а не файл']
+    if file.endswith('.xlsx') is False and file.endswith('.txt') is False:
+        return ['УПС!', 'Указанный файл с выгрузкой не требуемого формата (необходим ".xlsx" или ".txt")']
+    start_path = start_folder.text()
+    if not start_path:
+        return ['УПС!', 'Путь к исходным файлам пуст']
+    if os.path.isdir(start_path) is False:
+        return ['УПС!', 'Указанный путь к исходным файлам не является директорией']
+    finish_path = finish_folder.text()
+    if not finish_path:
+        return ['УПС!', 'УПС!', 'Путь к конечной папке пуст']
+    if os.path.isdir(finish_path) is False:
+        return ['УПС!', 'Указанный путь к конечной папке не является директорией']
+    if os.listdir(finish_path):
+        return ['УПС!', 'Конечная папка не пуста, очистите директорию или выберите новую']
+
+    return {'unloading_file': file, 'start_path': start_path, 'finish_path': finish_path}

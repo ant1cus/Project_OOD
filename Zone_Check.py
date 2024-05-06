@@ -246,6 +246,8 @@ class ZoneChecked(QThread):
                                                     except BaseException:
                                                         if '<' in table_3.cell(tc.top, range_search[j]).text:
                                                             x = -1
+                                                    # print('x - ', x)
+                                                    # print('float(self.zone[j])', float(self.zone[j]))
                                                     if x > float(self.zone[j]):
                                                         string.setdefault(name, [])
                                                         shading_elm.append(parse_xml(
@@ -319,7 +321,6 @@ class ZoneChecked(QThread):
                                 ws.cell(i, j).value = el  # Просто пишем
                             else:
                                 if isinstance(el, dict):  # Если тип словарь (если не прошло и есть значения для записи)
-                                # if type(el) == dict:  # Если тип словарь (если не прошло и есть значения для записи)
                                     j_ = 0
                                     for key in el:  # Имя и значения. Форматирование.
                                         ws.cell(i, j + j_).value = key
