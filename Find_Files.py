@@ -39,7 +39,7 @@ class FindingFiles(QThread):
             percent = 100 / len(files)
             if self.unloading_file.endswith('.txt'):
                 df = pd.read_csv(self.unloading_file, delimiter='|', encoding='ANSI',
-                                 header=None, converters={6: str, 11: str})
+                                 header=None, converters={0: str, 6: str, 11: str})
                 df.drop([i for i in range(df.shape[1]) if i not in [0, 6, 11]], axis=1, inplace=True)
                 df = df[[0, 11, 6]]
                 df.columns = range(df.shape[1])
