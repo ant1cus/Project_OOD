@@ -1,18 +1,27 @@
+# import datetime
 import os
 import pathlib
 import random
 import threading
-import traceback
+import time
 
+import traceback
 import pandas as pd
 from PyQt5.QtCore import QThread, pyqtSignal
+from DoingWindow import CheckWindow
+
+
+class CancelException(Exception):
+    pass
 
 
 class GenerationFileCC(QThread):
-    progress = pyqtSignal(int)  # Сигнал для progressbar
-    status = pyqtSignal(str)  # Сигнал для статус бара
-    messageChanged = pyqtSignal(str, str)
-    errors = pyqtSignal()
+    status_finish = pyqtSignal(str, str)
+    progress_value = pyqtSignal(int)
+    info_value = pyqtSignal(str, str)
+    status = pyqtSignal(str)
+    line_progress = pyqtSignal(str)
+    line_doing = pyqtSignal(str)
 
     def __init__(self, incoming_data):  # Список переданных элементов.
         QThread.__init__(self)
@@ -26,19 +35,31 @@ class GenerationFileCC(QThread):
         self.queue = incoming_data['queue']
         self.default_path = incoming_data['default_path']
         self.event = threading.Event()
+        self.event.set()
+        self.move = incoming_data['move']
+        self.all_doc = 0
+        self.now_doc = 0
         self.percent_progress = 0
         self.gen_txt = pd.DataFrame()
         self.name_txt = ''
+        self.name_dir = pathlib.Path(self.source).name
+        title = f'Генерация сплошного спектра в папке «{self.name_dir}»'
+        self.window_check = CheckWindow(self.default_path, self.event, self.move, title)
+        self.progress_value.connect(self.window_check.progressBar.setValue)
+        self.line_progress.connect(self.window_check.lineEdit_progress.setText)
+        self.line_doing.connect(self.window_check.lineEdit_doing.setText)
+        self.info_value.connect(self.window_check.info_message)
+        self.window_check.show()
 
     def parcing(self, current_progress, path, path_txt, generation, name_folder):
         def write_gen(df_gen, name_file, mode):
             for num_set in self.set:
                 self.logging.info('Запись генерируемых файлов ' + name_file + ' ' + str(num_set))
-                self.status.emit('Запись генерируемых файлов ' + name_file + ' ' + str(num_set))
+                self.line_doing.emit(f'Запись генерируемых файлов {name_file} {str(num_set)}'
+                                     f' ({self.now_doc} из {self.all_doc})')
                 path_dir_gen = pathlib.Path(self.output, str(num_set), name_file)
                 try:
-                    df_gen_old = pd.read_csv(path_dir_gen, delimiter=';',
-                                             encoding="unicode_escape", header=None)
+                    df_gen_old = pd.read_csv(path_dir_gen, delimiter=';', encoding="unicode_escape", header=None)
                 except BaseException:
                     df_gen_old = pd.DataFrame()
                 if len(df_gen.columns) == 3:
@@ -56,8 +77,7 @@ class GenerationFileCC(QThread):
                     df_to_write[1] = df_to_write[1].apply(lambda x: random.uniform(x * (1 - self.dispersion / 100),
                                                                                    x * (1 + self.dispersion / 100)))
                 df_write_new = pd.concat([df_gen_old, df_to_write])
-                df_write_new.to_csv(path_dir_gen, sep=';',
-                                    header=False, index=False, encoding="ANSI")
+                df_write_new.to_csv(path_dir_gen, sep=';', header=False, index=False, encoding="ANSI")
                 df_gen.columns = name_col
 
         df_sig = pd.DataFrame()
@@ -66,11 +86,21 @@ class GenerationFileCC(QThread):
         name = 'first'
         for file_csv in [file for file in os.listdir(str(pathlib.Path(path)))
                          if file.lower().endswith('.csv')]:
-            name = file_csv.partition('_')[0] + '.txt'
+            self.event.wait()
+            if self.window_check.stop_threading:
+                raise CancelException()
+            self.now_doc += 1
+            if '_0-180_' in file_csv:
+                name = file_csv.partition('_0-180_')[0] + '.txt'
+            elif '_180-360_' in file_csv:
+                name = file_csv.partition('_180-360_')[0] + '.txt'
+            else:
+                name = file_csv.rpartition('_')[0].rpartition('_')[0] + '.txt'
             if self.only_txt:
                 self.name_txt = name
             self.logging.info('Парсим ' + file_csv + ' для ' + name_folder)
-            self.status.emit('Парсим ' + file_csv + ' для ' + name_folder)
+            self.line_doing.emit(f'Парсим {str(file_csv)} для комплекта '
+                                 f'{name_folder} ({self.now_doc} из {self.all_doc})')
             if 'sig' in file_csv.lower():
                 names = ['frq', 'sig', 'str']
                 index_df = 0
@@ -102,7 +132,8 @@ class GenerationFileCC(QThread):
                 if generation and self.set and self.only_txt is False:
                     write_gen(df_old, file_csv, False)
                     self.logging.info('Парсим ' + file_csv + ' для ' + name_folder)
-                    self.status.emit('Парсим ' + file_csv + ' для ' + name_folder)
+                    self.line_doing.emit(f'Парсим {str(file_csv)} для комплекта '
+                                         f'{name_folder} ({self.now_doc} из {self.all_doc})')
                 df_write = pd.concat([df_write, df_old])
                 if len(index_val) != 1 and index + 1 < len(index_trace):
                     df_new = df.drop(labels=[i for i in range(index_trace[index + 1], len(df))], axis=0)
@@ -111,12 +142,14 @@ class GenerationFileCC(QThread):
                 df_new = df_new.drop(labels=[i for i in range(0, values + 1)], axis=0)
                 df_new.drop(labels=['str'], axis=1, inplace=True)
                 df_new = df_new.apply(pd.to_numeric, errors='coerce')
+                df_new.dropna(how='all', inplace=True)
                 df_new.interpolate(inplace=True)
                 df_write = pd.concat([df_write, df_new])
                 if generation and self.set and self.only_txt is False:
                     write_gen(df_new, file_csv, True)
                     self.logging.info('Парсим ' + file_csv + ' для ' + name_folder)
-                    self.status.emit('Парсим ' + file_csv + ' для ' + name_folder)
+                    self.line_doing.emit(f'Парсим {str(file_csv)} для комплекта '
+                                         f'{name_folder} ({self.now_doc} из {self.all_doc})')
                     df_new.drop(labels=['str'], axis=1, inplace=True)
                 df_new['frq'] = df_new['frq'].astype(float)
                 df_new['frq'] = df_new['frq'].multiply(0.000001)
@@ -141,8 +174,9 @@ class GenerationFileCC(QThread):
                 except ValueError:
                     df_list[index_df].update(df_to_concat)
             current_progress += self.percent_progress
-            self.progress.emit(int(current_progress))
-        self.status.emit('Сортируем и записываем txt ')
+            self.progress_value.emit(int(current_progress))
+            self.line_progress.emit(f'Выполнено {int(current_progress)} %')
+        self.line_doing.emit(f'Сортируем и записываем txt ({self.now_doc} из {self.all_doc})')
         self.logging.info('Join и сортировка таблицы')
         all_data_df = df_list[0].join(df_list[1])
         all_data_df.sort_index(axis=0, inplace=True)
@@ -160,29 +194,35 @@ class GenerationFileCC(QThread):
         return current_progress
 
     def run(self):
+        self.progress_value.emit(0)
         try:
             progress = 0
             self.logging.info('Считывание файлов')
-            self.status.emit('Старт')
-            self.progress.emit(0)
             for file_csv in os.listdir(str(pathlib.Path(self.source))):
                 progress += 1 if file_csv.lower().endswith('.csv') else 0
             self.logging.info('Создание папок для конечных файлов')
-            quant_set = 0
+            quantity_set = 0
             if self.set and self.only_txt is False:
                 for number_set in self.set:
-                    quant_set += 1
+                    quantity_set += 1
                     path_dir = pathlib.Path(self.output, str(number_set))
                     os.makedirs(path_dir, exist_ok=True)
             elif self.set and self.only_txt:
-                quant_set += len(self.set)
-            progress += progress * quant_set
+                quantity_set += len(self.set)
+            progress += progress * quantity_set
+            self.all_doc = progress
             self.percent_progress = 100 / progress
+            self.line_progress.emit(f'Выполнено {int(progress)} %')
             self.logging.info('Входные данные:')
             self.logging.info('0' + '"|"' + str(self.source) + '"|"' + 'True' + '"|"' +
                               str(pathlib.PurePath(self.source).name) + '.txt' + '"|"' + str(self.source))
+            self.line_doing.emit(f'Парсинг исходного файла ({self.now_doc} из {self.all_doc})')
             current_progress = self.parcing(0, self.source, str(pathlib.Path(self.source, 'txt')),
                                             True, 'исходного файла')
+            self.line_progress.emit(f'Выполнено {int(current_progress)} %')
+            self.event.wait()
+            if self.window_check.stop_threading:
+                raise CancelException()
             if self.set and self.only_txt:
                 self.logging.info('Генерация без excel')
                 for folder in self.set:
@@ -196,24 +236,45 @@ class GenerationFileCC(QThread):
             elif self.set:
                 self.logging.info('Генерация c excel')
                 for folder in os.listdir(str(pathlib.Path(self.output))):
+                    self.event.wait()
+                    if self.window_check.stop_threading:
+                        raise CancelException()
                     if os.path.isdir(str(pathlib.Path(self.output, folder))) and 'txt' not in folder:
                         self.logging.info('Входные данные:')
                         self.logging.info(str(current_progress) + '"|"' + str(pathlib.Path(self.output, str(folder))) +
                                           '"|"' + 'False' + '"|"' + str(folder) + '.txt' + '"|"' + str(folder))
+                        self.line_doing.emit(f'Генерация {str(folder)} ({self.now_doc} из {self.all_doc})')
                         current_progress = self.parcing(current_progress,
                                                         str(pathlib.Path(self.output, str(folder))),
                                                         str(pathlib.Path(self.output, 'txt', str(folder))),
                                                         False, str(folder))
-
-            self.progress.emit(100)
-            self.logging.info("Конец работы программы")
-            self.status.emit('Готово')
+            self.progress_value.emit(100)
+            self.status.emit(f"Генерация сплошного спектра в папке «{self.name_dir}» успешно завершена")
+            self.logging.info(f"Генерация сплошного спектра в папке «{self.name_dir}» успешно завершена")
             os.chdir(self.default_path)
+            self.status_finish.emit('continuous_spectrum', str(self))
+            time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+            self.window_check.close()
+            # print(datetime.datetime.now() - start_time)
+            return
+        except CancelException:
+            self.logging.warning(f"Генерация сплошного спектра в папке «{self.name_dir}» отменена пользователем")
+            self.status.emit(f"Генерация сплошного спектра в папке «{self.name_dir}» отменена пользователем")
+            os.chdir(self.default_path)
+            self.status_finish.emit('continuous_spectrum', str(self))
+            time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+            self.window_check.close()
             return
         except BaseException as es:
             self.logging.error(es)
             self.logging.error(traceback.format_exc())
-            self.progress.emit(0)
-            self.status.emit('Ошибка!')
+            self.logging.warning(f"Генерация сплошного спектра в папке «{self.name_dir}» не заврешена из-за ошибки")
+            self.info_value.emit('УПС!', 'Работа программы завершена из-за непредвиденной ошибки')
+            self.event.clear()
+            self.event.wait()
+            self.status.emit(f"Ошибка при генерации сплошного спектра в папке «{self.name_dir}»")
             os.chdir(self.default_path)
+            self.status_finish.emit('continuous_spectrum', str(self))
+            time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+            self.window_check.close()
             return

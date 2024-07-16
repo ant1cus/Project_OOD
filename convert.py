@@ -7,12 +7,12 @@ import pandas as pd
 from openpyxl import load_workbook
 
 
-def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_path, twelve_sectors):
+def file_parcing(path, logging, line_doing, now_doc, all_doc, line_progress, progress, per, cp, no_freq_lim,
+                 default_path, event, window_check, twelve_sectors=False):
     try:
         list_file = os.listdir(path)
         # Сохраним нужное нам описание режимов.
         logging.info("Читаем txt и сохраняем режимы для " + path)
-        status.emit('Считываем режимы из текстового файла для заказа ' + path.rpartition('\\')[2])
         txt_files = filter(lambda x: x.endswith('.txt'), list_file)
         for file in sorted(txt_files):
             try:
@@ -29,11 +29,9 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_
                     mode_1 = [line.rstrip() for line in mode_1]
         mode = [x for x in mode_1 if x]
         parcing_file = []
-        # if os.path.exists(path + '\\txt'):
         if os.path.exists(pathlib.Path(path, 'txt')):
             logging.info("Запоминаем какие папки уже есть внутри папки txt")
             parcing_file = os.listdir(pathlib.Path(path, 'txt'))
-            # parcing_file = os.listdir(path + '\\txt')
         # Работа с исходниками.
         # Отсортируем нужные нам файлы xlsx.
         exel_files = filter(lambda x: x.endswith('.xlsx') and ('~' not in x) and (x[:-4] not in parcing_file),
@@ -41,7 +39,12 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_
         logging.info("Начинаем прохождение по файлам excel")
         output_error = []
         for file in sorted(exel_files):
-            status.emit('Проверяем названия рабочих листов в документе ' + file)
+            event.wait()
+            if window_check.stop_threading:
+                return {'cancel': True}
+            now_doc += 1
+            line_doing.emit(f'Проверяем названия рабочих листов в документе {file} ({now_doc} из {all_doc})')
+            # status.emit('Проверяем названия рабочих листов в документе ' + file)
             error = []
             logging.info("Открываем книгу")
             wb = load_workbook(pathlib.Path(path, file), data_only=True)  # Откроем книгу.
@@ -76,12 +79,10 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_
                             worksheet = wb[name[elem]]  # выбираем лист с именем
                             worksheet.title = x  # переименовываем лист
                     logging.info("Сохраняем книгу с новыми названиями")
-                    # wb.save(filename=path + '\\' + file)  # сохраняем книгу
                     wb.save(filename=pathlib.Path(path, file))  # сохраняем книгу
                     wb.close()
                     break
             logging.info("Открываем книгу ещё раз если закрыли её в предыдущем цикле")  # Проверить надо ли
-            # wb = load_workbook(path + '\\' + file, data_only=True)  # Откроем книгу.
             wb = load_workbook(pathlib.Path(path, file), data_only=True)  # Откроем книгу.
             name = wb.sheetnames  # Список листов.
             logging.info("Проверяем на совпадение названий с файлом описания")
@@ -95,10 +96,9 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_
                 error.append(output.strip(' '))
             else:
                 for sheet in name:  # Загоняем в txt.
-                    status.emit('Проверяем рабочие листы в документе ' + file + ' на правильность заполнения')
+                    line_doing.emit(f'Проверяем режимы в {file} на ошибки ({now_doc} из {all_doc})')
                     logging.info("Проверяем документы на наличие ошибок")
                     if sheet.lower() != 'описание':
-                        # df = pd.read_excel(path + '\\' + file, sheet_name=sheet, header=None)
                         df = pd.read_excel(pathlib.Path(path, file), sheet_name=sheet, header=None)
                         logging.info("Смотрим есть ли ошибки")
                         if twelve_sectors:
@@ -107,11 +107,6 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_
                             for column in df.columns:
                                 data = df[column]
                                 try:  # Блок try для отлова текста в значениях
-                                    # if data.str.contains(',', regex=False).any():
-                                    #     error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
-                                    #                  file + ' в режиме '
-                                    #                  + sheet + ' в колонке ' + str(column) +
-                                    #                  ' есть значение с неправильным разделителем!')
                                     if data.astype(float).all():
                                         continue
                                     else:
@@ -162,8 +157,9 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_
                                                          file + ' в режиме '
                                                          + sheet + ' на частоте ' + str(round(frq, 4)) +
                                                          ' шум указан как текстовое значение')
-                                    if (isinstance(s, float) or isinstance(s, int)) and\
-                                            (isinstance(n, float) or isinstance(n, int)) and (no_freq_lim is False):
+                                    if (s and (isinstance(s, float) or isinstance(s, int))) and\
+                                            (n and (isinstance(n, float) or isinstance(n, int))) and\
+                                            (no_freq_lim is False):
                                         if s < n:
                                             error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' +
                                                          file + ' в режиме ' +
@@ -181,57 +177,48 @@ def file_parcing(path, logging, status, progress, per, cp, no_freq_lim, default_
                                                          str(round(frq, 4)) + ' слишком большое значение сигнала!')
                                 except IndexError:
                                     pass
-            cp = cp + per
+            cp += per
             if error:
-                status.emit('Добавляем ошибки для документа ' + file)
                 logging.info("Добавляем ошибки")
                 for e in error:
                     output_error.append(e)
                 wb.close()
+                line_progress.emit(f'Выполнено {int(cp)} %')
                 progress.emit(int(cp))
-            else:
-                status.emit('Создаем txt файлы для документа ' + file)
-                logging.info("Ошибок нет, записываем в txt")
-                logging.info("Создаем папку для txt файлов")
-                if os.path.exists(pathlib.Path(path, 'txt', book_name)) is False:
-                    os.makedirs(pathlib.Path(path, 'txt', book_name))
-                    os.chdir(pathlib.Path(path, 'txt', book_name))
-                # if os.path.exists(path + '\\txt\\' + book_name) is False:
-                #     os.makedirs(path + '\\txt\\' + book_name)
-                #     os.chdir(path + "\\txt\\" + book_name)
-                    for sheet in name:
-                        if re.findall(r'_lin', sheet) or re.findall(r'_linux', sheet):
-                            name_sheet = sheet.upper()
-                        elif re.findall(r'_win', sheet) or re.findall(r'_windows', sheet):
-                            name_sheet = sheet.lower()
-                        else:
-                            name_sheet = sheet
-                        # df = pd.read_excel(path + '\\' + file, sheet_name=sheet, header=None)
-                        df = pd.read_excel(pathlib.Path(path, file), sheet_name=sheet, header=None)
-                        if df.empty or type(df.iloc[0, 0]) == str:
-                            with open(pathlib.Path(path, 'txt', book_name, name_sheet + '.txt'), 'w'):
-                                pass
-                        else:
-                            if sheet.lower() != 'описание':
-                                if twelve_sectors is False:
-                                    df = df.drop(df.columns[[i for i in df.columns.tolist() if i > 2]], axis=1)
-                                    if [0, 1, 2] in df.columns.tolist():
-                                        df = df[[0, 1, 2]]
-                                    df = df.dropna()
-                                else:
-                                    df = df.fillna(0)
-                            df = df.round(4)
-                            df.to_csv(pathlib.Path(path, 'txt', book_name, name_sheet + '.txt'),
-                                      index=None, sep='\t', mode='w', header=None)
-                            # df.to_csv(path + '\\txt\\' + book_name + '\\' + name_sheet + '.txt',
-                            # index=None, sep='\t', mode='w', header=None)
-                wb.close()
-                progress.emit(int(cp))
-        return {'error': output_error, 'cp': cp}
+                continue
+            line_doing.emit(f'Создаем txt файлы для документа {file} ({now_doc} из {all_doc})')
+            logging.info("Ошибок нет, записываем в txt")
+            logging.info("Создаем папку для txt файлов")
+            if os.path.exists(pathlib.Path(path, 'txt', book_name)) is False:
+                os.makedirs(pathlib.Path(path, 'txt', book_name))
+                os.chdir(pathlib.Path(path, 'txt', book_name))
+                for sheet in name:
+                    if re.findall(r'_lin', sheet) or re.findall(r'_linux', sheet):
+                        name_sheet = sheet.upper()
+                    elif re.findall(r'_win', sheet) or re.findall(r'_windows', sheet):
+                        name_sheet = sheet.lower()
+                    else:
+                        name_sheet = sheet
+                    df = pd.read_excel(pathlib.Path(path, file), sheet_name=sheet, header=None)
+                    if df.empty or type(df.iloc[0, 0]) == str:
+                        with open(pathlib.Path(path, 'txt', book_name, name_sheet + '.txt'), 'w'):
+                            pass
+                    else:
+                        if sheet.lower() != 'описание':
+                            if twelve_sectors is False:
+                                df = df.drop(df.columns[[i for i in df.columns.tolist() if i > 2]], axis=1)
+                                if [0, 1, 2] in df.columns.tolist():
+                                    df = df[[0, 1, 2]]
+                                df = df.dropna()
+                            else:
+                                df = df.fillna(0)
+                        df = df.round(4)
+                        df.to_csv(pathlib.Path(path, 'txt', book_name, name_sheet + '.txt'),
+                                  index=None, sep='\t', mode='w', header=None)
+            wb.close()
+            line_progress.emit(f'Выполнено {int(cp)} %')
+            progress.emit(int(cp))
+        return {'error': output_error, 'cp': cp, 'now_doc': now_doc, 'cancel': False, 'base_exception': False}
+    # Подумать что тут с исключениями
     except BaseException as es:
-        logging.error(es)
-        logging.error(traceback.format_exc())
-        progress.emit(0)
-        status.emit('Ошибка!')
-        os.chdir(default_path)
-        return
+        return {'base_exception': True, 'text': es, 'trace': traceback.format_exc()}

@@ -7,12 +7,10 @@ from openpyxl import load_workbook
 
 
 def check(n, e):
-    f = True
     for el in e:
         if n == el:
-            f = False
-            return f
-    return f
+            return False
+    return True
 
 
 def checked_zone_checked(line_edit_path_check, line_edit_table_number, zone):
@@ -25,13 +23,15 @@ def checked_zone_checked(line_edit_path_check, line_edit_table_number, zone):
         return ['УПС!', 'Путь к проверяемым документам пуст']
     if not os.path.isdir(path):
         return ['УПС!', 'Указанный путь к проверяемым документам не является директорией']
+    if not os.listdir(path):
+        return ['УПС!', 'В указанной директории отсутствуют файлы для проверки']
     table = line_edit_table_number.text().strip()
     if not table:
         return ['УПС!', 'Не указан номер таблицы']
     for i in table:
         if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')):
             return ['УПС!', 'Есть лишние символы в номере таблицы']
-    zone_out = {i: el.text().replace(',', '.') for i, el in enumerate(zone) if el.text()}
+    zone_out = {i: el.text().replace(',', '.') if el.text() else '10000000000' for i, el in enumerate(zone)}
     err_msg = ('Есть лишние символы в ограничении по стационарным антеннам',
                'Есть лишние символы в ограничении по возимым антеннам',
                'Есть лишние символы в ограничении по носимым антеннам',
@@ -55,11 +55,22 @@ def checked_file_parcing(dir_path, group_file):
         if 'Описание.txt' not in txt_files and 'описание.txt' not in txt_files:
             errors.append('Нет файла с описанием режимов (' + p + ')')
         else:
-            with open(pathlib.Path(p, 'Описание.txt'), mode='r', encoding='utf-8') as f:
-                lines = f.readlines()
-                for line in lines:
-                    if re.findall(r'\s', line.rstrip('\n')):
-                        errors.append('Пробелы в названии режимов (' + p + ', ' + line.rstrip('\n') + ')')
+            try:
+                # with open(path + '\\' + file, mode='r', encoding="utf-8-sig") as f:
+                with open(pathlib.Path(p, 'Описание.txt'), mode='r', encoding='utf-8') as f:
+                    lines = f.readlines()
+            except UnicodeDecodeError:
+                # with open(path + '\\' + file, mode='r') as f:
+                with open(pathlib.Path(p, 'Описание.txt'), mode='r', encoding='ANSI') as f:
+                    lines = f.readlines()
+            for line in lines:
+                if re.findall(r'\s', line.rstrip('\n')):
+                    errors.append('Пробелы в названии режимов (' + p + ', ' + line.rstrip('\n') + ')')
+            # with open(pathlib.Path(p, 'Описание.txt'), mode='r', encoding='utf-8') as f:
+            #     lines = f.readlines()
+            #     for line in lines:
+            #         if re.findall(r'\s', line.rstrip('\n')):
+            #             errors.append('Пробелы в названии режимов (' + p + ', ' + line.rstrip('\n') + ')')
         return {'errors': errors, 'len': len(excel_files)}
     # Выбираем путь для исходников.
     path = dir_path.text().strip()
@@ -197,13 +208,14 @@ def checked_generation_pemi(source_file, output_file, set_number, set_quantity, 
             'name_mode': name_mode, 'restrict_file': restrict_file}
 
 
-def checked_delete_header_footer(path, conclusion_post, conclusion_name, protocol_post, protocol_name,
-                                 prescription_post, prescription_name):
+def checked_delete_header_footer(path, check_box_director, line_edit_old_director, line_edit_new_director):
     source = path.text().strip()
     if not source:
         return ['УПС!', 'Путь к исходным файлам пуст']
     if not os.path.isdir(source):
         return ['УПС!', 'Путь к исходным файлам удалён или переименован']
+    if not os.listdir(source):
+        return ['УПС!', 'В указанной директории отсутствуют файлы для обезличивания']
     name_file = [False, False, False]
     error = []
     for file in os.listdir(source):
@@ -217,27 +229,12 @@ def checked_delete_header_footer(path, conclusion_post, conclusion_name, protoco
             name_file[2] = True
     if error:
         return ['УПС!', 'Файлы старого формата:\n' + '\n'.join(error)]
-    post_conclusion, post_prot, post_pre = conclusion_post.text().strip(), protocol_post.text().strip(), prescription_post.text().strip()
-    name_conclusion, name_prot, name_pre = conclusion_name.text().strip(), protocol_name.text().strip(), prescription_name.text().strip()
-    name_rus = ['заключении', 'протоколе', 'предписании']
-    error = []
-    if any([name_conclusion, name_prot, name_pre]):
-        for name, el_name, el_post in zip(name_file, [name_conclusion, name_prot, name_pre],
-                                          [post_conclusion, post_prot, post_pre]):
-            if name:
-                if re.match(r'[А-Я]\.[А-Я]\.\s[А-Я][а-я]+', el_name) is None:
-                    error.append('Имя ' + el_name + ' в ' +
-                                 name_rus[[name_conclusion, name_prot, name_pre].index(el_name)]
-                                 + ' написано неверно (Шаблон имени «И.И. Иванов»)')
-                if len(el_post) == 0:
-                    error.append('Не указана должность в ' +
-                                 name_rus[[post_conclusion, post_prot, post_pre].index(el_post)])
-        if error:
-            return ['УПС!', '\n'.join(error)]
-        return {'path': source, 'post_executor': [post_conclusion, post_prot, post_pre],
-                'name_executor': [name_conclusion, name_prot, name_pre]}
-    else:
-        return ['УПС!', 'Не указано ни одно имя']
+    old_director = None
+    new_director = None
+    if check_box_director.isChecked():
+        old_director = line_edit_old_director.text()
+        new_director = line_edit_new_director.text()
+    return {'path': source, 'old_director': old_director, 'new_director': new_director}
 
 
 def checked_hfe_generation(path, set_value, req_val, frequency, value):
@@ -250,8 +247,8 @@ def checked_hfe_generation(path, set_value, req_val, frequency, value):
         freq = frequency.text().strip()
         val = value.text().strip()
     else:
-        freq = 100
-        val = 100
+        freq = '100'
+        val = '100'
     quantity = set_value.text().strip()
     variables = [freq, val, quantity]
     errors1 = ['Не указана частота', 'Не указан уровень', 'Не указано количество комплектов']
@@ -281,7 +278,8 @@ def checked_hfi_generation(path, frequency, quantity, mode):
             if check(j, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')):
                 return ['УПС!', errors2[i]]
     if any(mode):
-        return {'path': output, 'quantity': int(quantity), 'freq': variables[0], 'val': variables[1], 'mode': mode}
+        return {'path': output, 'quantity': int(quantity.text().strip()), 'freq': variables[0], 'val': variables[1],
+                'mode': mode}
     else:
         return ['УПС!', 'Не выбран не один режим']
 
@@ -396,3 +394,70 @@ def checked_generation_cc(start_folder, finish_folder, set_number, checkbox_freq
                 return ['УПС!', 'Не правильно указан разброс (только цифры, дробный разделитель - ".")']
     return {'source': source, 'output': output, 'set': set_num, 'frequency': freq, 'only_txt': txt,
             "dispersion": float(dispersion)}
+
+
+def checked_number_instance(start_folder, finish_folder, incoming_set_number):
+    path_old = start_folder.text()
+    if not path_old:
+        return ['УПС!', 'Путь к исходным файлам пуст']
+    if os.path.isdir(path_old):
+        pass
+    else:
+        return ['УПС!', 'Указанный путь к исходным файлам не является директорией']
+    path_new = finish_folder.text()
+    if not path_new:
+        return ['УПС!', 'УПС!', 'Путь к конечным файлам пуст']
+    if os.path.isdir(path_new):
+        pass
+    else:
+        return ['УПС!', 'Указанный путь к конечным файлам не является директорией']
+    number_instance_ = incoming_set_number.text().strip()
+    for i in number_instance_:
+        if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ' ', '-', ',', '.')):
+            return ['УПС!', 'Есть лишние символы в номерах экземпляров']
+    set_num = number_instance_.replace(' ', '').replace(',', '.')
+    if set_num[0] == '.' or set_num[0] == '-':
+        return ['УПС!', 'Первый символ введён не верно']
+    if set_num[-1] == '.' or set_num[-1] == '-':
+        return ['УПС!', 'Последний символ введён не верно']
+    for i in range(len(set_num)):
+        if set_num[i] == '.' or set_num[i] == '-':
+            if set_num[i + 1] == '.' or set_num[i + 1] == '-':
+                return ['УПС!', 'Два разделителя номеров подряд']
+    set_number = []
+    for element in set_num.split('.'):
+        if '-' in element:
+            num1, num2 = int(element.partition('-')[0]), int(element.partition('-')[2])
+            if num1 >= num2:
+                return ['УПС!', 'Диапазон номеров экземпляров указан не верно']
+            else:
+                for el in range(num1, num2 + 1):
+                    set_number.append(el)
+        else:
+            set_number.append(element)
+    set_number.sort()
+    return {'path_old': path_old, 'path_new': path_new, 'set_number': set_number}
+
+
+def checked_find_files(unloading_file, start_folder, finish_folder):
+    file = unloading_file.text()
+    if not file:
+        return ['УПС!', 'Поле «файл с выгрузкой» пусто']
+    if os.path.isdir(file):
+        return ['УПС!', 'В поле «файл с выгрузкой» указана директория, а не файл']
+    if file.endswith('.xlsx') is False and file.endswith('.txt') is False:
+        return ['УПС!', 'Указанный файл с выгрузкой не требуемого формата (необходим ".xlsx" или ".txt")']
+    start_path = start_folder.text()
+    if not start_path:
+        return ['УПС!', 'Путь к исходным файлам пуст']
+    if os.path.isdir(start_path) is False:
+        return ['УПС!', 'Указанный путь к исходным файлам не является директорией']
+    finish_path = finish_folder.text()
+    if not finish_path:
+        return ['УПС!', 'УПС!', 'Путь к конечной папке пуст']
+    if os.path.isdir(finish_path) is False:
+        return ['УПС!', 'Указанный путь к конечной папке не является директорией']
+    if os.listdir(finish_path):
+        return ['УПС!', 'Конечная папка не пуста, очистите директорию или выберите новую']
+
+    return {'unloading_file': file, 'start_path': start_path, 'finish_path': finish_path}

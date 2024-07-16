@@ -44,92 +44,20 @@ class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки п
         self.path_for_default = path
         self.parent = parent
         self.name_list = name_list
-        # Имена
-        # self.name_list = {'checked-path_check': 'Путь к дир. с файлами', 'checked-table_number': 'Номер таблицы',
-        #                   'checked-stationary_FSB': 'Стац. ФСБ', 'checked-carry_FSB': 'Воз. ФСБ',
-        #                   'checked-wear_FSB': 'Нос. ФСБ', 'checked-r1_FSB': 'r1 ФСБ', 'checked-r1s_FSB': 'r1` ФСБ',
-        #                   'checked-stationary_FSTEK': 'Стац. ФСТЭК', 'checked-carry_FSTEK': 'Воз. ФСТЭК',
-        #                   'checked-wear_FSTEK': 'Нос. ФСТЭК', 'checked-r1_FSTEK': 'r1 ФСТЭК',
-        #                   'parser-path_parser': 'Путь к дир. с файлами',
-        #                   'extract-path_original_extract': 'Путь к дир. с файлами',
-        #                   'extract-conclusion_post': 'Должность заключение',
-        #                   'extract-conclusion_name': 'ФИО заключение',
-        #                   'extract-protocol_post': 'Должность протокол', 'extract-protocol_name': 'ФИО протокол',
-        #                   'extract-prescription_post': 'Должность предписание',
-        #                   'extract-prescription_name': 'ФИО предписание',
-        #                   'gen_pemi-path_original_file': 'Путь к дир. с исходниками',
-        #                   'gen_pemi-path_finish_folder': 'Путь к дир. для генерации',
-        #                   'gen_pemi-path_freq_restrict': 'Путь к файлу ограничений',
-        #                   'gen_pemi-complect_quant_pemi': 'Количество комплектов',
-        #                   'gen_pemi-complect_number_pemi': 'Номера комплектов',
-        #                   'HFE-path_file_HFE': 'Путь к дир. с файлами',
-        #                   'HFE-complect_quant_HFE': 'Количество комплектов',
-        #                   'HFE-frequency': 'Частота', 'HFE-level': 'Уровень',
-        #                   'HFI-path_file_HFI': 'Путь к дир. с файлами',
-        #                   'HFI-complect_quant_HFI': 'Количество комплектов',
-        #                   'HFI-imposition_freq': 'Частота навязывания', 'application-path_example': 'Путь к файлу',
-        #                   'application-path_finish_folder_example': 'Путь к конечной дир.',
-        #                   'application-number_position': 'Номер позиции',
-        #                   'application-quantity_document': 'Количество комплектов',
-        #                   'LF-path_start_folder': 'Путь к начальной дир.',
-        #                   'LF-path_finish_folder': 'Путь к конечной дир.',
-        #                   'LF-path_file_excel': 'Путь к файлу генератору'}
-        # self.name_list = {'checked-path_check': 'Путь к дир. с файлами', 'checked-table_number': 'Номер таблицы',
-        #                   'checked-checkBox_first_table': 'Только 1 таб.', 'checked-groupBox_FSB': 'Проверка ФСБ',
-        #                   'checked-checkBox_win_lin': 'Windows + Linux',
-        #                   'checked-stationary_FSB': 'Стац. ФСБ', 'checked-carry_FSB': 'Воз. ФСБ',
-        #                   'checked-wear_FSB': 'Нос. ФСБ', 'checked-r1_FSB': 'r1 ФСБ', 'checked-r1s_FSB': 'r1` ФСБ',
-        #                   'checked-groupBox_FSTEK': 'Проверка ФСТЭК',
-        #                   'checked-stationary_FSTEK': 'Стац. ФСТЭК', 'checked-carry_FSTEK': 'Воз. ФСТЭК',
-        #                   'checked-wear_FSTEK': 'Нос. ФСТЭК', 'checked-r1_FSTEK': 'r1 ФСТЭК',
-        #                   'parser-path_parser': 'Путь к дир. с файлами',
-        #                   'parser-checkBox_group_parcing': 'Пакетный парсинг',
-        #                   'parser-checkBox_no_freq_limit': 'Без ограничения частот',
-        #                   'extract-path_original_extract': 'Путь к дир. с файлами',
-        #                   'extract-groupBox_value_for_extract': 'Значения для выписки',
-        #                   'extract-conclusion_post': 'Должность заключение',
-        #                   'extract-conclusion_name': 'ФИО заключение',
-        #                   'extract-protocol_post': 'Должность протокол', 'extract-protocol_name': 'ФИО протокол',
-        #                   'extract-prescription_post': 'Должность предписание',
-        #                   'extract-prescription_name': 'ФИО предписание',
-        #                   'gen_pemi-path_original_file': 'Путь к дир. с исходниками',
-        #                   'gen_pemi-path_finish_folder': 'Путь к дир. для генерации',
-        #                   'gen_pemi-checkBox_freq_restrict': 'Файл ограничения частот',
-        #                   'gen_pemi-path_freq_restrict': 'Путь к файлу ограничений',
-        #                   'gen_pemi-checkBox_no_excel_generation': 'Не генерировать excel',
-        #                   'gen_pemi-checkBox_no_limit_freq_gen': 'Без ограничения знач.',
-        #                   'gen_pemi-checkBox_3db_difference': 'Разница 3 дБ',
-        #                   'gen_pemi-complect_quant_pemi': 'Количество комплектов',
-        #                   'gen_pemi-complect_number_pemi': 'Номера комплектов',
-        #                   'HFE-path_file_HFE': 'Путь к дир. с файлами',
-        #                   'HFE-complect_quant_HFE': 'Количество комплектов',
-        #                   'HFE-checkBox_required_values_HFE': 'Значения вручную',
-        #                   'HFE-frequency': 'Частота', 'HFE-level': 'Уровень',
-        #                   'HFI-path_file_HFI': 'Путь к дир. с файлами',
-        #                   'HFI-complect_quant_HFI': 'Количество комплектов',
-        #                   'HFI-checkBox_imposition_freq': 'Ручной ввод частоты',
-        #                   'HFI-imposition_freq': 'Частота навязывания',
-        #                   'HFI-checkBox_power_supply': 'Питание',
-        #                   'HFI-checkBox_symetrical': 'Симметричка',
-        #                   'HFI-checkBox_asymetriacal': 'Не симметричка',
-        #                   'application-path_example': 'Путь к файлу',
-        #                   'application-path_finish_folder_example': 'Путь к конечной дир.',
-        #                   'application-number_position': 'Номер позиции',
-        #                   'application-quantity_document': 'Количество комплектов',
-        #                   'LF-path_start_folder': 'Путь к начальной дир.',
-        #                   'LF-path_finish_folder': 'Путь к конечной дир.',
-        #                   'LF-path_file_excel': 'Путь к файлу генератору'}
         self.name_box = [self.groupBox_checked, self.groupBox_parcing, self.groupBox_exctracting,
                          self.groupBox_gen_pemi, self.groupBox_gen_hfe, self.groupBox_gen_hfi,
-                         self.groupBox_application, self.groupBox_gen_LF, self.groupBox_cotinuous_spectrum]
+                         self.groupBox_application, self.groupBox_gen_LF, self.groupBox_cotinuous_spectrum,
+                         self.groupBox_number_instance, self.groupBox_finding_file]
         self.name_grid = [self.gridLayout_checked, self.gridLayout_parcer, self.gridLayout_exctract,
                           self.gridLayout_gen_pemi, self.gridLayout_HFE, self.gridLayout_HFI,
-                          self.gridLayout_application, self.gridLayout_gen_LF, self.gridLayout_cotinuous_spectrum]
+                          self.gridLayout_application, self.gridLayout_gen_LF, self.gridLayout_cotinuous_spectrum,
+                          self.gridLayout_number_instance, self.gridLayout_finding_file]
         with open(pathlib.Path(self.path_for_default, 'Настройки.txt'), "r", encoding='utf-8-sig') as f:  # Открываем
             dict_load = json.load(f)  # Загружаем данные
             self.data = dict_load['widget_settings']
             self.tab_order = dict_load['gui_settings']['tab_order']
             self.tab_visible = dict_load['gui_settings']['tab_visible']
+            self.version = dict_load['version']['actual_version']
         self.buttongroup_add = QButtonGroup()
         self.buttongroup_add.buttonClicked[int].connect(self.add_button_clicked)
         self.buttongroup_clear = QButtonGroup()
@@ -148,7 +76,7 @@ class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки п
             frame = False
             grid = False
             for j, n in enumerate(['checked', 'parser', 'extract', 'gen_pemi', 'HFE', 'HFI', 'application', 'LF',
-                                   'CC']):
+                                   'CC', 'NI', 'FF']):
                 if n in el.partition('-')[0]:
                     frame = self.name_box[j]
                     grid = self.name_grid[j]
@@ -183,7 +111,8 @@ class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки п
                                            "}")
                 self.name[i].setDisabled(True)  # Неактивный
                 grid.addWidget(self.name[i], i, 3)  # Помещаем в фрейм
-                if 'Путь' in self.line[i].text():
+                # if 'Путь' in self.line[i].text():
+                if 'path_' in el:
                     self.button_open[i] = QPushButton("Открыть", frame)  # Создаем кнопку
                     self.button_open[i].setFont(QFont("Times", 12, QFont.Light))  # Размер шрифта
                     self.button_open[i].setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # Размеры виджета
@@ -213,18 +142,6 @@ class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки п
                 elif directory and isinstance(directory, str):
                     self.name[num].setText(directory)
                 break
-        # file = False
-        # if 'дир.' in self.line[num].text():
-        #     directory = QFileDialog.getExistingDirectory(self, "Открыть папку", QDir.currentPath())
-        # else:
-        #     directory = QFileDialog.getOpenFileName(self, "Открыть файл", QDir.currentPath())
-        #     file = True
-        # if directory:  # Если нажать кнопку отркыть в диалоге выбора
-        #     if file:  # Если файлы
-        #         if directory[0]:  # Если есть файл, чтобы не очищалось поле
-        #             self.name[num].setText(directory[0])
-        #     else:  # Если директории
-        #         self.name[num].setText(directory)
 
     def add_button_clicked(self, number):  # Если кликнули по кнопке
         self.name[number].setEnabled(True)  # Делаем активным для изменения
@@ -253,7 +170,8 @@ class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки п
                        "gui_settings":
                            {"tab_order": self.tab_order,
                             "tab_visible": self.tab_visible
-                            }
+                            },
+                       "version": {"actual_version": self.version}
                        }
         rewrite(self.path_for_default, data_insert, widget=True)
         self.close()  # Закрываем

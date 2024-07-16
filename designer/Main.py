@@ -9,35 +9,6 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-import os
-
-
-class Button(QtWidgets.QLineEdit):
-
-	def __init__(self, parent):
-		super(Button, self).__init__(parent)
-
-		self.setAcceptDrops(True)
-
-	def dragEnterEvent(self, e):
-
-		if e.mimeData().hasUrls():
-			e.accept()
-		else:
-			super(Button, self).dragEnterEvent(e)
-
-	def dragMoveEvent(self, e):
-
-		super(Button, self).dragMoveEvent(e)
-
-	def dropEvent(self, e):
-
-		if e.mimeData().hasUrls():
-			for url in e.mimeData().urls():
-				self.setText(os.path.normcase(url.toLocalFile()))
-				e.accept()
-		else:
-			super(Button, self).dropEvent(e)
 
 
 class Ui_MainWindow(object):
@@ -255,7 +226,7 @@ class Ui_MainWindow(object):
         self.pushButton_open_folder_zone_check.setFont(font)
         self.pushButton_open_folder_zone_check.setObjectName("pushButton_open_folder_zone_check")
         self.gridLayout_2.addWidget(self.pushButton_open_folder_zone_check, 0, 4, 1, 1)
-        self.lineEdit_path_check = Button(self.tab_zone_checked)
+        self.lineEdit_path_check = QtWidgets.QLineEdit(self.tab_zone_checked)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.lineEdit_path_check.setFont(font)
@@ -484,7 +455,7 @@ class Ui_MainWindow(object):
         self.gridLayout_15.addWidget(self.plainTextEdit_errors, 0, 0, 1, 1)
         self.gridLayout_12.addWidget(self.groupBox_errors, 1, 0, 1, 2)
         self.gridLayout_8.addLayout(self.gridLayout_12, 4, 0, 1, 3)
-        self.lineEdit_path_parser = Button(self.tab_parser)
+        self.lineEdit_path_parser = QtWidgets.QLineEdit(self.tab_parser)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.lineEdit_path_parser.setFont(font)
@@ -528,7 +499,7 @@ class Ui_MainWindow(object):
         self.tab_exctract.setObjectName("tab_exctract")
         self.gridLayout_16 = QtWidgets.QGridLayout(self.tab_exctract)
         self.gridLayout_16.setObjectName("gridLayout_16")
-        self.lineEdit_path_start_extract = Button(self.tab_exctract)
+        self.lineEdit_path_start_extract = QtWidgets.QLineEdit(self.tab_exctract)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -697,7 +668,7 @@ class Ui_MainWindow(object):
         self.lineEdit_complect_number_pemi.setFont(font)
         self.lineEdit_complect_number_pemi.setObjectName("lineEdit_complect_number_pemi")
         self.gridLayout_9.addWidget(self.lineEdit_complect_number_pemi, 6, 1, 1, 2)
-        self.lineEdit_path_freq_restrict = Button(self.tab_gen_pemi)
+        self.lineEdit_path_freq_restrict = QtWidgets.QLineEdit(self.tab_gen_pemi)
         self.lineEdit_path_freq_restrict.setEnabled(False)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -748,7 +719,7 @@ class Ui_MainWindow(object):
         self.label_original_file.setFont(font)
         self.label_original_file.setObjectName("label_original_file")
         self.gridLayout_9.addWidget(self.label_original_file, 0, 0, 1, 1)
-        self.lineEdit_path_finish_pemi = Button(self.tab_gen_pemi)
+        self.lineEdit_path_finish_pemi = QtWidgets.QLineEdit(self.tab_gen_pemi)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -783,7 +754,7 @@ class Ui_MainWindow(object):
         self.label_complect_number_pemi.setFont(font)
         self.label_complect_number_pemi.setObjectName("label_complect_number_pemi")
         self.gridLayout_9.addWidget(self.label_complect_number_pemi, 6, 0, 1, 1)
-        self.lineEdit_path_start_pemi = Button(self.tab_gen_pemi)
+        self.lineEdit_path_start_pemi = QtWidgets.QLineEdit(self.tab_gen_pemi)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -878,7 +849,7 @@ class Ui_MainWindow(object):
         self.lineEdit_complect_quant_HFE.setFont(font)
         self.lineEdit_complect_quant_HFE.setObjectName("lineEdit_complect_quant_HFE")
         self.gridLayout_10.addWidget(self.lineEdit_complect_quant_HFE, 3, 1, 1, 3)
-        self.lineEdit_path_folder_HFE = Button(self.tab_gen_HFE)
+        self.lineEdit_path_folder_HFE = QtWidgets.QLineEdit(self.tab_gen_HFE)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.lineEdit_path_folder_HFE.setFont(font)
@@ -952,7 +923,7 @@ class Ui_MainWindow(object):
         self.pushButton_generation_HFI.setFont(font)
         self.pushButton_generation_HFI.setObjectName("pushButton_generation_HFI")
         self.gridLayout_11.addWidget(self.pushButton_generation_HFI, 9, 1, 1, 5)
-        self.lineEdit_path_folder_HFI = Button(self.tab_gen_HFI)
+        self.lineEdit_path_folder_HFI = QtWidgets.QLineEdit(self.tab_gen_HFI)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1137,13 +1108,13 @@ class Ui_MainWindow(object):
         self.lineEdit_quantity_document.setFont(font)
         self.lineEdit_quantity_document.setObjectName("lineEdit_quantity_document")
         self.gridLayout_17.addWidget(self.lineEdit_quantity_document, 3, 1, 1, 6)
-        self.lineEdit_path_finish_example = Button(self.tab_gen_application)
+        self.lineEdit_path_finish_example = QtWidgets.QLineEdit(self.tab_gen_application)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.lineEdit_path_finish_example.setFont(font)
         self.lineEdit_path_finish_example.setObjectName("lineEdit_path_finish_example")
         self.gridLayout_17.addWidget(self.lineEdit_path_finish_example, 1, 1, 1, 5)
-        self.lineEdit_path_start_example = Button(self.tab_gen_application)
+        self.lineEdit_path_start_example = QtWidgets.QLineEdit(self.tab_gen_application)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.lineEdit_path_start_example.setFont(font)
@@ -1178,7 +1149,7 @@ class Ui_MainWindow(object):
         self.label_path_start_folder_lf.setFont(font)
         self.label_path_start_folder_lf.setObjectName("label_path_start_folder_lf")
         self.gridLayout_19.addWidget(self.label_path_start_folder_lf, 0, 0, 1, 1)
-        self.lineEdit_path_start_folder_lf = Button(self.tab_gen_LF)
+        self.lineEdit_path_start_folder_lf = QtWidgets.QLineEdit(self.tab_gen_LF)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.lineEdit_path_start_folder_lf.setFont(font)
@@ -1196,7 +1167,7 @@ class Ui_MainWindow(object):
         self.label_path_finish_folder_lf.setFont(font)
         self.label_path_finish_folder_lf.setObjectName("label_path_finish_folder_lf")
         self.gridLayout_19.addWidget(self.label_path_finish_folder_lf, 1, 0, 1, 1)
-        self.lineEdit_path_finish_folder_lf = Button(self.tab_gen_LF)
+        self.lineEdit_path_finish_folder_lf = QtWidgets.QLineEdit(self.tab_gen_LF)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.lineEdit_path_finish_folder_lf.setFont(font)
@@ -1214,7 +1185,7 @@ class Ui_MainWindow(object):
         self.label_path_file_excel_gen.setFont(font)
         self.label_path_file_excel_gen.setObjectName("label_path_file_excel_gen")
         self.gridLayout_19.addWidget(self.label_path_file_excel_gen, 2, 0, 1, 1)
-        self.lineEdit_path_file_excel_lf = Button(self.tab_gen_LF)
+        self.lineEdit_path_file_excel_lf = QtWidgets.QLineEdit(self.tab_gen_LF)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.lineEdit_path_file_excel_lf.setFont(font)
@@ -1255,7 +1226,7 @@ class Ui_MainWindow(object):
         self.label_path_folder_cc_finish.setFont(font)
         self.label_path_folder_cc_finish.setObjectName("label_path_folder_cc_finish")
         self.gridLayout_20.addWidget(self.label_path_folder_cc_finish, 1, 0, 1, 1)
-        self.lineEdit_path_folder_start_cc = Button(self.tab_continuous_spectrum)
+        self.lineEdit_path_folder_start_cc = QtWidgets.QLineEdit(self.tab_continuous_spectrum)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.lineEdit_path_folder_start_cc.setFont(font)
@@ -1267,7 +1238,7 @@ class Ui_MainWindow(object):
         self.label_path_folder_cc_start.setFont(font)
         self.label_path_folder_cc_start.setObjectName("label_path_folder_cc_start")
         self.gridLayout_20.addWidget(self.label_path_folder_cc_start, 0, 0, 1, 1)
-        self.lineEdit_path_folder_finish_cc = Button(self.tab_continuous_spectrum)
+        self.lineEdit_path_folder_finish_cc = QtWidgets.QLineEdit(self.tab_continuous_spectrum)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.lineEdit_path_folder_finish_cc.setFont(font)
@@ -1340,7 +1311,7 @@ class Ui_MainWindow(object):
         self.label_old_number_instance.setFont(font)
         self.label_old_number_instance.setObjectName("label_old_number_instance")
         self.gridLayout_22.addWidget(self.label_old_number_instance, 0, 0, 1, 1)
-        self.lineEdit_path_folder_old_number_instance = Button(self.tab_number_instance)
+        self.lineEdit_path_folder_old_number_instance = QtWidgets.QLineEdit(self.tab_number_instance)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1373,7 +1344,7 @@ class Ui_MainWindow(object):
         self.label_new_number_instance.setFont(font)
         self.label_new_number_instance.setObjectName("label_new_number_instance")
         self.gridLayout_22.addWidget(self.label_new_number_instance, 1, 0, 1, 1)
-        self.lineEdit_path_folder_new_number_instance = Button(self.tab_number_instance)
+        self.lineEdit_path_folder_new_number_instance = QtWidgets.QLineEdit(self.tab_number_instance)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.lineEdit_path_folder_new_number_instance.setFont(font)
@@ -1419,13 +1390,13 @@ class Ui_MainWindow(object):
         self.label_start_folder_find = QtWidgets.QLabel(self.tab_finding_files)
         self.label_start_folder_find.setObjectName("label_start_folder_find")
         self.gridLayout_23.addWidget(self.label_start_folder_find, 1, 0, 1, 1)
-        self.lineEdit_path_folder_start_find = Button(self.tab_finding_files)
+        self.lineEdit_path_folder_start_find = QtWidgets.QLineEdit(self.tab_finding_files)
         self.lineEdit_path_folder_start_find.setObjectName("lineEdit_path_folder_start_find")
         self.gridLayout_23.addWidget(self.lineEdit_path_folder_start_find, 1, 1, 1, 1)
         self.label_finish_folder_find = QtWidgets.QLabel(self.tab_finding_files)
         self.label_finish_folder_find.setObjectName("label_finish_folder_find")
         self.gridLayout_23.addWidget(self.label_finish_folder_find, 2, 0, 1, 1)
-        self.lineEdit_path_folder_finish_find = Button(self.tab_finding_files)
+        self.lineEdit_path_folder_finish_find = QtWidgets.QLineEdit(self.tab_finding_files)
         self.lineEdit_path_folder_finish_find.setObjectName("lineEdit_path_folder_finish_find")
         self.gridLayout_23.addWidget(self.lineEdit_path_folder_finish_find, 2, 1, 1, 1)
         self.pushButton_open_file_unloading_find = QtWidgets.QPushButton(self.tab_finding_files)
@@ -1434,7 +1405,7 @@ class Ui_MainWindow(object):
         self.pushButton_open_folder_start_find = QtWidgets.QPushButton(self.tab_finding_files)
         self.pushButton_open_folder_start_find.setObjectName("pushButton_open_folder_start_find")
         self.gridLayout_23.addWidget(self.pushButton_open_folder_start_find, 1, 2, 1, 1)
-        self.lineEdit_path_file_unloading_find = Button(self.tab_finding_files)
+        self.lineEdit_path_file_unloading_find = QtWidgets.QLineEdit(self.tab_finding_files)
         self.lineEdit_path_file_unloading_find.setObjectName("lineEdit_path_file_unloading_find")
         self.gridLayout_23.addWidget(self.lineEdit_path_file_unloading_find, 0, 1, 1, 1)
         self.pushButton_open_folder_finish_find = QtWidgets.QPushButton(self.tab_finding_files)
