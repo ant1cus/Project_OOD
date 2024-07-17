@@ -297,6 +297,8 @@ class ZoneChecked(QThread):
                     return cm, cns
 
                 for enum_df, df in enumerate([df_list[1], df_list[2]]):
+                    if df.shape[0] < 2:
+                        continue
                     # Проверка чтобы не бегать если третья таблица не мощность
                     if self.department is False and df.shape[1] > 12:
                         continue
