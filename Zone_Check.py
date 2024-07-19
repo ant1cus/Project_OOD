@@ -250,8 +250,6 @@ class ZoneChecked(QThread):
                         else:
                             replace_zone_check.append(round(float(i), 1))
                     zone_check[element] = replace_zone_check
-                    # zone_check[element] = [0 if '<' in i or '-' in i else round(float(i), 1)
-                    #                        for i in zone_check[element]]
                     for enum, elem in enumerate(zone_check[element]):
                         extended_report.append(elem)
                         if elem > user_zone[enum]:
@@ -275,7 +273,6 @@ class ZoneChecked(QThread):
                     raise CancelException()
                 progress = progress + percent
                 self.set_line_progress(f'Выполнено {int(progress)} %')
-                # self.line_progress.emit(f'Выполнено {int(progress)} %')
                 self.progress_value.emit(int(progress))
                 self.logging.info("Проверяем и красим ячейки в таблице")
                 self.line_doing.emit(f'Проверяем зоны в {str(name_doc)} ({now_doc} из {all_doc})')
@@ -295,7 +292,11 @@ class ZoneChecked(QThread):
                     if enum_df == 1:
                         cm = 'Power' if len(cm) > 10 else cm + '_pwr'
                     return cm, cns
-
+                if self.one_table:
+                    progress = progress + percent
+                    self.set_line_progress(f'Выполнено {int(progress)} %')
+                    self.progress_value.emit(int(progress))
+                    continue
                 for enum_df, df in enumerate([df_list[1], df_list[2]]):
                     if df.shape[0] < 2:
                         continue
@@ -304,7 +305,6 @@ class ZoneChecked(QThread):
                         continue
                     if df.shape[1] < 10:
                         continue
-                    # df[0].replace({'(Электрическая составляющая)': '', '(Магнитная составляющая)': ''}, inplace=True)
                     find_st = df.loc[(df[0] == 'Максимальные значения') |
                                      (df.apply(lambda x: x[0] == x[zone_col[0]] == x[zone_col[-1]] ==
                                                                  x[zone_col[1]] == x[zone_col[-2]], axis=1))]
@@ -375,12 +375,10 @@ class ZoneChecked(QThread):
                     for zone in zone_col:
                         error_list = find_zone[zone].loc[find_zone[zone] == True].index.tolist()
                         first_line = first_line + error_list
-                        # for error in error_list:
                         [set_bg_color(table_val.rows[error + index_plus].cells[zone]._tc) for error in error_list]
                     if len(first_line) > 0:
                         first_line.sort()
                         first_line = [el for el, _ in groupby(first_line)]
-                        # print(find_st.index.tolist())
                         ind_sys = find_st.index.tolist()
                         name_sys_ind = []
                         for fl in first_line:
@@ -388,8 +386,6 @@ class ZoneChecked(QThread):
                                 if fl < ind:
                                     name_sys_ind.append(ind_sys[en - 1])
                                     break
-                        # print(name_sys_ind)
-                        # print(df.iloc[name_sys_ind, 0].tolist())
                         if self.department:
                             frequency = (df.iloc[[int(x) for x in first_line], 0].tolist())
                         else:
@@ -410,143 +406,12 @@ class ZoneChecked(QThread):
                             [set_bg_color(table_val.rows[error + index_plus].cells[2]._tc) for error in first_line]
                 df_extended_report = df_extended_report.append(extended_report_win)
                 df_extended_report = df_extended_report.append(extended_report_lin)
-                # doc.save(pathlib.Path(self.path, name_doc))
-                # previous_val = {i: 0 for i in zone_col}
-                # extended_report_security = {}
-                # system = True
-                # if self.one_table:
-                #     progress = progress + percent
-                #     self.progress_value.emit(int(progress))
-                #     continue
-                # for enum_df, df in enumerate([df_list[1], df_list[2]]):
-                #     # Проверка чтобы не бегать если третья таблица не мощность
-                #     if self.department is False and df.shape[1] > 12:
-                #         continue
-                #     if df.shape[1] < 10:
-                #         continue
-                #     for index in range(df.shape[0]):
-                #         if all(x == df.iloc[index, 0] for x in df.iloc[index]):
-                #             if self.department is False and df.iloc[index, 0] == '3 категория':
-                #                 break
-                #             if self.department is False and df.iloc[index, 0] == '2 категория':
-                #                 continue
-                #             if df.iloc[index, 0] != 'Опасные сигналы не обнаружены':
-                #                 if '(' in df.iloc[index, 0]:
-                #                     cur_mode = re.findall(r"\(([^)]*)\)", df.iloc[index, 0])[0]
-                #                 else:
-                #                     cur_mode = df.iloc[index, 0]
-                #                 if '(' not in df.iloc[index, 0]:
-                #                     cur_name_system = df.iloc[index, 0]
-                #                 elif len(re.findall(r"\(", df.iloc[index, 0])) == 1:
-                #                     cur_name_system = df.iloc[index, 0].rpartition(' (')[0].rpartition(' ')[2]
-                #                     if 'windows' not in cur_name_system.lower() and\
-                #                             'linux' not in cur_name_system.lower():
-                #                         cur_name_system = ''
-                #                 else:
-                #                     cur_name_system = re.findall(r"\)([^()]*)\(", df.iloc[index, 0])[0].strip()
-                #                 if enum_df == 1:
-                #                     cur_mode = 'Power' if len(cur_mode) > 10 else cur_mode + '_pwr'
-                #
-                #                 # Добавил функцию чтобы бегать только по тем столбцам, где значения превыщают норму
-                #                 def add_column_list(l1, l2):
-                #                     for e1, e2, e3 in zip(l1, l2, zone_col):
-                #                         try:
-                #                             if e1 < e2 and e3 not in column_list:
-                #                                 column_list.append(e3)
-                #                                 zone_for_check[e3] = e1
-                #                         except TypeError:
-                #                             pass
-                #                 if 'default' not in zone_check:
-                #                     if 'windows' in cur_name_system.lower():
-                #                         system = True
-                #                         add_column_list(user_zone, zone_check['Windows'])
-                #                     else:
-                #                         system = False
-                #                         add_column_list(user_zone, zone_check['Linux'])
-                #                 else:
-                #                     system = True
-                #                     add_column_list(user_zone, zone_check['default'])
-                #             if df.iloc[index, 0] == 'Опасные сигналы не обнаружены':
-                #                 if f'{cur_mode} {cur_name_system}' in list(extended_report_security.keys()):
-                #                     if 'default' in zone_check:
-                #                         extended_report = [cur_mode] + \
-                #                                           ['Опасные сигналы не обнаружены']*len(zone_label)
-                #                         df_extended_report.loc[len(df_extended_report)] = extended_report
-                #                     else:
-                #                         if 'windows' in cur_name_system.lower():
-                #                             extended_report = [cur_mode] + \
-                #                                               ['Опасные сигналы не обнаружены']*len(zone_label)
-                #                             extended_report_win.loc[len(extended_report_win)] = extended_report
-                #                         else:
-                #                             extended_report = [cur_mode] + \
-                #                                               ['Опасные сигналы не обнаружены']*len(zone_label)
-                #                             extended_report_lin.loc[len(extended_report_lin)] = extended_report
-                #                     del extended_report_security[f'{cur_mode} {cur_name_system}']
-                #                 else:
-                #                     extended_report_security[f'{cur_mode} {cur_name_system}'] = True
-                #             continue
-                #         if df.iloc[index, 0] == 'Максимальные значения':
-                #             extended_report_prev = [df.iloc[index, val] for val in zone_col]
-                #             extended_report = []
-                #             for element in extended_report_prev:
-                #                 if '<' not in element:
-                #                     if self.department is False and float(element) - int(float(element)) == 0:
-                #                         extended_report.append(int(element))
-                #                     else:
-                #                         extended_report.append(round(float(element), 1))
-                #                 else:
-                #                     extended_report.append(element)
-                #             if 'default' in zone_check:
-                #                 df_extended_report.loc[len(df_extended_report)] = [cur_mode] + extended_report
-                #             else:
-                #                 if 'windows' in cur_name_system.lower():
-                #                     extended_report_win.loc[len(extended_report_win)] = [cur_mode] + extended_report
-                #                 else:
-                #                     extended_report_lin.loc[len(extended_report_lin)] = [cur_mode] + extended_report
-                #             continue
-                #         for ind in column_list:
-                #             if '<' in df.iloc[index, ind]:
-                #                 cur_zone = 0
-                #             elif '-' in df.iloc[index, ind]:
-                #                 cur_zone = previous_val[ind]
-                #             else:
-                #                 cur_zone = round(float(df.iloc[index, ind]), 1)
-                #             previous_val[ind] = cur_zone
-                #             if zone_for_check[ind] < cur_zone and zone_for_check[ind] != 0:
-                #                 index_plus = 2 if self.department else 1
-                #                 sys_err = report[set_number]['win'] if system else report[set_number]['lin']
-                #                 table_val = table_value if enum_df == 0 else table_pwr
-                #                 if cur_mode not in sys_err.keys():
-                #                     sys_err[cur_mode] = []
-                #                 shading_elm.append(parse_xml(
-                #                     r'<w:shd {} w:fill="FFFF00"/>'.format(nsdecls('w')))
-                #                 )
-                #                 table_val.rows[index + index_plus].cells[0]._tc.get_or_add_tcPr().append(
-                #                     shading_elm[shading_index])
-                #                 shading_index += 1
-                #                 shading_elm.append(parse_xml(
-                #                     r'<w:shd {} w:fill="FFFF00"/>'.format(nsdecls('w')))
-                #                 )
-                #                 table_val.rows[index + index_plus].cells[ind]._tc.get_or_add_tcPr().append(
-                #                     shading_elm[shading_index])
-                #                 shading_index += 1
-                #                 if self.department:
-                #                     if df.iloc[index, 0] not in sys_err[cur_mode]:
-                #                         sys_err[cur_mode].append(df.iloc[index, 0])
-                #                 else:
-                #                     frq_range = f'{df.iloc[index, 1]}-{df.iloc[index, 2]}'
-                #                     if frq_range not in sys_err[cur_mode]:
-                #                         sys_err[cur_mode].append(frq_range)
-                # if 'default' not in zone_check:
-                #     df_extended_report = df_extended_report.append(extended_report_win)
-                #     df_extended_report = df_extended_report.append(extended_report_lin)
                 self.logging.info("Сохраняем документ")
                 doc.save(pathlib.Path(self.path, name_doc))
                 if self.window_check.stop_threading:
                     break
                 progress = progress + percent
                 self.set_line_progress(f'Выполнено {int(progress)} %')
-                # self.line_progress.emit(f'Выполнено {int(progress)} %')
                 self.progress_value.emit(int(progress))
             if self.window_check.stop_threading:
                 self.logging.warning('Прервано пользователем')
