@@ -218,7 +218,10 @@ def checked_delete_header_footer(path, check_box_director, line_edit_old_directo
         return ['УПС!', 'В указанной директории отсутствуют файлы для обезличивания']
     name_file = [False, False, False]
     error = []
-    for file in os.listdir(source):
+    files = [file for file in os.listdir(source) if '~' not in file and file.endswith('.docx')]
+    if not files:
+        return ['УПС!', 'В указанной директории отсутствуют файлы, пригодные для обезличивания']
+    for file in files:
         if file.endswith('.doc'):
             error.append(file)
         if 'заключение' in file.lower():

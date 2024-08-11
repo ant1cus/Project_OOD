@@ -80,7 +80,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.actual_version = '3.1.1'
+        self.actual_version = '3.1.2'
         self.queue = queue.Queue(maxsize=1)
         self.pushButton_open_folder_zone_check.clicked.connect((lambda: self.browse(self.lineEdit_path_check)))
         self.pushButton_open_folder_parser.clicked.connect((lambda: self.browse(self.lineEdit_path_parser)))

@@ -61,16 +61,43 @@ class DeleteHeaderFooter(QThread):
             self.logging.info('Начинаем обезличивать документы')
             self.progress_value.emit(int(current_progress))
             self.line_progress.emit(f'Выполнено {int(current_progress)} %')
-            files = [file for file in os.listdir(self.path) if '~' not in file]
+            files = [file for file in os.listdir(self.path) if '~' not in file and file.endswith('.docx')]
             percent = 100 / len(files)
             self.all_doc = len(files)
+            no_header = []
             for element in files:
-                self.now_doc += 1
-                self.logging.info(f'Обезличиваем документ {element}')
-                self.line_doing.emit(f'Обезличиваем документ {element} ({self.now_doc} из {self.all_doc})')
                 self.event.wait()
                 if self.window_check.stop_threading:
                     raise CancelException()
+                # print(element)
+                self.now_doc += 1
+                self.logging.info(f'Обезличиваем документ {element}')
+                self.line_doing.emit(f'Обезличиваем документ {element} ({self.now_doc} из {self.all_doc})')
+                if 'приложение' in element.lower():
+                    self.logging.info('Работаем с ворд документом')
+                    doc = docx.Document(pathlib.Path(self.path, element))  # Открываем
+                    sub = False
+                    for paragraph in doc.paragraphs:
+                        if 'к протоколу' in paragraph.text:
+                            paragraph.text = re.sub('к протоколу', 'к выписке из протокола', paragraph.text)
+                            for run in paragraph.runs:
+                                run.font.bold = False
+                                run.font.name = 'Times New Roman'
+                                run.font.size = Pt(12)
+                            sub = True
+                            break
+                        if 'к выписке из протокола' in paragraph.text:
+                            break
+                    if sub:
+                        doc.save(pathlib.Path(self.path, element))
+                    else:
+                        no_header.append(element)
+                        self.logging.info(f'Документ {element} скорее всего документ уже обезличен.'
+                                          f' Переходим к следующему')
+                    current_progress += percent
+                    self.progress_value.emit(int(current_progress))
+                    self.line_progress.emit(f'Выполнено {int(current_progress)} %')
+                    continue
                 temp_docx = os.path.join(self.path + '\\', element)
                 temp_zip = os.path.join(self.path + '\\', element + ".zip")
                 temp_folder = os.path.join(self.path + '\\', "template")
@@ -88,32 +115,39 @@ class DeleteHeaderFooter(QThread):
                 pages_xml = os.path.join(temp_folder, "word", "document.xml")
                 tree = etree.parse(pages_xml)
                 root = tree.getroot()
-                j = 0
                 self.logging.info('Получаем тэг для копирования')
-                # flag = False
-                # for tag in root[0]:
-                #     print(tag)
-                # for i in range(len(root[0])):
-                #     print(root[0][len(root[0]) - i][0])
-                #     if flag:
-                #         break
-                #     try:
-                #         for t, tag in enumerate(root[0][len(root[0]) - i][0]):
-                #             print(tag)
-                #             if 'sectPr' in tag.tag:
-                #                 for tags in tag.tag:
-                #                     print(tags)
-                #                 j = i
-                #                 flag = True
-                #                 break
-                #     except IndexError:
-                #         print('finish tag')
-                #         continue
-                for i, tag in enumerate(root[0][len(root[0]) - 3][0]):
-                    if tag.tag.rpartition('}')[2] == 'sectPr':
-                        j = i
+                header = ''
+
+                ############
+                def req_for_tag(tag_, header_):
+                    for enum_, i_ in enumerate(tag_):
+                        keys = [key for key in i_.attrib.keys() if '}id' in key]
+                        for key in keys:
+                            if 'rId8' in i_.attrib[key] or 'rId9' in i_.attrib[key] or 'rId10' in i_.attrib[key]:
+                                header_ = copy.deepcopy(tag_)
+                                return header_
+                        if len(i_):
+                            header_ = req_for_tag(i_, header_)
+                            if len(header_):
+                                return header_
+                    return header_
+
+                for i in range(len(root[0]) - 1, 0, -1):
+                    header = req_for_tag(root[0][i], header)
+                    if len(header):
                         break
-                header = copy.deepcopy(root[0][len(root[0]) - 3][0][j])
+                ############
+                # try:
+                #     for i, tag in enumerate(root[0][len(root[0]) - 3][0]):
+                #         if tag.tag.rpartition('}')[2] == 'sectPr':
+                #             # print(tag.attrib)
+                #             print('old', root[0][len(root[0]) - 3][0][i])
+                #             break
+                # except IndexError:
+                #     print('KRAFT')
+                # print('req', header)
+                # print(len(root[0]) - 3, j)
+                # header = copy.deepcopy(root[0][len(root[0]) - 3][0][j])
                 self.logging.info('Собираем и удаляем архив')
                 os.remove(temp_zip)
                 shutil.make_archive(temp_zip.replace(".zip", ""), 'zip', temp_folder)
@@ -152,19 +186,9 @@ class DeleteHeaderFooter(QThread):
                 p._p = p._element = None
                 number = doc.sections[0].first_page_footer.paragraphs[0].text
                 doc.sections[0].first_page_footer.paragraphs[0].text = None
-                doc.sections[0].footer.paragraphs[0].text = None
-                date = ''
-                if doc.sections[len(doc.sections) - 1].different_first_page_header_footer:
-                    for paragraph in doc.sections[len(doc.sections) - 1].first_page_footer.paragraphs:
-                        if re.findall(r'\d{2}\.\d{2}\.\d{4}', paragraph.text):
-                            date = re.findall(r'\d{2}\.\d{2}\.\d{4}', paragraph.text)
-                        if 'Б/ч' in paragraph.text:
-                            paragraph_del(paragraph)
-                            break
-                        paragraph_del(paragraph)
-                    doc.sections[len(doc.sections) - 1].first_page_header.is_linked_to_previous = False  # header
-                    doc.sections[len(doc.sections) - 1].first_page_footer.is_linked_to_previous = False  # Футер
-                else:
+                # doc.sections[0].footer.paragraphs[0].text = None
+                date = []
+                if len(doc.sections) == 1:
                     for paragraph in doc.sections[len(doc.sections) - 1].footer.paragraphs:
                         if re.findall(r'\d{2}\.\d{2}\.\d{4}', paragraph.text):
                             date = re.findall(r'\d{2}\.\d{2}\.\d{4}', paragraph.text)
@@ -172,6 +196,34 @@ class DeleteHeaderFooter(QThread):
                             paragraph_del(paragraph)
                             break
                         paragraph_del(paragraph)
+                else:
+                    doc.sections[0].footer.paragraphs[0].text = None
+                    if doc.sections[len(doc.sections) - 1].different_first_page_header_footer:
+                        for paragraph in doc.sections[len(doc.sections) - 1].first_page_footer.paragraphs:
+                            if re.findall(r'\d{2}\.\d{2}\.\d{4}', paragraph.text):
+                                date = re.findall(r'\d{2}\.\d{2}\.\d{4}', paragraph.text)
+                            if 'Б/ч' in paragraph.text:
+                                paragraph_del(paragraph)
+                                break
+                            paragraph_del(paragraph)
+                        doc.sections[len(doc.sections) - 1].first_page_header.is_linked_to_previous = False  # header
+                        doc.sections[len(doc.sections) - 1].first_page_footer.is_linked_to_previous = False  # Футер
+                    else:
+                        for paragraph in doc.sections[len(doc.sections) - 1].footer.paragraphs:
+                            if re.findall(r'\d{2}\.\d{2}\.\d{4}', paragraph.text):
+                                date = re.findall(r'\d{2}\.\d{2}\.\d{4}', paragraph.text)
+                            if 'Б/ч' in paragraph.text:
+                                paragraph_del(paragraph)
+                                break
+                            paragraph_del(paragraph)
+                if len(date) == 0:
+                    no_header.append(element)
+                    self.logging.info(f'В документе {element} не нашлась дата в колонтитуле, скорее всего документ уже '
+                                      f'обезличен. Переходим к следующему')
+                    current_progress += percent
+                    self.progress_value.emit(int(current_progress))
+                    self.line_progress.emit(f'Выполнено {int(current_progress)} %')
+                    continue
                 while True:
                     flag_for_exit = 0
                     if flag_for_exit == 3:
@@ -278,14 +330,16 @@ class DeleteHeaderFooter(QThread):
                 os.mkdir(self.path + '\\zip')
                 with zipfile.ZipFile(temp_zip) as my_document:
                     my_document.extractall(temp_folder)
-                pages_xml = os.path.join(temp_folder, "word", "document.xml")
-                tree = etree.parse(pages_xml)
-                root = tree.getroot()
-                for i, e in reversed(list(enumerate(root[0]))):
-                    if e.tag.rpartition('}')[2] == 'sectPr':
-                        e.getparent().replace(e, header)
-                        break
-                tree.write(os.path.join(temp_folder, "word", "document.xml"), encoding="UTF-8", xml_declaration=True)
+                if len(header):
+                    pages_xml = os.path.join(temp_folder, "word", "document.xml")
+                    tree = etree.parse(pages_xml)
+                    root = tree.getroot()
+                    for i, e in reversed(list(enumerate(root[0]))):
+                        if e.tag.rpartition('}')[2] == 'sectPr':
+                            e.getparent().replace(e, header)
+                            break
+                    tree.write(os.path.join(temp_folder, "word", "document.xml"), encoding="UTF-8",
+                               xml_declaration=True)
                 self.logging.info('Удаляем архив')
                 os.remove(temp_zip)
                 shutil.make_archive(temp_zip.replace(".zip", ""), 'zip', temp_folder)
@@ -302,10 +356,15 @@ class DeleteHeaderFooter(QThread):
                 current_progress += percent
                 self.progress_value.emit(int(current_progress))
                 self.line_progress.emit(f'Выполнено {int(current_progress)} %')
+            if len(no_header):
+                self.logging.info("Выводим файлы без колонтитулов")
+                self.info_value.emit('Внимание!', 'Следующие документы уже обезличены:\n' + ', '.join(no_header))
+                self.event.clear()
+                self.event.wait()
             self.logging.info(f"Обезличивание документов в папке «{self.name_dir}» успешно завершено")
             self.progress_value.emit(100)
             os.chdir(self.default_path)
-            self.status.emit(f"Обезличивание документов «{self.name_dir}» успешно завершено")
+            self.status.emit(f"Обезличивание документов в папке «{self.name_dir}» успешно завершено")
             self.status_finish.emit('delete_header_footer', str(self))
             time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
             self.window_check.close()

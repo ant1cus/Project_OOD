@@ -61,6 +61,7 @@ class CheckWindow(QDialog, Ui_Dialog):
             self.event.set()
         elif title == 'Внимание!':
             QMessageBox.warning(self, title, description)
+            self.event.set()
         elif title == 'Вопрос?':
             ans = QMessageBox.question(self, title, description, QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if ans == QMessageBox.No:
