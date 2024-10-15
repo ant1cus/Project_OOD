@@ -74,7 +74,7 @@ class GenerationFile(QThread):
                 self.status.emit(f"Ошибка при генерации файлов в папке «{self.name_dir}»")
                 os.chdir(self.default_path)
                 self.status_finish.emit('generate_pemi', str(self))
-                time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+                time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
                 self.window_check.close()
                 return
             if error['cancel']:
@@ -89,7 +89,7 @@ class GenerationFile(QThread):
                 self.status.emit(f"В исходных файлах в папке «{pathlib.Path(self.source).name}» присутствуют ошибки")
                 os.chdir(self.default_path)
                 self.status_finish.emit('generate_pemi', str(self))
-                time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+                time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
                 self.window_check.close()
                 return
             self.now_doc = error['now_doc']
@@ -250,7 +250,7 @@ class GenerationFile(QThread):
                 self.status.emit(f"Ошибка при генерации файлов в папке «{self.name_dir}»")
                 os.chdir(self.default_path)
                 self.status_finish.emit('generate_pemi', str(self))
-                time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+                time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
                 self.window_check.close()
                 return
             if error['cancel']:
@@ -261,7 +261,7 @@ class GenerationFile(QThread):
             os.chdir(self.default_path)
             self.status.emit(f"Генрация файлов в папке «{self.name_dir}» успешно завершена")
             self.status_finish.emit('generate_pemi', str(self))
-            time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+            time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
             self.window_check.close()
             # print(datetime.datetime.now() - start_time)
             return
@@ -270,7 +270,7 @@ class GenerationFile(QThread):
             self.status.emit(f"Генерация файлов в папке «{self.name_dir}» отменена пользователем")
             os.chdir(self.default_path)
             self.status_finish.emit('generate_pemi', str(self))
-            time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+            time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
             self.window_check.close()
             return
         except BaseException as es:
@@ -283,7 +283,7 @@ class GenerationFile(QThread):
             self.status.emit(f"Ошибка при генерации файлов в папке «{self.name_dir}»")
             os.chdir(self.default_path)
             self.status_finish.emit('generate_pemi', str(self))
-            time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+            time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
             self.window_check.close()
             return
 

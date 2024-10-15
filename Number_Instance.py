@@ -98,7 +98,7 @@ class ChangeNumberInstance(QThread):
             os.chdir(self.default_path)
             self.status.emit(f"Создание экземпляров документов в папке «{self.name_dir}» успешно завершено")
             self.status_finish.emit('change_number_instance', str(self))
-            time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+            time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
             self.window_check.close()
             # print(datetime.datetime.now() - start_time)
             return
@@ -107,7 +107,7 @@ class ChangeNumberInstance(QThread):
             self.status.emit(f"Создание экземпляров документов в папке «{self.name_dir}» отменено пользователем")
             os.chdir(self.default_path)
             self.status_finish.emit('change_number_instance', str(self))
-            time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+            time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
             self.window_check.close()
             return
         except BaseException as es:
@@ -120,7 +120,7 @@ class ChangeNumberInstance(QThread):
             self.status.emit(f"Ошибка при создании экземпляров документов в папке «{self.name_dir}»")
             os.chdir(self.default_path)
             self.status_finish.emit('change_number_instance', str(self))
-            time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+            time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
             self.window_check.close()
             return
 

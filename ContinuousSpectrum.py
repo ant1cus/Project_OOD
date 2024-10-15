@@ -253,7 +253,7 @@ class GenerationFileCC(QThread):
             self.logging.info(f"Генерация сплошного спектра в папке «{self.name_dir}» успешно завершена")
             os.chdir(self.default_path)
             self.status_finish.emit('continuous_spectrum', str(self))
-            time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+            time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
             self.window_check.close()
             # print(datetime.datetime.now() - start_time)
             return
@@ -262,7 +262,7 @@ class GenerationFileCC(QThread):
             self.status.emit(f"Генерация сплошного спектра в папке «{self.name_dir}» отменена пользователем")
             os.chdir(self.default_path)
             self.status_finish.emit('continuous_spectrum', str(self))
-            time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+            time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
             self.window_check.close()
             return
         except BaseException as es:
@@ -275,6 +275,6 @@ class GenerationFileCC(QThread):
             self.status.emit(f"Ошибка при генерации сплошного спектра в папке «{self.name_dir}»")
             os.chdir(self.default_path)
             self.status_finish.emit('continuous_spectrum', str(self))
-            time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+            time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
             self.window_check.close()
             return

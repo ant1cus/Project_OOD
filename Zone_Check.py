@@ -419,7 +419,7 @@ class ZoneChecked(QThread):
                 self.logging.warning('Прервано пользователем')
                 os.chdir(self.default_path)
                 self.status_finish.emit('zone_checked', str(self))
-                time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+                time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
                 self.window_check.close()
                 return
             self.logging.info("Формируем excel")
@@ -441,7 +441,7 @@ class ZoneChecked(QThread):
                             self.logging.warning('Прервано пользователем')
                             os.chdir(self.default_path)
                             self.status_finish.emit('zone_checked', str(self))
-                            time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+                            time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
                             self.window_check.close()
                             raise CancelException()
             if self.department:
@@ -604,7 +604,7 @@ class ZoneChecked(QThread):
             os.chdir(self.default_path)
             self.status.emit(f"Проверка зон в папке «{self.name_dir}» успешно завершена")
             self.status_finish.emit('zone_checked', str(self))
-            time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+            time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
             self.window_check.close()
             # print(datetime.datetime.now() - start_time)
             return
@@ -613,7 +613,7 @@ class ZoneChecked(QThread):
             self.status.emit(f"Проверка зон в папке «{self.name_dir}» отменена пользователем")
             os.chdir(self.default_path)
             self.status_finish.emit('zone_checked', str(self))
-            time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+            time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
             self.window_check.close()
             return
         except BaseException as es:
@@ -626,6 +626,6 @@ class ZoneChecked(QThread):
             self.status.emit(f"Ошибка при проверке зон в папке «{self.name_dir}»")
             os.chdir(self.default_path)
             self.status_finish.emit('zone_checked', str(self))
-            time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+            time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
             self.window_check.close()
             return
