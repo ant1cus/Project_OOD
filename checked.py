@@ -208,7 +208,8 @@ def checked_generation_pemi(source_file, output_file, set_number, set_quantity, 
             'name_mode': name_mode, 'restrict_file': restrict_file}
 
 
-def checked_delete_header_footer(path, check_box_director, line_edit_old_director, line_edit_new_director):
+def checked_delete_header_footer(path, check_box_director, line_edit_old_director, line_edit_new_director,
+                                 check_box_margin, spin_box_left, spin_box_top, spin_box_right, spin_box_bottom):
     source = path.text().strip()
     if not source:
         return ['УПС!', 'Путь к исходным файлам пуст']
@@ -232,12 +233,21 @@ def checked_delete_header_footer(path, check_box_director, line_edit_old_directo
             name_file[2] = True
     if error:
         return ['УПС!', 'Файлы старого формата:\n' + '\n'.join(error)]
-    old_director = None
-    new_director = None
+    old_director, new_director = None, None
     if check_box_director.isChecked():
         old_director = line_edit_old_director.text()
         new_director = line_edit_new_director.text()
-    return {'path': source, 'old_director': old_director, 'new_director': new_director}
+    margin_left, margin_top, margin_right, margin_bottom = None, None, None, None
+    margin = False
+    if check_box_margin.isChecked():
+        margin = True
+        margin_left, margin_top = spin_box_left.value(), spin_box_top.value()
+        margin_right, margin_bottom = spin_box_right.value(), spin_box_bottom.value()
+        if all([margin_left, margin_top, margin_right, margin_bottom]) is False:
+            return ['УПС!', 'Не все значения полей указаны (укажите число, отличное от нуля)']
+
+    return {'path': source, 'old_director': old_director, 'new_director': new_director, 'margin_left': margin_left,
+            'margin_top': margin_top, 'margin_right': margin_right, 'margin_bottom': margin_bottom, 'margin': margin}
 
 
 def checked_hfe_generation(path, set_value, req_val, frequency, value):

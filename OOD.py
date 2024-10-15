@@ -173,6 +173,11 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                           'extract-checkBox_director': ['Директор', self.checkBox_director],
                           'extract-old_director': ['Директор кого ищем', self.lineEdit_old_director],
                           'extract-new_director': ['Директор на кого меняем', self.lineEdit_new_director],
+                          'extract-checkBox_margin': ['Отступы', self.checkBox_margin],
+                          'extract-doubleSpinBox_left': ['Левый', self.doubleSpinBox_left_margin],
+                          'extract-doubleSpinBox_top': ['Верхний', self.doubleSpinBox_top_margin],
+                          'extract-doubleSpinBox_right': ['Правый', self.doubleSpinBox_right_margin],
+                          'extract-doubleSpinBox_bottom': ['Нижний', self.doubleSpinBox_bottom_margin],
                           'gen_pemi-path_folder_start': ['Папка с исходниками',
                                                          self.lineEdit_path_start_pemi],
                           'gen_pemi-path_folder_finish': ['Папка для генерации',
@@ -364,6 +369,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 if 'checkBox' in element or 'groupBox' in element:
                     self.name_list[element][1].setChecked(True) if incoming_data[element] \
                         else self.name_list[element][1].setChecked(False)
+                elif 'doubleSpinBox' in element:
+                    self.name_list[element][1].setValue(float(incoming_data[element]))
                 else:
                     self.name_list[element][1].setText(incoming_data[element])
 
@@ -706,7 +713,10 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.logging_dict[file_name[0]].info('Проверка данных')
         try:
             output = checked_delete_header_footer(self.lineEdit_path_start_extract, self.checkBox_director,
-                                                  self.lineEdit_old_director, self.lineEdit_new_director)
+                                                  self.lineEdit_old_director, self.lineEdit_new_director,
+                                                  self.checkBox_margin, self.doubleSpinBox_left_margin,
+                                                  self.doubleSpinBox_top_margin, self.doubleSpinBox_right_margin,
+                                                  self.doubleSpinBox_bottom_margin)
             if isinstance(output, list):
                 self.logging_dict[file_name[0]].warning(output[1])
                 self.logging_dict[file_name[0]].warning('Ошибки в заполнении формы, программа не запущена в работу')

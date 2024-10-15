@@ -1,3 +1,4 @@
+import datetime
 import os
 import re
 import traceback
@@ -46,45 +47,72 @@ def file_parcing(path, logging, line_doing, now_doc, all_doc, line_progress, pro
             line_doing.emit(f'Проверяем названия рабочих листов в документе {file} ({now_doc} из {all_doc})')
             # status.emit('Проверяем названия рабочих листов в документе ' + file)
             error = []
-            logging.info("Открываем книгу")
-            wb = load_workbook(pathlib.Path(path, file), data_only=True)  # Откроем книгу.
-            # wb = load_workbook(path + '\\' + file, data_only=True)  # Откроем книгу.
-            book_name = str(file.rsplit('.xlsx', maxsplit=1)[0])  # Определение названия exel.
-            name = wb.sheetnames  # Список листов.
             pat = ['_ЦП', '.m', '.v']  # список ключевых слов для поиска в ЦП
             pat_rez = ['_ЦП', '.m', '.v']
-            logging.info("Проверяем на названия файлов для ЦП")
-            for name_list in name:
+            book_name = file.rpartition('.xlsx')[0]
+            logging.info("Открываем книгу")
+            # Новое для ускорения
+            new_book = {}
+            book = pd.read_excel(pathlib.Path(path, file), sheet_name=None, header=None)
+            for enum, name_list in enumerate(book.keys()):
+                x = name_list
                 if re.search(r'_ЦП', name_list) or re.search(r'\.m', name_list) or re.search(r'\.v', name_list):
-                    for elem in range(0, len(name)):  # поиск и устранение неточностей в названиях вкладок ЦП
-                        if re.search(r'_ЦП', name[elem]) or re.search(r'\.m', name[elem]) or \
-                                re.search(r'\.v', name[elem]):  # проверяем интересующие нас названия
-                            logging.info("Нашли название" + name[elem])
-                            rez = []
-                            x = name[elem]
-                            for y in pat:  # прогоняем список
-                                logging.info("Ищем совпадение в нашем списке")
-                                if y == '.v':
-                                    replace = re.findall(r'.v\d', x)
-                                    if replace:
-                                        y = replace[0]
-                                        pat_rez[2] = y
-                                rez.append(1) if x.find(y) != -1 else rez.append(-1)  # добавляем заметки для
-                                # ключевых слов
-                                logging.info("Изменяем название")
-                                x = x.replace(y, '')  # оставляем только название режима
-                            for i in range(0, 3):
-                                x = x + pat_rez[i] if rez[i] == 1 else x  # добавляем необходимые ключевые слова
-                            logging.info("Переименовываем лист")
-                            worksheet = wb[name[elem]]  # выбираем лист с именем
-                            worksheet.title = x  # переименовываем лист
-                    logging.info("Сохраняем книгу с новыми названиями")
-                    wb.save(filename=pathlib.Path(path, file))  # сохраняем книгу
-                    wb.close()
-                    break
-            logging.info("Открываем книгу ещё раз если закрыли её в предыдущем цикле")  # Проверить надо ли
-            wb = load_workbook(pathlib.Path(path, file), data_only=True)  # Откроем книгу.
-            name = wb.sheetnames  # Список листов.
+                    logging.info(f"Нашли название {name_list}")
+                    rez = []
+                    for y in pat:  # прогоняем список
+                        logging.info("Ищем совпадение в нашем списке")
+                        if y == '.v':
+                            replace = re.findall(r'.v\d', x)
+                            if replace:
+                                pat_rez[2] = replace[0]
+                        rez.append(1) if x.find(y) != -1 else rez.append(-1)  # добавляем заметки для
+                        # ключевых слов
+                        logging.info("Изменяем название")
+                        x = x.replace(y, '')  # оставляем только название режима
+                    for i in range(0, 3):
+                        x = x + pat_rez[i] if rez[i] == 1 else x  # добавляем необходимые ключевые слова
+                logging.info("Записываем новый словарь")
+                new_book[x] = book[name_list]
+            name = [x for x in new_book.keys()]
+            # Конец
+            # wb = load_workbook(pathlib.Path(path, file), data_only=True)  # Откроем книгу.
+            # # wb = load_workbook(path + '\\' + file, data_only=True)  # Откроем книгу.
+            # book_name = str(file.rsplit('.xlsx', maxsplit=1)[0])  # Определение названия exel.
+            # name = wb.sheetnames  # Список листов.
+            # logging.info("Проверяем на названия файлов для ЦП")
+            # for name_list in name:
+            #     if re.search(r'_ЦП', name_list) or re.search(r'\.m', name_list) or re.search(r'\.v', name_list):
+            #         for elem in range(0, len(name)):  # поиск и устранение неточностей в названиях вкладок ЦП
+            #             if re.search(r'_ЦП', name[elem]) or re.search(r'\.m', name[elem]) or \
+            #                     re.search(r'\.v', name[elem]):  # проверяем интересующие нас названия
+            #                 logging.info("Нашли название" + name[elem])
+            #                 rez = []
+            #                 x = name[elem]
+            #                 # pat = ['_ЦП', '.m', '.v']  # список ключевых слов для поиска в ЦП
+            #                 # pat_rez = ['_ЦП', '.m', '.v']
+            #                 for y in pat:  # прогоняем список
+            #                     logging.info("Ищем совпадение в нашем списке")
+            #                     if y == '.v':
+            #                         replace = re.findall(r'.v\d', x)
+            #                         if replace:
+            #                             y = replace[0]
+            #                             pat_rez[2] = y
+            #                     rez.append(1) if x.find(y) != -1 else rez.append(-1)  # добавляем заметки для
+            #                     # ключевых слов
+            #                     logging.info("Изменяем название")
+            #                     x = x.replace(y, '')  # оставляем только название режима
+            #                 for i in range(0, 3):
+            #                     x = x + pat_rez[i] if rez[i] == 1 else x  # добавляем необходимые ключевые слова
+            #                 logging.info("Переименовываем лист")
+            #                 worksheet = wb[name[elem]]  # выбираем лист с именем
+            #                 worksheet.title = x  # переименовываем лист
+            #         logging.info("Сохраняем книгу с новыми названиями")
+            #         wb.save(filename=pathlib.Path(path, file))  # сохраняем книгу
+            #         wb.close()
+            #         break
+            # logging.info("Открываем книгу ещё раз если закрыли её в предыдущем цикле")  # Проверить надо ли
+            # wb = load_workbook(pathlib.Path(path, file), data_only=True)  # Откроем книгу.
+            # name = wb.sheetnames  # Список листов.
             logging.info("Проверяем на совпадение названий с файлом описания")
             if name != mode:  # проверяем названия на соответствия
                 logging.info("Названия не совпадают")
@@ -99,7 +127,8 @@ def file_parcing(path, logging, line_doing, now_doc, all_doc, line_progress, pro
                     line_doing.emit(f'Проверяем режимы в {file} на ошибки ({now_doc} из {all_doc})')
                     logging.info("Проверяем документы на наличие ошибок")
                     if sheet.lower() != 'описание':
-                        df = pd.read_excel(pathlib.Path(path, file), sheet_name=sheet, header=None)
+                        # df = pd.read_excel(pathlib.Path(path, file), sheet_name=sheet, header=None)
+                        df = new_book[sheet]
                         logging.info("Смотрим есть ли ошибки")
                         if twelve_sectors:
                             alphabet = [chr(i) for i in range(65, 90)]
@@ -129,7 +158,7 @@ def file_parcing(path, logging, line_doing, now_doc, all_doc, line_progress, pro
                                     frq, s, n = row[0], row[1], row[2]
                                     # if type(frq) is str:
                                     if isinstance(frq, str):
-                                        frq = float(frq.replace(',', '.'))
+                                        # frq = float(frq.replace(',', '.'))
                                         error.append('В заказе ' + path.rpartition('\\')[2] + ' в исходнике ' + file +
                                                      ' в режиме ' + sheet +
                                                      ' в строке ' + str(i + 1) + ' записано текстовое значение!')
@@ -182,7 +211,7 @@ def file_parcing(path, logging, line_doing, now_doc, all_doc, line_progress, pro
                 logging.info("Добавляем ошибки")
                 for e in error:
                     output_error.append(e)
-                wb.close()
+                # wb.close()
                 line_progress.emit(f'Выполнено {int(cp)} %')
                 progress.emit(int(cp))
                 continue
@@ -199,7 +228,8 @@ def file_parcing(path, logging, line_doing, now_doc, all_doc, line_progress, pro
                         name_sheet = sheet.lower()
                     else:
                         name_sheet = sheet
-                    df = pd.read_excel(pathlib.Path(path, file), sheet_name=sheet, header=None)
+                    df = new_book[sheet]
+                    # df = pd.read_excel(pathlib.Path(path, file), sheet_name=sheet, header=None)
                     if df.empty or type(df.iloc[0, 0]) == str:
                         with open(pathlib.Path(path, 'txt', book_name, name_sheet + '.txt'), 'w'):
                             pass
@@ -215,7 +245,7 @@ def file_parcing(path, logging, line_doing, now_doc, all_doc, line_progress, pro
                         df = df.round(4)
                         df.to_csv(pathlib.Path(path, 'txt', book_name, name_sheet + '.txt'),
                                   index=None, sep='\t', mode='w', header=None)
-            wb.close()
+            # wb.close()
             line_progress.emit(f'Выполнено {int(cp)} %')
             progress.emit(int(cp))
         return {'error': output_error, 'cp': cp, 'now_doc': now_doc, 'cancel': False, 'base_exception': False}

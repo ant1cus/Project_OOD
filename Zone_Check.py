@@ -235,6 +235,8 @@ class ZoneChecked(QThread):
                 extended_report = [set_number]
                 extended_report_win = pd.DataFrame(data=None, columns=['№'] + zone_label)
                 extended_report_lin = pd.DataFrame(data=None, columns=['№'] + zone_label)
+                if len(df_extended_report) != 0:
+                    df_extended_report.loc[len(df_extended_report)] = [None] * (len(df_extended_report.columns))
                 if 'default' not in zone_check:
                     df_extended_report.loc[len(df_extended_report)] = extended_report +\
                                                                       [None]*(len(df_extended_report.columns) - 1)

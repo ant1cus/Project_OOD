@@ -4,7 +4,8 @@ import pathlib
 import default_window
 
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QLineEdit, QDialog, QButtonGroup, QLabel, QSizePolicy, QPushButton, QFileDialog, QComboBox
+from PyQt5.QtWidgets import QLineEdit, QDialog, QButtonGroup, QLabel, QSizePolicy, QPushButton, QFileDialog, QComboBox,\
+    QDoubleSpinBox
 from PyQt5.QtCore import QDir
 from rewrite_settings import rewrite
 
@@ -100,18 +101,23 @@ class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки п
                 self.button_clear[i].setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)  # Размеры виджета
                 self.buttongroup_clear.addButton(self.button_clear[i], i)  # Добавляем в группу
                 grid.addWidget(self.button_clear[i], i, 2)  # Добавляем в фрейм по месту
-
-                self.name[i] = Button(frame)  # Помещаем в фрейм
-                if el in self.data:
-                    self.name[i].setText(self.data[el])
+                if 'spinbox' in el.lower():
+                    self.name[i] = QDoubleSpinBox()
+                    if el in self.data:
+                        self.name[i].setValue(float(self.data[el]))
+                    self.name[i].setSingleStep(0.1)
+                    self.name[i].setDecimals(1)
+                else:
+                    self.name[i] = Button(frame)  # Помещаем в фрейм
+                    self.name[i].setStyleSheet("QLineEdit {"
+                                               "border-style: solid;"
+                                               "}")
+                    if el in self.data:
+                        self.name[i].setText(self.data[el])
                 self.name[i].setFont(QFont("Times", 12, QFont.Light))  # Шрифт, размер
                 self.name[i].setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Размеры виджета
-                self.name[i].setStyleSheet("QLineEdit {"
-                                           "border-style: solid;"
-                                           "}")
                 self.name[i].setDisabled(True)  # Неактивный
                 grid.addWidget(self.name[i], i, 3)  # Помещаем в фрейм
-                # if 'Путь' in self.line[i].text():
                 if 'path_' in el:
                     self.button_open[i] = QPushButton("Открыть", frame)  # Создаем кнопку
                     self.button_open[i].setFont(QFont("Times", 12, QFont.Light))  # Размер шрифта

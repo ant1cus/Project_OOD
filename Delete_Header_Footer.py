@@ -3,7 +3,7 @@ import copy
 import shutil
 import zipfile
 
-from docx.shared import Pt
+from docx.shared import Pt, Cm
 from lxml import etree
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 import os
@@ -38,6 +38,11 @@ class DeleteHeaderFooter(QThread):
         self.prescription = incoming_data['prescription']
         self.old_director = incoming_data['old_director']
         self.new_director = incoming_data['new_director']
+        self.margin = incoming_data['margin']
+        self.margin_left = incoming_data['margin_left']
+        self.margin_top = incoming_data['margin_top']
+        self.margin_right = incoming_data['margin_right']
+        self.margin_bottom = incoming_data['margin_bottom']
         self.logging = incoming_data['logging']
         self.queue = incoming_data['queue']
         self.default_path = incoming_data['default_path']
@@ -69,7 +74,6 @@ class DeleteHeaderFooter(QThread):
                 self.event.wait()
                 if self.window_check.stop_threading:
                     raise CancelException()
-                # print(element)
                 self.now_doc += 1
                 self.logging.info(f'Обезличиваем документ {element}')
                 self.line_doing.emit(f'Обезличиваем документ {element} ({self.now_doc} из {self.all_doc})')
@@ -137,17 +141,6 @@ class DeleteHeaderFooter(QThread):
                     if len(header):
                         break
                 ############
-                # try:
-                #     for i, tag in enumerate(root[0][len(root[0]) - 3][0]):
-                #         if tag.tag.rpartition('}')[2] == 'sectPr':
-                #             # print(tag.attrib)
-                #             print('old', root[0][len(root[0]) - 3][0][i])
-                #             break
-                # except IndexError:
-                #     print('KRAFT')
-                # print('req', header)
-                # print(len(root[0]) - 3, j)
-                # header = copy.deepcopy(root[0][len(root[0]) - 3][0][j])
                 self.logging.info('Собираем и удаляем архив')
                 os.remove(temp_zip)
                 shutil.make_archive(temp_zip.replace(".zip", ""), 'zip', temp_folder)
@@ -186,7 +179,6 @@ class DeleteHeaderFooter(QThread):
                 p._p = p._element = None
                 number = doc.sections[0].first_page_footer.paragraphs[0].text
                 doc.sections[0].first_page_footer.paragraphs[0].text = None
-                # doc.sections[0].footer.paragraphs[0].text = None
                 date = []
                 if len(doc.sections) == 1:
                     for paragraph in doc.sections[len(doc.sections) - 1].footer.paragraphs:
@@ -265,19 +257,11 @@ class DeleteHeaderFooter(QThread):
                                 run.font.size = Pt(size)
                     if re.findall(r'«\d{2}»\s\w+\s\d{4}\s[г]\.', paragraph.text):
                         size = size_pt(paragraph)
-                        # if paragraph.runs[0].font.size is None:
-                        #     size = paragraph.style.font.size.pt
-                        # else:
-                        #     size = paragraph.runs[0].font.size.pt
                         paragraph.text = re.sub(r'«\d{2}»\s\w+\s\d{4}\s[г]\.', 'date', paragraph.text)
                         for run in paragraph.runs:
                             run.font.size = Pt(size)
                     if re.findall(name.partition(' ')[0].upper(), paragraph.text):
                         size = size_pt(paragraph)
-                        # if paragraph.runs[0].font.size is None:
-                        #     size = paragraph.style.font.size.pt
-                        # else:
-                        #     size = paragraph.runs[0].font.size.pt
                         name_doc = name.partition(' ')[0] if name.partition(' ')[0] else name.partition('.')[0]
                         if name_doc.lower() == 'протокол' or name_doc.lower() == 'акт':
                             name_doc += 'а'
@@ -302,7 +286,7 @@ class DeleteHeaderFooter(QThread):
                         break
                 doc.save(pathlib.Path(self.path, element))
                 doc = docx.Document(pathlib.Path(self.path, element))  # Открываем
-                if 'Заключение' in name:
+                if 'Заключение' in name or 'Акт' in name:
                     executor = self.conclusion
                 elif 'Протокол' in name:
                     executor = self.protocol
@@ -353,6 +337,15 @@ class DeleteHeaderFooter(QThread):
                         self.logging.error(es)
                         self.logging.error(traceback.format_exc())
                         self.logging.info('Ошибка с удалением, пробуем ещё раз')
+                if self.margin:
+                    self.logging.info('Меняем поля в документе')
+                    doc = docx.Document(pathlib.Path(self.path, element))  # Открываем
+                    for section in doc.sections:
+                        section.left_margin = Cm(self.margin_left)
+                        section.top_margin = Cm(self.margin_top)
+                        section.right_margin = Cm(self.margin_right)
+                        section.bottom_margin = Cm(self.margin_bottom)
+                    doc.save(pathlib.Path(self.path, element))
                 current_progress += percent
                 self.progress_value.emit(int(current_progress))
                 self.line_progress.emit(f'Выполнено {int(current_progress)} %')
