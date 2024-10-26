@@ -164,8 +164,11 @@ class ZoneChecked(QThread):
                     df_lin_index = len(df_excel) - 1
                 df_list = []
                 # Собираем все таблицы и делаем из них DataFrame
-                table_value = doc.tables[1] if self.win_lin and self.department else doc.tables[2]
-                table_pwr = doc.tables[3] if self.win_lin and self.department else doc.tables[4]
+                if self.one_table:
+                    table_value = table_pwr = table_zone
+                else:
+                    table_value = doc.tables[1] if self.win_lin and self.department else doc.tables[2]
+                    table_pwr = doc.tables[3] if self.win_lin and self.department else doc.tables[4]
                 self.line_doing.emit(f'Считываем зоны в {str(name_doc)} ({now_doc} из {all_doc})')
                 table_for_check = [table_zone] if self.one_table else [table_zone, table_value, table_pwr]
                 for table_val in table_for_check:
