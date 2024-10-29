@@ -64,7 +64,7 @@ def file_parcing(path, logging, line_doing, now_doc, all_doc, line_progress, pro
                         if y == '.v':
                             replace = re.findall(r'.v\d', x)
                             if replace:
-                                pat_rez[2] = replace[0]
+                                y = pat_rez[2] = replace[0]
                         rez.append(1) if x.find(y) != -1 else rez.append(-1)  # добавляем заметки для
                         # ключевых слов
                         logging.info("Изменяем название")
