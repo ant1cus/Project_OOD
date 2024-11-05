@@ -60,7 +60,7 @@ class GenerationFileCC(QThread):
                 path_dir_gen = pathlib.Path(self.output, str(num_set), name_file)
                 try:
                     df_gen_old = pd.read_csv(path_dir_gen, delimiter=';', encoding="unicode_escape", header=None)
-                except BaseException:
+                except (BaseException,):
                     df_gen_old = pd.DataFrame()
                 if len(df_gen.columns) == 3:
                     name_col = list(df_gen.columns)
@@ -164,7 +164,7 @@ class GenerationFileCC(QThread):
             self.logging.info('Перезапись файла ' + file_csv)
             if str(df_write.iloc[0, 0]) == 'sep=':  # Если при считывании эта строка первая, то будет криво писать
                 df_write.drop(labels=[0], axis=0, inplace=True)
-            df_write.to_csv(str(pathlib.Path(path, file_csv)), sep=';',
+            df_write.to_csv(pathlib.Path(path, file_csv), sep=';',
                             header=False, index=False, encoding="ANSI")
             if add_index == 0:
                 df_list[index_df] = pd.concat([df_list[index_df], df_to_concat])
@@ -188,7 +188,7 @@ class GenerationFileCC(QThread):
         path_dir = pathlib.Path(path_txt, name)
         path_dir.touch()
         self.logging.info('Запись текстового файла ' + name)
-        all_data_df.to_csv(str(path_dir), header=None, sep='\t', mode='w', float_format="%.8f")
+        all_data_df.to_csv(str(path_dir), header=False, sep='\t', mode='w', float_format="%.8f")
         if self.only_txt:
             self.gen_txt = all_data_df
         return current_progress

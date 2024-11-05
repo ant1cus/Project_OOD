@@ -142,7 +142,7 @@ class GenerationFile(QThread):
                         if description.empty:
                             try:
                                 description = pd.read_csv(el, sep='\t', header=None)
-                            except BaseException:
+                            except (BaseException,):
                                 description = pd.DataFrame()
                 current_progress += self.percent_progress
                 self.line_progress.emit(f'Выполнено {int(current_progress)} %')
@@ -153,12 +153,11 @@ class GenerationFile(QThread):
                     for el in df.index.values:
                         col = (mode[file][mode[file][0].isin([el])].sort_values(by=[0]))
                         df_out[file] = pd.concat([df_out[file], pd.DataFrame({'frq': [el],
-                                                                                    'max_s': [col[1].max()],
-                                                                                    'min_s': [col[1].min()],
-                                                                                    'max_n': [col[2].max()],
-                                                                                    'min_n': [col[2].min()],
-                                                                                    'quant_frq':
-                                                                                        [df[el]/quant_doc]})],
+                                                                              'max_s': [col[1].max()],
+                                                                              'min_s': [col[1].min()],
+                                                                              'max_n': [col[2].max()],
+                                                                              'min_n': [col[2].min()],
+                                                                              'quant_frq': [df[el]/quant_doc]})],
                                                  axis=0)
             for set_number in self.set:
                 self.now_doc += 1
@@ -195,7 +194,7 @@ class GenerationFile(QThread):
                                 df_limit = pd.read_csv(self.restrict_file, sep='\t', names=['Mode', 'Freq', 'Lim'])
                                 df_limit = df_limit.replace({',': '.'}, regex=True)
                                 for r in df_limit.itertuples(index=False):
-                                    if file in r[0]:
+                                    if file in r[0].lower():
                                         if float(r[1]) == row[0]:
                                             if (s - n) > float(r[2]):
                                                 s = float(n) + float(r[2]) - random.uniform(0.01, 0.1)
@@ -286,4 +285,3 @@ class GenerationFile(QThread):
             time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
             self.window_check.close()
             return
-
