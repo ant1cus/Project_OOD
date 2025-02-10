@@ -302,8 +302,9 @@ class DeleteHeaderFooter(QThread):
                 while True:
                     rename_chance = 1
                     if rename_chance == 4:
-                        os.rename(temp_docx, temp_zip)
                         break
+                        # os.rename(temp_docx, temp_zip)
+                        # break
                     try:
                         os.rename(temp_docx, temp_zip)
                         break
@@ -326,7 +327,18 @@ class DeleteHeaderFooter(QThread):
                                xml_declaration=True)
                 self.logging.info('Удаляем архив')
                 os.remove(temp_zip)
-                shutil.make_archive(temp_zip.replace(".zip", ""), 'zip', temp_folder)
+                while True:
+                    rename_chance = 1
+                    if rename_chance == 4:
+                        break
+                    try:
+                        shutil.make_archive(temp_zip.replace(".zip", ""), 'zip', temp_folder)
+                        break
+                    except BaseException:
+                        self.logging.warning(f'Не смог сделать архив {rename_chance} раз, ждём...')
+                        rename_chance += 1
+                        time.sleep(3)
+                # shutil.make_archive(temp_zip.replace(".zip", ""), 'zip', temp_folder)
                 os.rename(temp_zip, temp_docx)  # rename zip file to docx
                 while True:
                     try:
