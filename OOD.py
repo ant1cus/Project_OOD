@@ -170,6 +170,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                           'extract-conclusion': ['Заключение', self.lineEdit_conclusion],
                           'extract-protocol': ['Протокол', self.lineEdit_protocol],
                           'extract-prescription': ['Предписание', self.lineEdit_prescription],
+                          'extract-checkBox_project_prescription': ['Выписка из проекта предписания',
+                                                                    self.checkBox_project_prescription],
                           'extract-checkBox_director': ['Директор', self.checkBox_director],
                           'extract-old_director': ['Директор кого ищем', self.lineEdit_old_director],
                           'extract-new_director': ['Директор на кого меняем', self.lineEdit_new_director],
@@ -728,6 +730,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             # Если всё прошло запускаем поток
             self.logging_dict[file_name[0]].info('Запуск на выполнение')
             output['logging'], output['queue'] = self.logging_dict[file_name[0]], self.queue
+            output['project_prescription'] = self.checkBox_project_prescription.isChecked()
             output['default_path'] = self.default_path
             output['conclusion'] = self.lineEdit_conclusion.text()
             output['protocol'] = self.lineEdit_protocol.text()

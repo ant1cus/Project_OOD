@@ -36,6 +36,7 @@ class DeleteHeaderFooter(QThread):
         self.conclusion = incoming_data['conclusion']
         self.protocol = incoming_data['protocol']
         self.prescription = incoming_data['prescription']
+        self.project_prescription = incoming_data['project_prescription']
         self.old_director = incoming_data['old_director']
         self.new_director = incoming_data['new_director']
         self.margin = incoming_data['margin']
@@ -260,7 +261,8 @@ class DeleteHeaderFooter(QThread):
                         paragraph.text = re.sub(r'«\d{2}»\s\w+\s\d{4}\s[г]\.', 'date', paragraph.text)
                         for run in paragraph.runs:
                             run.font.size = Pt(size)
-                    if re.findall(name.partition(' ')[0].upper(), paragraph.text):
+                    if re.findall(name.partition(' ')[0].upper(), paragraph.text) or\
+                            re.findall(name.partition(' ')[0][:-1].upper(), paragraph.text):
                         size = size_pt(paragraph)
                         name_doc = name.partition(' ')[0] if name.partition(' ')[0] else name.partition('.')[0]
                         if name_doc.lower() == 'протокол' or name_doc.lower() == 'акт':
@@ -269,15 +271,29 @@ class DeleteHeaderFooter(QThread):
                             name_doc = list(name_doc)
                             name_doc[-1] = 'я'
                             name_doc = ''.join(name_doc)
-                        paragraph.text = re.sub(name.partition(' ')[0].upper(),
-                                                'ВЫПИСКА ИЗ ' + name_doc.upper(),
-                                                paragraph.text)
+                        if re.findall(r'ПРОЕКТ ПРЕДПИСАНИЯ', paragraph.text):
+                            if self.project_prescription:
+                                paragraph.text = re.sub('ПРОЕКТ ПРЕДПИСАНИЯ',
+                                                        'ВЫПИСКА ИЗ ПРОЕКТА ПРЕДПИСАНИЯ',
+                                                        paragraph.text)
+                            else:
+                                paragraph.text = re.sub('ПРОЕКТ ПРЕДПИСАНИЯ',
+                                                        'ВЫПИСКА ИЗ ПРЕДПИСАНИЯ',
+                                                        paragraph.text)
+                        else:
+                            paragraph.text = re.sub(name.partition(' ')[0].upper(),
+                                                    'ВЫПИСКА ИЗ ' + name_doc.upper(),
+                                                    paragraph.text)
+                        # paragraph.text = re.sub(name.partition(' ')[0].upper(),
+                        #                         'ВЫПИСКА ИЗ ' + name_doc.upper(),
+                        #                         paragraph.text)
                         for run in paragraph.runs:
                             run.font.bold = False
                             run.font.name = 'Times New Roman'
                         doc.paragraphs[i + 1].insert_paragraph_before('Уч. № ' + number + ' от ' + date[0])
                         for par_format in range(4):
                             doc.paragraphs[i + par_format].paragraph_format.first_line_indent = None
+                            doc.paragraphs[i + par_format].paragraph_format.left_indent = Cm(0)
                         for j in [i, i + 1]:
                             doc.paragraphs[j].paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
                             for run in doc.paragraphs[j].runs:
@@ -345,7 +361,7 @@ class DeleteHeaderFooter(QThread):
                         shutil.rmtree(temp_folder)
                         shutil.rmtree(self.path + '\\zip')
                         break
-                    except OSError as es:
+                    except BaseException as es:
                         self.logging.error(es)
                         self.logging.error(traceback.format_exc())
                         self.logging.info('Ошибка с удалением, пробуем ещё раз')
