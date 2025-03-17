@@ -58,9 +58,9 @@ class GenerationFileCC(QThread):
                 self.line_doing.emit(f'Запись генерируемых файлов {name_file} {str(num_set)}'
                                      f' ({self.now_doc} из {self.all_doc})')
                 path_dir_gen = pathlib.Path(self.output, str(num_set), name_file)
-                try:
+                if os.path.exists(path_dir_gen):
                     df_gen_old = pd.read_csv(path_dir_gen, delimiter=';', encoding="unicode_escape", header=None)
-                except (BaseException,):
+                else:
                     df_gen_old = pd.DataFrame()
                 if len(df_gen.columns) == 3:
                     name_col = list(df_gen.columns)
@@ -141,6 +141,9 @@ class GenerationFileCC(QThread):
                     df_new = df
                 df_new = df_new.drop(labels=[i for i in range(0, values + 1)], axis=0)
                 df_new.drop(labels=['str'], axis=1, inplace=True)
+                # Меняем цифровой разделитель, если нужно.
+                df_new[names[0]] = df_new[names[0]].str.replace(',', '.')
+                df_new[names[1]] = df_new[names[1]].str.replace(',', '.')
                 df_new = df_new.apply(pd.to_numeric, errors='coerce')
                 df_new.dropna(how='all', inplace=True)
                 df_new.interpolate(inplace=True)
@@ -212,7 +215,7 @@ class GenerationFileCC(QThread):
             progress += progress * quantity_set
             self.all_doc = progress
             self.percent_progress = 100 / progress
-            self.line_progress.emit(f'Выполнено {int(progress)} %')
+            self.line_progress.emit(f'Выполнено {0} %')
             self.logging.info('Входные данные:')
             self.logging.info('0' + '"|"' + str(self.source) + '"|"' + 'True' + '"|"' +
                               str(pathlib.PurePath(self.source).name) + '.txt' + '"|"' + str(self.source))
