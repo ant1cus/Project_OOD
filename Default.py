@@ -48,11 +48,11 @@ class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки п
         self.name_box = [self.groupBox_checked, self.groupBox_parcing, self.groupBox_exctracting,
                          self.groupBox_gen_pemi, self.groupBox_gen_hfe, self.groupBox_gen_hfi,
                          self.groupBox_application, self.groupBox_gen_LF, self.groupBox_cotinuous_spectrum,
-                         self.groupBox_number_instance, self.groupBox_finding_file]
+                         self.groupBox_number_instance, self.groupBox_finding_file, self.groupBox_lf_pemi]
         self.name_grid = [self.gridLayout_checked, self.gridLayout_parcer, self.gridLayout_exctract,
                           self.gridLayout_gen_pemi, self.gridLayout_HFE, self.gridLayout_HFI,
                           self.gridLayout_application, self.gridLayout_gen_LF, self.gridLayout_cotinuous_spectrum,
-                          self.gridLayout_number_instance, self.gridLayout_finding_file]
+                          self.gridLayout_number_instance, self.gridLayout_finding_file, self.gridLayout_lf_pemi]
         with open(pathlib.Path(self.path_for_default, 'Настройки.txt'), "r", encoding='utf-8-sig') as f:  # Открываем
             dict_load = json.load(f)  # Загружаем данные
             self.data = dict_load['widget_settings']
@@ -77,7 +77,7 @@ class DefaultWindow(QDialog, default_window.Ui_Dialog):  # Настройки п
             frame = False
             grid = False
             for j, n in enumerate(['checked', 'parser', 'extract', 'gen_pemi', 'HFE', 'HFI', 'application', 'LF',
-                                   'CC', 'NI', 'FF']):
+                                   'CC', 'NI', 'FF', 'lf_pemi']):
                 if n in el.partition('-')[0]:
                     frame = self.name_box[j]
                     grid = self.name_grid[j]

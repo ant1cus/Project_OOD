@@ -622,7 +622,7 @@ class ZoneChecked(QThread):
         except BaseException as es:
             self.logging.error(es)
             self.logging.error(traceback.format_exc())
-            self.logging.warning(f"Проверка зон в папке «{self.name_dir}» не заврешена из-за ошибки")
+            self.logging.warning(f"Проверка зон в папке «{self.name_dir}» не завершена из-за ошибки")
             self.info_value.emit('УПС!', 'Работа программы завершена из-за непредвиденной ошибки')
             self.event.clear()
             self.event.wait()

@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox,
 from checked import (checked_zone_checked, checked_file_parcing, checked_generation_pemi,
                      checked_delete_header_footer, checked_hfe_generation, checked_hfi_generation,
                      checked_application_data, checked_lf_data, checked_generation_cc, checked_number_instance,
-                     checked_find_files)
+                     checked_find_files, checked_lf_pemi)
 from rewrite_settings import rewrite
 from Default import DefaultWindow
 from Zone_Check import ZoneChecked
@@ -80,7 +80,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setupUi(self)
-        self.actual_version = '3.1.2'
+        self.actual_version = '3.2.1'
         self.queue = queue.Queue(maxsize=1)
         self.pushButton_open_folder_zone_check.clicked.connect((lambda: self.browse(self.lineEdit_path_check)))
         self.pushButton_open_folder_parser.clicked.connect((lambda: self.browse(self.lineEdit_path_parser)))
@@ -111,6 +111,10 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                                                                 self.browse(self.lineEdit_path_folder_start_find)))
         self.pushButton_open_folder_finish_find.clicked.connect((lambda:
                                                                  self.browse(self.lineEdit_path_folder_finish_find)))
+        self.pushButton_open_folder_start_lf_pemi.clicked.connect((lambda:
+                                                                   self.browse(self.lineEdit_path_folder_start_lf_pemi)))
+        self.pushButton_open_folder_finish_lf_pemi.clicked.connect((lambda:
+                                                                    self.browse(self.lineEdit_path_folder_finish_lf_pemi)))
         self.groupBox_FSB.clicked.connect(self.group_box_change_state)
         self.groupBox_FSTEK.clicked.connect(self.group_box_change_state)
         self.pushButton_check.clicked.connect(self.checked_zone)
@@ -124,6 +128,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.pushButton_ss_start.clicked.connect(self.generate_cc)
         self.pushButton_number_instance.clicked.connect(self.change_number_instance)
         self.pushButton_start_find.clicked.connect(self.finding_files)
+        self.pushButton_start_lf_pemi.clicked.connect(self.gen_lf_pemi)
         self.action_settings_default.triggered.connect(self.default_settings)
         self.menu_about.aboutToShow.connect(about)
         self.action_zone_checked.triggered.connect(self.add_tab)
@@ -137,6 +142,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.action_gen_cc.triggered.connect(self.add_tab)
         self.action_number_instance.triggered.connect(self.add_tab)
         self.action_finding_file.triggered.connect(self.add_tab)
+        self.action_gen_lf_pemi.triggered.connect(self.add_tab)
         self.tabWidget.tabBar().tabMoved.connect(self.tab_)
         self.tabWidget.tabBarClicked.connect(self.tab_click)
         self.tabWidget.tabCloseRequested.connect(lambda index: self.tabWidget.removeTab(index))
@@ -229,21 +235,31 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                           'NI-number_instance': ['Номера экземпляров', self.lineEdit_number_instance],
                           'FF-path_unloading_file': ['Файл выгрузки', self.lineEdit_path_file_unloading_find],
                           'FF-path_start_folder': ['Папка с файлами', self.lineEdit_path_folder_start_find],
-                          'FF-path_finish_folder': ['Конечная папка', self.lineEdit_path_folder_finish_find]}
+                          'FF-path_finish_folder': ['Конечная папка', self.lineEdit_path_folder_finish_find],
+                          'lf_pemi-path_folder_start_lf_pemi': ['Папка с исходниками',
+                                                                self.lineEdit_path_folder_start_lf_pemi],
+                          'lf_pemi-path_folder_finish_lf_pemi': ['Конечная папка',
+                                                                 self.lineEdit_path_folder_finish_lf_pemi],
+                          'lf_pemi-set_number': ['Номера комплектов', self.lineEdit_set_number_lf_pemi],
+                          'lf_pemi-checkBox_lf_pemi_values_spread': ['Включить разброс',
+                                                                     self.checkBox_lf_pemi_values_spread],
+                          'lf_pemi-values_spread': ['Разброс значений', self.lineEdit_values_spread_lf_pemi],
+                          }
         # Грузим значения по умолчанию
         self.name_tab = {"tab_zone_checked": "Проверка зон", "tab_parser": "Парсер txt",
                          "tab_exctract": "Обезличивание", "tab_gen_application": "Генератор приложений",
                          "tab_gen_pemi": "Генератор ПЭМИ", "tab_gen_HFE": "Генератор ВЧО",
                          "tab_gen_HFI": "Генератор ВЧН", "tab_gen_LF": "Генератор НЧ",
                          "tab_continuous_spectrum": "Сплошной спектр", "tab_number_instance": "Номера экземпляра",
-                         "tab_finding_files": "Поиск файлов"}
+                         "tab_finding_files": "Поиск файлов", "tab_gen_lf_pemi": "Генератор НЧ ПЭМИ"}
         self.name_action = {"tab_zone_checked": self.action_zone_checked, "tab_parser": self.action_parser,
                             "tab_exctract": self.action_extract, "tab_gen_application": self.action_gen_application,
                             "tab_gen_pemi": self.action_gen_pemi, "tab_gen_HFE": self.action_gen_HFE,
                             "tab_gen_HFI": self.action_gen_HFI, 'tab_gen_LF': self.action_gen_LF,
                             "tab_continuous_spectrum": self.action_gen_cc,
                             "tab_number_instance": self.action_number_instance,
-                            "tab_finding_files": self.action_finding_file}
+                            "tab_finding_files": self.action_finding_file,
+                            "tab_gen_lf_pemi": self.action_gen_lf_pemi}
         try:
             with open(pathlib.Path(pathlib.Path.cwd(), 'Настройки.txt'), "r", encoding='utf-8-sig') as f:
                 dict_load = json.load(f)
@@ -262,12 +278,12 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                                                 '3': "tab_gen_application", '4': "tab_gen_pemi", '5': "tab_gen_HFE",
                                                 '6': "tab_gen_HFI", '7': "tab_gen_LF",
                                                 '8': "tab_continuous_spectrum", '9': "tab_number_instance",
-                                                '10': "tab_finding_files"},
+                                                '10': "tab_finding_files", '11': "tab_gen_lf_pemi"},
                                   "tab_visible": {"tab_zone_checked": True, "tab_parser": True, "tab_exctract": True,
                                                   "tab_gen_application": True, "tab_gen_pemi": True,
                                                   "tab_gen_HFE": True, "tab_gen_HFI": True, "tab_gen_LF": True,
                                                   "tab_continuous_spectrum": True, "tab_number_instance": True,
-                                                  "tab_finding_files": True}
+                                                  "tab_finding_files": True, "tab_gen_lf_pemi": True}
                                   },
                              "version": {"actual_version": ''}
                              }
@@ -302,7 +318,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.thread_dict = {'zone_checked': {}, 'continuous_spectrum': {}, 'delete_header_footer': {},
                             'copy_application': {}, 'change_number_instance': {}, 'generate_lf': {},
                             'generate_hfi': {}, 'generate_hfe': {}, 'finding_files': {}, 'generate_pemi': {},
-                            'parcing_file': {}}
+                            'parcing_file': {}, 'gen_lf_pemi': {}}
 
     def logging_file(self, name):
         filename_now = str(datetime.datetime.today().timestamp()) + '_logs.log'
@@ -860,6 +876,45 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.finished_thread('finding_files',
                                  name_all=str(pathlib.Path('logs', 'finding_files', file_name[1])),
                                  name_now=str(pathlib.Path('logs', 'finding_files', file_name[0])))
+            return
+
+    def gen_lf_pemi(self):
+        file_name = self.logging_file('gen_lf_pemi')
+        self.logging_dict[file_name[0]].info('----------------Запускаем gen_lf_pemi----------------')
+        self.logging_dict[file_name[0]].info('Проверка данных')
+        try:
+            incoming_data = checked_lf_pemi(self.lineEdit_path_folder_start_lf_pemi,
+                                            self.lineEdit_path_folder_finish_lf_pemi,
+                                            self.lineEdit_set_number_lf_pemi,
+                                            self.checkBox_lf_pemi_values_spread,
+                                            self.lineEdit_set_number_lf_pemi)
+            if isinstance(incoming_data, list):
+                self.logging_dict[file_name[0]].warning(incoming_data[1])
+                self.logging_dict[file_name[0]].warning('Ошибки в заполнении формы, программа не запущена в работу')
+                self.on_message_changed(incoming_data[0], incoming_data[1])
+                self.finished_thread('gen_lf_pemi',
+                                     name_all=str(pathlib.Path('logs', 'gen_lf_pemi', file_name[1])),
+                                     name_now=str(pathlib.Path('logs', 'gen_lf_pemi', file_name[0])))
+                return
+            # Если всё прошло запускаем поток
+            self.logging_dict[file_name[0]].info('Запуск на выполнение')
+            incoming_data['logging'], incoming_data['queue'] = self.logging_dict[file_name[0]], self.queue
+            incoming_data['default_path'] = self.default_path
+            incoming_data['move'] = len(self.thread_dict['gen_lf_pemi'])
+            self.thread = FindingFiles(incoming_data)
+            self.thread.status_finish.connect(self.finished_thread)
+            self.thread.status.connect(self.statusBar().showMessage)
+            self.thread.start()
+            self.thread_dict['gen_lf_pemi'][str(self.thread)] = {'filename_all': file_name[1],
+                                                                 'filename_now': file_name[0]}
+        except BaseException as exception:
+            self.logging_dict[file_name[0]].error('Ошибка при старте gen_lf_pemi')
+            self.logging_dict[file_name[0]].error(exception)
+            self.logging_dict[file_name[0]].error(traceback.format_exc())
+            self.on_message_changed('УПС!', 'Неизвестная ошибка, обратитесь к разработчику')
+            self.finished_thread('gen_lf_pemi',
+                                 name_all=str(pathlib.Path('logs', 'gen_lf_pemi', file_name[1])),
+                                 name_now=str(pathlib.Path('logs', 'gen_lf_pemi', file_name[0])))
             return
 
     def pause_thread(self):

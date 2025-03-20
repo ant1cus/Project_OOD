@@ -66,11 +66,6 @@ def checked_file_parcing(dir_path, group_file):
             for line in lines:
                 if re.findall(r'\s', line.rstrip('\n')):
                     errors.append('Пробелы в названии режимов (' + p + ', ' + line.rstrip('\n') + ')')
-            # with open(pathlib.Path(p, 'Описание.txt'), mode='r', encoding='utf-8') as f:
-            #     lines = f.readlines()
-            #     for line in lines:
-            #         if re.findall(r'\s', line.rstrip('\n')):
-            #             errors.append('Пробелы в названии режимов (' + p + ', ' + line.rstrip('\n') + ')')
         return {'errors': errors, 'len': len(excel_files)}
     # Выбираем путь для исходников.
     path = dir_path.text().strip()
@@ -361,7 +356,7 @@ def checked_generation_cc(start_folder, finish_folder, set_number, checkbox_freq
     if not os.path.isdir(output):
         return ['УПС!', 'Указанный путь к создаваемым файлам переименован или удалён']
     if len([True for el in pathlib.Path(source).iterdir() if el.is_dir()]) > 1:
-            return ['УПС!', 'В указанной директории слишком много папок']
+        return ['УПС!', 'В указанной директории слишком много папок']
     set_num = set_number.text().strip()
     if set_num:
         for i in set_num:
@@ -474,3 +469,51 @@ def checked_find_files(unloading_file, start_folder, finish_folder):
         return ['УПС!', 'Конечная папка не пуста, очистите директорию или выберите новую']
 
     return {'unloading_file': file, 'start_path': start_path, 'finish_path': finish_path}
+
+
+def checked_lf_pemi(start_folder, finish_folder, set_numbers, checkbox_values_spread, values_spread):
+    start_path = start_folder.text().strip()
+    if not start_path:
+        return ['УПС!', 'Путь к исходным файлам пуст']
+    if os.path.isdir(start_path) is False:
+        return ['УПС!', 'Указанный путь к исходным файлам удалён или переименован']
+    finish_path = finish_folder.text().strip()
+    if not finish_path:
+        return ['УПС!', 'УПС!', 'Путь к конечной папке пуст']
+    if os.path.isdir(finish_path) is False:
+        return ['УПС!', 'Указанный путь к конечной папке удалён или переименован']
+    if os.listdir(finish_path):
+        return ['УПС!', 'Конечная папка не пуста, очистите директорию или выберите новую']
+    numbers = set_numbers.text().strip()
+    for i in numbers:
+        if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ' ', '-', ',', '.')):
+            return ['УПС!', 'Есть лишние символы в номерах экземпляров']
+    set_num = numbers.replace(' ', '').replace(',', '.')
+    if set_num[0] == '.' or set_num[0] == '-':
+        return ['УПС!', 'Первый символ введён не верно']
+    if set_num[-1] == '.' or set_num[-1] == '-':
+        return ['УПС!', 'Последний символ введён не верно']
+    for i in range(len(set_num)):
+        if set_num[i] == '.' or set_num[i] == '-':
+            if set_num[i + 1] == '.' or set_num[i + 1] == '-':
+                return ['УПС!', 'Два разделителя номеров подряд']
+    set_number = []
+    for element in set_num.split('.'):
+        if '-' in element:
+            num1, num2 = int(element.partition('-')[0]), int(element.partition('-')[2])
+            if num1 >= num2:
+                return ['УПС!', 'Диапазон номеров экземпляров указан не верно']
+            else:
+                for el in range(num1, num2 + 1):
+                    set_number.append(el)
+        else:
+            set_number.append(element)
+    set_number.sort()
+    spread = 10
+    if checkbox_values_spread.isChecked():
+        spread = values_spread.text().strip()
+        for i in spread:
+            if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', ',', '.')):
+                return ['УПС!', 'Используйте только цифры и разделитель «.» или «,» в разбросе значений']
+
+    return {'start_path': start_path, 'finish_path': finish_path, 'set_number': set_number, 'values_spread': spread}

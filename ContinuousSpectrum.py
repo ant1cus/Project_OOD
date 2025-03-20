@@ -179,7 +179,7 @@ class GenerationFileCC(QThread):
             current_progress += self.percent_progress
             self.progress_value.emit(int(current_progress))
             self.line_progress.emit(f'Выполнено {int(current_progress)} %')
-        self.line_doing.emit(f'Сортируем и записываем txt ({self.now_doc} из {self.all_doc})')
+        self.line_doing.emit(f'Сортируем и записываем txt')
         self.logging.info('Join и сортировка таблицы')
         all_data_df = df_list[0].join(df_list[1])
         all_data_df.sort_index(axis=0, inplace=True)
@@ -271,7 +271,7 @@ class GenerationFileCC(QThread):
         except BaseException as es:
             self.logging.error(es)
             self.logging.error(traceback.format_exc())
-            self.logging.warning(f"Генерация сплошного спектра в папке «{self.name_dir}» не заврешена из-за ошибки")
+            self.logging.warning(f"Генерация сплошного спектра в папке «{self.name_dir}» не завершена из-за ошибки")
             self.info_value.emit('УПС!', 'Работа программы завершена из-за непредвиденной ошибки')
             self.event.clear()
             self.event.wait()

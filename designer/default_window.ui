@@ -87,14 +87,14 @@
          <property name="geometry">
           <rect>
            <x>0</x>
-           <y>0</y>
-           <width>1082</width>
-           <height>642</height>
+           <y>-177</y>
+           <width>1094</width>
+           <height>576</height>
           </rect>
          </property>
          <layout class="QGridLayout" name="gridLayout_2">
-          <item row="8" column="0">
-           <widget class="QGroupBox" name="groupBox_cotinuous_spectrum">
+          <item row="4" column="0">
+           <widget class="QGroupBox" name="groupBox_gen_hfe">
             <property name="font">
              <font>
               <pointsize>12</pointsize>
@@ -103,20 +103,20 @@
              </font>
             </property>
             <property name="title">
-             <string>Сплошной спектр</string>
+             <string>Генератор ВЧО</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
             </property>
-            <layout class="QGridLayout" name="gridLayout_13">
+            <layout class="QGridLayout" name="gridLayout_9">
              <item row="0" column="0">
-              <layout class="QGridLayout" name="gridLayout_cotinuous_spectrum"/>
+              <layout class="QGridLayout" name="gridLayout_HFE"/>
              </item>
             </layout>
            </widget>
           </item>
-          <item row="7" column="0">
-           <widget class="QGroupBox" name="groupBox_gen_LF">
+          <item row="10" column="0">
+           <widget class="QGroupBox" name="groupBox_finding_file">
             <property name="font">
              <font>
               <pointsize>12</pointsize>
@@ -125,102 +125,14 @@
              </font>
             </property>
             <property name="title">
-             <string>Генератор НЧ</string>
+             <string>Поиск файлов</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
             </property>
-            <layout class="QGridLayout" name="gridLayout_14">
+            <layout class="QGridLayout" name="gridLayout_15">
              <item row="0" column="0">
-              <layout class="QGridLayout" name="gridLayout_gen_LF"/>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QGroupBox" name="groupBox_checked">
-            <property name="font">
-             <font>
-              <pointsize>12</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="title">
-             <string>Проверка зон</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-            <layout class="QGridLayout" name="gridLayout_4">
-             <item row="0" column="0">
-              <layout class="QGridLayout" name="gridLayout_checked"/>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QGroupBox" name="groupBox_parcing">
-            <property name="font">
-             <font>
-              <pointsize>12</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="title">
-             <string>Парсинг</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-            <layout class="QGridLayout" name="gridLayout_6">
-             <item row="0" column="0">
-              <layout class="QGridLayout" name="gridLayout_parcer"/>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QGroupBox" name="groupBox_gen_pemi">
-            <property name="font">
-             <font>
-              <pointsize>12</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="title">
-             <string>Генератор ПЭМИ</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-            <layout class="QGridLayout" name="gridLayout_8">
-             <item row="0" column="0">
-              <layout class="QGridLayout" name="gridLayout_gen_pemi"/>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item row="9" column="0">
-           <widget class="QGroupBox" name="groupBox_number_instance">
-            <property name="font">
-             <font>
-              <pointsize>12</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="title">
-             <string>Номера экземпляров</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-            <layout class="QGridLayout" name="gridLayout_16">
-             <item row="0" column="0">
-              <layout class="QGridLayout" name="gridLayout_number_instance"/>
+              <layout class="QGridLayout" name="gridLayout_finding_file"/>
              </item>
             </layout>
            </widget>
@@ -247,50 +159,6 @@
             </layout>
            </widget>
           </item>
-          <item row="6" column="0">
-           <widget class="QGroupBox" name="groupBox_application">
-            <property name="font">
-             <font>
-              <pointsize>12</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="title">
-             <string>Копирование приложения</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-            <layout class="QGridLayout" name="gridLayout_12">
-             <item row="0" column="0">
-              <layout class="QGridLayout" name="gridLayout_application"/>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item row="4" column="0">
-           <widget class="QGroupBox" name="groupBox_gen_hfe">
-            <property name="font">
-             <font>
-              <pointsize>12</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="title">
-             <string>Генератор ВЧО</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-            <layout class="QGridLayout" name="gridLayout_9">
-             <item row="0" column="0">
-              <layout class="QGridLayout" name="gridLayout_HFE"/>
-             </item>
-            </layout>
-           </widget>
-          </item>
           <item row="2" column="0">
            <widget class="QGroupBox" name="groupBox_exctracting">
             <property name="font">
@@ -313,8 +181,8 @@
             </layout>
            </widget>
           </item>
-          <item row="10" column="0">
-           <widget class="QGroupBox" name="groupBox_finding_file">
+          <item row="8" column="0">
+           <widget class="QGroupBox" name="groupBox_cotinuous_spectrum">
             <property name="font">
              <font>
               <pointsize>12</pointsize>
@@ -323,14 +191,168 @@
              </font>
             </property>
             <property name="title">
-             <string>Поиск файлов</string>
+             <string>Сплошной спектр</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
             </property>
-            <layout class="QGridLayout" name="gridLayout_15">
+            <layout class="QGridLayout" name="gridLayout_13">
              <item row="0" column="0">
-              <layout class="QGridLayout" name="gridLayout_finding_file"/>
+              <layout class="QGridLayout" name="gridLayout_cotinuous_spectrum"/>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QGroupBox" name="groupBox_gen_pemi">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="title">
+             <string>Генератор ПЭМИ</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_8">
+             <item row="0" column="0">
+              <layout class="QGridLayout" name="gridLayout_gen_pemi"/>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QGroupBox" name="groupBox_application">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="title">
+             <string>Копирование приложения</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_12">
+             <item row="0" column="0">
+              <layout class="QGridLayout" name="gridLayout_application"/>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QGroupBox" name="groupBox_checked">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="title">
+             <string>Проверка зон</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_4">
+             <item row="0" column="0">
+              <layout class="QGridLayout" name="gridLayout_checked"/>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item row="9" column="0">
+           <widget class="QGroupBox" name="groupBox_number_instance">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="title">
+             <string>Номера экземпляров</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_16">
+             <item row="0" column="0">
+              <layout class="QGridLayout" name="gridLayout_number_instance"/>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QGroupBox" name="groupBox_parcing">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="title">
+             <string>Парсинг</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_6">
+             <item row="0" column="0">
+              <layout class="QGridLayout" name="gridLayout_parcer"/>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item row="7" column="0">
+           <widget class="QGroupBox" name="groupBox_gen_LF">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="title">
+             <string>Генератор НЧ</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_14">
+             <item row="0" column="0">
+              <layout class="QGridLayout" name="gridLayout_gen_LF"/>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item row="11" column="0">
+           <widget class="QGroupBox" name="groupBox_lf_pemi">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="title">
+             <string>Генератор НЧ ПЭМИ</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_17">
+             <item row="0" column="0">
+              <layout class="QGridLayout" name="gridLayout_lf_pemi"/>
              </item>
             </layout>
            </widget>
