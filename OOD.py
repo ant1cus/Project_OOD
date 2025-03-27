@@ -30,6 +30,7 @@ from LowFrequency_dispertion import LFGeneration
 from ContinuousSpectrum import GenerationFileCC
 from Number_Instance import ChangeNumberInstance
 from Find_Files import FindingFiles
+from LF_PEMI_Generation import LFPEMIGeneration
 
 
 class AboutWindow(QDialog, about.Ui_Dialog):  # Для отображения информации
@@ -887,7 +888,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                                             self.lineEdit_path_folder_finish_lf_pemi,
                                             self.lineEdit_set_number_lf_pemi,
                                             self.checkBox_lf_pemi_values_spread,
-                                            self.lineEdit_set_number_lf_pemi)
+                                            self.lineEdit_values_spread_lf_pemi)
             if isinstance(incoming_data, list):
                 self.logging_dict[file_name[0]].warning(incoming_data[1])
                 self.logging_dict[file_name[0]].warning('Ошибки в заполнении формы, программа не запущена в работу')
@@ -901,7 +902,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             incoming_data['logging'], incoming_data['queue'] = self.logging_dict[file_name[0]], self.queue
             incoming_data['default_path'] = self.default_path
             incoming_data['move'] = len(self.thread_dict['gen_lf_pemi'])
-            self.thread = FindingFiles(incoming_data)
+            self.thread = LFPEMIGeneration(incoming_data)
             self.thread.status_finish.connect(self.finished_thread)
             self.thread.status.connect(self.statusBar().showMessage)
             self.thread.start()
