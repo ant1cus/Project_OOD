@@ -174,12 +174,28 @@ def file_parcing(path, logging, line_doing, now_doc, all_doc, line_progress, pro
                 os.makedirs(pathlib.Path(path, 'txt', book_name))
                 os.chdir(pathlib.Path(path, 'txt', book_name))
                 for sheet in name:
-                    if re.findall(r'_lin', sheet) or re.findall(r'_linux', sheet):
-                        name_sheet = sheet.upper()
-                    elif re.findall(r'_win', sheet) or re.findall(r'_windows', sheet):
-                        name_sheet = sheet.lower()
+                    # Новое для имени ЦП
+                    name_second = ''
+                    name_third = ''
+                    if re.findall(r'_ЦП', sheet) or re.findall(r'\.m', sheet) or re.findall(r'\.v', sheet):
+                        name_first = sheet.rpartition('.')[0]
+                        name_second = sheet.rpartition('.')[1]
+                        name_third = sheet.rpartition('.')[2]
                     else:
-                        name_sheet = sheet.upper()
+                        name_first = sheet
+                    if re.findall(r'_lin', name_first) or re.findall(r'_linux', name_first):
+                        name_sheet = name_first.upper()
+                    elif re.findall(r'_win', name_first) or re.findall(r'_windows', name_first):
+                        name_sheet = name_first.lower()
+                    else:
+                        name_sheet = name_first.upper()
+                    name_sheet = name_sheet + name_second + name_third
+                        # if re.findall(r'_lin', sheet) or re.findall(r'_linux', sheet):
+                        #     name_sheet = sheet.upper()
+                        # elif re.findall(r'_win', sheet) or re.findall(r'_windows', sheet):
+                        #     name_sheet = sheet.lower()
+                        # else:
+                        #     name_sheet = sheet.upper()
                     df = new_book[sheet]
                     if df.empty or type(df.iloc[0, 0]) == str:
                         with open(pathlib.Path(path, 'txt', book_name, name_sheet + '.txt'), 'w'):
