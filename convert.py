@@ -177,15 +177,16 @@ def file_parcing(path, logging, line_doing, now_doc, all_doc, line_progress, pro
                     # Новое для имени ЦП
                     name_second = ''
                     name_third = ''
-                    if re.findall(r'_ЦП', sheet) or re.findall(r'\.m', sheet) or re.findall(r'\.v', sheet):
-                        name_first = sheet.rpartition('.')[0]
-                        name_second = sheet.rpartition('.')[1]
-                        name_third = sheet.rpartition('.')[2]
+                    if re.findall(r'_ЦП', sheet, re.I):
+                        name_first = re.split('_ЦП', sheet, re.I)[0]
+                        name_second = '_ЦП'
+                        name_third = re.split('_ЦП', sheet, re.I)[1]
                     else:
                         name_first = sheet
-                    if re.findall(r'_lin', name_first) or re.findall(r'_linux', name_first):
+                    if re.findall(r'_lin|_linux', name_first, re.I) or re.findall(r'_lin|_linux', name_third, re.I):
                         name_sheet = name_first.upper()
-                    elif re.findall(r'_win', name_first) or re.findall(r'_windows', name_first):
+                    elif (re.findall(r'_win|_windows', name_first, re.I) or
+                          re.findall(r'_win|_windows', name_third, re.I)):
                         name_sheet = name_first.lower()
                     else:
                         name_sheet = name_first.upper()
