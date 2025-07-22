@@ -51,7 +51,7 @@ class LFPEMIGeneration(QThread):
 
     def run(self):
         try:
-            max_difference = 3  # Для подстановки требуемой разницы
+            max_difference = 2.99  # Для подстановки требуемой разницы
             self.progress_value.emit(0)
             current_progress = 0
             lines_file = ['n', 'p', 'z']
