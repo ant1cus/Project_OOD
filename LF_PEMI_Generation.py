@@ -58,7 +58,8 @@ class LFPEMIGeneration(QThread):
             frames = {i: pd.DataFrame(columns=['frq', 'max_s', 'min_s', 'max_n', 'min_n'])
                       for i in ['void', 'f', 'g', 'i', 'j', 'm', 'n', 'p', 'z']}
             errors = []
-            for file in [f for f in Path(self.start_path).rglob("*.txt") if 'динамики' in f.name.lower()]:
+            find_text = r"микрофон|динамики|колонки"
+            for file in [f for f in Path(self.start_path).rglob("*.txt") if re.findall(find_text, f.name, re.I)]:
                 file_type = re.findall(r'\w+.(\w)\.txt', file.name)[0]
                 if file_type == 'и':
                     file_type = 'void'
