@@ -144,7 +144,7 @@ class ZoneChecked(QThread):
                 set_number = name_doc.rpartition(' ')[2][:-5]
                 report[set_number] = {'error_win': False, 'error_lin': False, 'win': {}, 'lin': {}}
                 # Для того, что бы не съезжала заливка ее нужно добавлять каждый раз для каждой ячейки
-                doc = docx.Document(pathlib.Path(self.path, name_doc))
+                doc = docx.Document(str(pathlib.Path(self.path, name_doc)))
                 table_zone = doc.tables[int(self.table) - 1]  # Таблица для проверки (общая)
                 self.logging.info("Считываем зоны")
                 # Попытка по новому прочитать и ускорить процесс
@@ -188,9 +188,9 @@ class ZoneChecked(QThread):
                 for i in range(3 if self.one_table is False else 1):
                     df_list[i] = df_list[i].drop(index=drop_line)
                     df_list[i].reset_index(drop=True, inplace=True)
-                # Если в 1-ой таблице есть объединенная строка (имя системы) - значит будут 2 системы
-                # Сразу добавляем строки в таблицу для вывода в excel
-                # Вносим в список зоны для проверки
+                # Если в 1-ой таблице есть объединенная строка (имя системы) - значит будут 2 системы.
+                # Сразу добавляем строки в таблицу для вывода в excel.
+                # Вносим в список зоны для проверки.
                 zone_check = {}
                 name_win = 'default'
                 name_lin = 'Linux'
@@ -297,6 +297,7 @@ class ZoneChecked(QThread):
                     if enum_df == 1:
                         cm = 'Power' if len(cm) > 10 else cm + '_pwr'
                     return cm, cns
+                
                 if self.one_table:
                     progress = progress + percent
                     self.set_line_progress(f'Выполнено {int(progress)} %')
@@ -310,7 +311,7 @@ class ZoneChecked(QThread):
                         continue
                     if df.shape[1] < 10:
                         continue
-                    find_st = df.loc[(df[0] == 'Максимальные значения') |
+                    find_st = df.loc[(df[0] == 'Максимальные значения') | (df[0] == 'Опасные сигналы не обнаружены') |
                                      (df.apply(lambda x: x[0] == x[zone_col[0]] == x[zone_col[-1]] ==
                                                                  x[zone_col[1]] == x[zone_col[-2]], axis=1))]
                     if self.department is False:
@@ -318,19 +319,23 @@ class ZoneChecked(QThread):
                     if self.department:
                         mag_line = [i for i in find_st.index.tolist() if 'магнитная составляющая' in find_st.loc[i, 0]]
                         find_st = find_st.drop(sorted(mag_line + [i + 1 for i in mag_line]))
+                    find_st.loc[find_st[0] == 'Опасные сигналы не обнаружены', zone_col] = 'Опасные сигналы' \
+                                                                                           ' не обнаружены'
                     # extend report
                     name_mode = df.drop([i for i in range(df.shape[1]) if i not in zone_col and i != 0], axis=1)
                     if name_mode.iloc[0, 0] == '2 категория':
                         name_mode = name_mode.drop(0)
                     name_mode = name_mode.loc[(df.apply(lambda x: x[0] == x[zone_col[0]] == x[zone_col[-1]] ==
                                                                   x[zone_col[1]] == x[zone_col[-2]]
-                                                        and x[zone_col[0]] != 'Опасные сигналы не обнаружены', axis=1))]
+                                                        and x[0] != 'Опасные сигналы не обнаружены', axis=1))]
                     # Тут продолжаем плохо дропнулось
                     if self.department:
                         mag_line = [i for i in name_mode.index.tolist() if 'магнитная составляющая'
                                     in name_mode.loc[i, 0]]
                         name_mode = name_mode.drop(mag_line)
                     name_mode[0] = list(map(cur_mode_and_sys, name_mode[0].to_numpy().tolist()))
+                    for e, x in enumerate(find_st.index.isin(name_mode.index.tolist())):
+                        print(f"e - {e}, x - {x}")
                     extend_line = [e for e, x in enumerate(find_st.index.isin(name_mode.index.tolist())) if not x]
                     for col in zone_col:
                         list_val = find_st.iloc[extend_line, col].tolist()
@@ -409,10 +414,10 @@ class ZoneChecked(QThread):
                         else:
                             [set_bg_color(table_val.rows[error + index_plus].cells[1]._tc) for error in first_line]
                             [set_bg_color(table_val.rows[error + index_plus].cells[2]._tc) for error in first_line]
-                df_extended_report = df_extended_report.append(extended_report_win)
-                df_extended_report = df_extended_report.append(extended_report_lin)
+                df_extended_report = pd.concat([df_extended_report, extended_report_win], ignore_index=True)
+                df_extended_report = pd.concat([df_extended_report, extended_report_lin], ignore_index=True)
                 self.logging.info("Сохраняем документ")
-                doc.save(pathlib.Path(self.path, name_doc))
+                doc.save(str(pathlib.Path(self.path, name_doc)))
                 if self.window_check.stop_threading:
                     break
                 progress = progress + percent
@@ -434,7 +439,7 @@ class ZoneChecked(QThread):
                         os.remove(pathlib.Path(self.path, 'Зоны.xlsx'))
                         break
                     except PermissionError:
-                        self.info_value.emit('Вопрос?', 'Файл «Зоны.xlsx» в проверемой папке должен быть перезаписан. '
+                        self.info_value.emit('Вопрос?', 'Файл «Зоны.xlsx» в проверяемой папке должен быть перезаписан. '
                                                         'При необходимости сохраните файл в другое место и закройте '
                                                         'его. После этого нажмите «Да» для продолжения или '
                                                         '«Нет» для прерывания')
@@ -531,7 +536,7 @@ class ZoneChecked(QThread):
                                                                      fill_type="solid")
                             # Проверка для покраски - если 1 система, то индекс строки номера комплекта совпадает
                             # и второе значение в строке не пустое.
-                            # Если 2 системы, смотрим, чтобы тип значения был строкой (отфоматировали в предыдущем шаге)
+                            # Если 2 системы, смотрим, чтобы тип значения был строкой - отформатирован в предыдущем шаге
                             # и содержалось название системы.
                             if row == set_row and ws.cell(row, 2).value is not None:
                                 if report[set_number]['error_win']:
@@ -586,8 +591,8 @@ class ZoneChecked(QThread):
                                 else:
                                     ws.cell(row, col).fill = PatternFill(start_color='FFC000', end_color='FFC000',
                                                                          fill_type="solid")
-                            if (isinstance(ws.cell(row, col).value, float) or\
-                                isinstance(ws.cell(row, col).value, int) or\
+                            if (isinstance(ws.cell(row, col).value, float) or
+                                isinstance(ws.cell(row, col).value, int) or
                                     all([True for i in ws.cell(row, col).value
                                          if i in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']])) and\
                                     ws.cell(row, col).value != '<0.1' and ws.cell(row, col).value != '-':

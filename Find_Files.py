@@ -52,7 +52,8 @@ class FindingFiles(QThread):
             incoming_errors = []
             current_progress = 0
             self.logging.info('Начинаем заполнение документов, читаем значения из файла')
-            files = [file for file in os.listdir(self.start_path) if file.endswith('.xlsx') and '~' not in file]
+            files = [file for file in os.listdir(self.start_path)
+                     if (file.endswith('.xlsx') or file.endswith('.docx')) and '~' not in file]
             files = natsorted(files)
             self.all_doc = len(files)
             self.percent_progress = 100 / len(files)
