@@ -311,7 +311,8 @@ class ZoneChecked(QThread):
                         continue
                     if df.shape[1] < 10:
                         continue
-                    find_st = df.loc[(df[0] == 'Максимальные значения') | (df[0] == 'Опасные сигналы не обнаружены') |
+                    find_st = df.loc[(df[0].str.contains('Максимальные значения', case=False)) |
+                                     (df[0].str.contains('Опасные сигналы не обнаружены', case=False)) |
                                      (df.apply(lambda x: x[0] == x[zone_col[0]] == x[zone_col[-1]] ==
                                                                  x[zone_col[1]] == x[zone_col[-2]], axis=1))]
                     if self.department is False:
@@ -334,8 +335,6 @@ class ZoneChecked(QThread):
                                     in name_mode.loc[i, 0]]
                         name_mode = name_mode.drop(mag_line)
                     name_mode[0] = list(map(cur_mode_and_sys, name_mode[0].to_numpy().tolist()))
-                    for e, x in enumerate(find_st.index.isin(name_mode.index.tolist())):
-                        print(f"e - {e}, x - {x}")
                     extend_line = [e for e, x in enumerate(find_st.index.isin(name_mode.index.tolist())) if not x]
                     for col in zone_col:
                         list_val = find_st.iloc[extend_line, col].tolist()
