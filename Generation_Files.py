@@ -56,7 +56,7 @@ class GenerationFile(QThread):
         try:
             current_progress = 0
             self.logging.info('Начинаем генерировать файлы')
-            self.all_doc = 2*(len(os.listdir(self.source)) - 1) + 2*int(self.set_quant)
+            self.all_doc = 2*(len(os.listdir(self.source)) - 1) + (1 if self.no_excel_file else 2)*int(self.set_quant)
             self.line_progress.emit(f'Выполнено {int(current_progress)} %')
             self.progress_value.emit(0)
             self.percent_progress = 100/self.all_doc
@@ -236,9 +236,9 @@ class GenerationFile(QThread):
             if self.no_excel_file is False:
                 with open(self.output + '\\Описание.txt', mode='w', encoding='utf-8-sig') as f:
                     f.write('\n'.join([el for el in mode]).rstrip())
-            error = file_parcing(self.output, self.logging, self.line_doing, self.now_doc, self.all_doc,
-                                 self.line_progress, self.progress_value, self.percent_progress, current_progress,
-                                 self.no_freq_lim, self.default_path, self.event, self.window_check)
+                error = file_parcing(self.output, self.logging, self.line_doing, self.now_doc, self.all_doc,
+                                     self.line_progress, self.progress_value, self.percent_progress, current_progress,
+                                     self.no_freq_lim, self.default_path, self.event, self.window_check)
             if error['base_exception']:
                 self.logging.error(error['text'])
                 self.logging.error(error['trace'])

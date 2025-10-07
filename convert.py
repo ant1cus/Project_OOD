@@ -11,7 +11,7 @@ def file_parcing(path, logging, line_doing, now_doc, all_doc, line_progress, pro
     try:
         list_file = os.listdir(path)
         # Сохраним нужное нам описание режимов.
-        logging.info("Читаем txt и сохраняем режимы для " + path)
+        logging.info(f"Читаем txt и сохраняем режимы для {path}")
         txt_files = filter(lambda x: x.endswith('.txt'), list_file)
         for file in sorted(txt_files):
             try:
