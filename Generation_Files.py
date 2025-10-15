@@ -183,7 +183,7 @@ class GenerationFile(QThread):
                                 while True:
                                     s = s + 0.1
                                     n = n - 0.1 if (n > row[4]) else n
-                                    if (s-n) > 3.02:
+                                    if (s-n) > 3.2:
                                         break
                             if self.no_freq_lim is False:
                                 if s < n:
