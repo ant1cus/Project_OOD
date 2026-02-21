@@ -47,26 +47,7 @@ def checked_zone_checked(line_edit_path_check, line_edit_table_number, zone):
     return zone_out
 
 
-def checked_file_parcing(dir_path, group_file):
-    def folder_checked(p):
-        errors = []
-        txt_files = list(filter(lambda x: x.endswith('.txt'), os.listdir(p)))
-        excel_files = [x for x in os.listdir(p) if x.endswith('.xlsx')]
-        if 'Описание.txt' not in txt_files and 'описание.txt' not in txt_files:
-            errors.append('Нет файла с описанием режимов (' + p + ')')
-        else:
-            try:
-                # with open(path + '\\' + file, mode='r', encoding="utf-8-sig") as f:
-                with open(pathlib.Path(p, 'Описание.txt'), mode='r', encoding='utf-8') as f:
-                    lines = f.readlines()
-            except UnicodeDecodeError:
-                # with open(path + '\\' + file, mode='r') as f:
-                with open(pathlib.Path(p, 'Описание.txt'), mode='r', encoding='ANSI') as f:
-                    lines = f.readlines()
-            for line in lines:
-                if re.findall(r'\s', line.rstrip('\n')):
-                    errors.append('Пробелы в названии режимов (' + p + ', ' + line.rstrip('\n') + ')')
-        return {'errors': errors, 'len': len(excel_files)}
+def checked_file_parcing(dir_path,  del_frq_check, del_frq):
     # Выбираем путь для исходников.
     path = dir_path.text().strip()
     if not path:
@@ -75,23 +56,29 @@ def checked_file_parcing(dir_path, group_file):
         return ['УПС!', 'Путь к исходной папке удалён или переименован']
     else:
         folders = [i for i in os.listdir(path) if os.path.isdir(path + '\\' + i) and i != 'txt']
-        if group_file is False and folders:
+        if folders:
             return ['УПС!', 'В директории для парсинга присутствуют папки']
-        elif group_file and folders is False:
-            return ['УПС!', 'В директории для парсинга нет папок для преобразования']
+    if del_frq_check:
+        if del_frq == 0:
+            return ['УПС!', 'В удаляемой частоте значение равно 0']
     error = []
-    progress = 0
-    if group_file:
-        for folder in os.listdir(path):
-            if os.path.isdir(path + '\\' + folder):
-                err = folder_checked(path + '\\' + folder)
-                progress += err['len']
-                if err['errors']:
-                    error.append(err)
-    else:
-        err = folder_checked(path)
-        error, progress = err['errors'], err['len']
-    return ['УПС!', '\n'.join(error)] if error else {'path': path, 'progress': progress}
+    txt_files = list(filter(lambda x: x.endswith('.txt'), os.listdir(path)))
+    excel_files = [x for x in os.listdir(path) if x.endswith('.xlsx')]
+    if 'Описание.txt' not in txt_files and 'описание.txt' not in txt_files:
+        error.append(f"Нет файла с описанием режимов ({path})")
+    try:
+        with open(pathlib.Path(path, 'Описание.txt'), mode='r', encoding='utf-8') as f:
+            lines = f.readlines()
+    except UnicodeDecodeError:
+        with open(pathlib.Path(path, 'Описание.txt'), mode='r', encoding='ANSI') as f:
+            lines = f.readlines()
+    for line in lines:
+        if re.findall(r'\s', line.rstrip('\n')):
+            err_lines = line.rstrip('\n')
+            error.append(f"Пробелы в названии режимов ({path}, {err_lines})")
+    all_doc = len(excel_files)*2
+    return ['УПС!', '\n'.join(error)] if error else {'path': path, 'all_doc': all_doc,
+                                                     'del_frq_check': del_frq_check, 'del_frq': del_frq}
 
 
 def checked_generation_pemi(source_file, output_file, set_number, set_quantity, freq_restrict,
