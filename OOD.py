@@ -169,9 +169,12 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                           'checked-wear_FSTEK': ['Нос. ФСТЭК', self.lineEdit_wear_FSTEK],
                           'checked-r1_FSTEK': ['r1 ФСТЭК', self.lineEdit_r1_FSTEK],
                           'parser-path_folder_parser': ['Папка с файлами', self.lineEdit_path_parser],
-                          'parser-checkBox_group_parcing': ['Пакетный парсинг', self.checkBox_group_parcing],
-                          'parser-checkBox_no_freq_limit': ['Без ограничения частот', self.checkBox_no_freq_limit],
+                          'parser-checkBox_difference_3': ['Разница 3 ед.', self.checkBox_difference_3],
+                          'parser-checkBox_two_percent': ['Проверка 2%', self.checkBox_two_percent],
+                          'parser-checkBox_video_check': ['Video', self.checkBox_video_check],
                           'parser-checkBox_12_sectors': ['12 секторов', self.checkBox_12_sectors],
+                          'parser-checkBox_del_frq': ['Удалить', self.checkBox_del_frq],
+                          'parser-doubleSpinBox_del_frq': ['Частота', self.doubleSpinBox_del_frq],
                           'extract-path_folder_start_extract': ['Папка с файлами',
                                                                 self.lineEdit_path_start_extract],
                           'extract-conclusion': ['Заключение', self.lineEdit_conclusion],
@@ -619,10 +622,13 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.groupBox_error_order.setStyleSheet("")
             self.plainTextEdit_errors.clear()
             self.groupBox_errors.setStyleSheet("")
-            group_file = self.checkBox_group_parcing.isChecked()
-            no_freq_lim = self.checkBox_no_freq_limit.isChecked()
+            difference_3 = self.checkBox_difference_3.isChecked()
+            two_percent = self.checkBox_two_percent.isChecked()
+            video_check = self.checkBox_video_check.isChecked()
             twelve_sectors = self.checkBox_12_sectors.isChecked()
-            folder = checked_file_parcing(self.lineEdit_path_parser, group_file)
+            del_frq_check = self.checkBox_del_frq.isChecked()
+            del_frq = self.doubleSpinBox_del_frq.value()
+            folder = checked_file_parcing(self.lineEdit_path_parser, del_frq_check, del_frq)
             if isinstance(folder, list):
                 self.logging_dict[file_name[0]].warning(folder[1])
                 self.logging_dict[file_name[0]].warning('Ошибки в заполнении формы, программа не запущена в работу')
@@ -633,7 +639,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 return
             # Если всё прошло запускаем поток
             self.logging_dict[file_name[0]].info('Запуск на выполнение')
-            folder['group_file'], folder['no_freq_lim'], folder['12_sec'] = group_file, no_freq_lim, twelve_sectors
+            folder['difference_3'], folder['two_percent'] = difference_3, two_percent
+            folder['video_check'], folder['12_sec'] = video_check, twelve_sectors
             folder['logging'], folder['queue'] = self.logging_dict[file_name[0]], self.queue
             folder['default_path'], folder['move'] = self.default_path, len(self.thread_dict['parcing_file'])
             self.thread = FileParcing(folder)

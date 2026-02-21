@@ -24,17 +24,19 @@ class FileParcing(QThread):
     def __init__(self, incoming_data):  # Список переданных элементов.
         QThread.__init__(self)
         self.path = incoming_data['path']
-        self.all_progress = incoming_data['progress']
-        self.group_file = incoming_data['group_file']
-        self.no_freq_lim = incoming_data['no_freq_lim']
+        self.difference_3 = incoming_data['difference_3']
+        self.two_percent = incoming_data['two_percent']
+        self.video_check = incoming_data['video_check']
         self.twelve_sectors = incoming_data['12_sec']
+        self.del_frq_check = incoming_data['del_frq_check']
+        self.del_frq = incoming_data['del_frq']
         self.logging = incoming_data['logging']
         self.queue = incoming_data['queue']
         self.default_path = incoming_data['default_path']
         self.event = threading.Event()
         self.event.set()
         self.now_doc = 0
-        self.all_doc = 0
+        self.all_doc = incoming_data['all_doc']
         self.percent_progress = 0
         self.move = incoming_data['move']
         self.name_dir = pathlib.Path(self.path).name
@@ -50,71 +52,38 @@ class FileParcing(QThread):
         try:
             current_progress = 0
             self.logging.info('Начинаем парсить файлы')
-            self.all_doc = self.all_progress
-            self.percent_progress = 100 / self.all_progress
+            self.percent_progress = 100 / self.all_doc
             self.line_progress.emit(f'Выполнено {int(current_progress)} %')
             self.progress_value.emit(0)
             errors = []
             succsess_path = []
             error_path = []
-            if self.group_file:
-                for folder in os.listdir(self.path):
-                    self.event.wait()
-                    if self.window_check.stop_threading:
-                        raise CancelException()
-                    if os.path.isdir(pathlib.Path(self.path, folder)):
-                        err = file_parcing(pathlib.Path(self.path, folder), self.logging, self.line_doing, self.now_doc,
-                                           self.all_doc, self.line_progress, self.progress_value, self.percent_progress,
-                                           current_progress, self.no_freq_lim, self.default_path, self.event,
-                                           self.window_check, self.twelve_sectors)
-                        if err['base_exception']:
-                            self.logging.error(err['text'])
-                            self.logging.error(err['trace'])
-                            self.logging.warning(f"Парсинг файлов в папке «{self.name_dir}» не завершён из-за ошибки")
-                            self.info_value.emit('УПС!', 'Работа программы завершена из-за непредвиденной ошибки')
-                            self.event.clear()
-                            self.event.wait()
-                            self.status.emit(f"Ошибка при парсинге файлов в папке «{self.name_dir}»")
-                            os.chdir(self.default_path)
-                            self.status_finish.emit('parcing_file', str(self))
-                            time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
-                            self.window_check.close()
-                            return
-                        if err['cancel']:
-                            raise CancelException()
-                        if err['error']:
-                            error_path.append(pathlib.Path(self.path, folder))
-                            for element in err['error']:
-                                errors.append(element)
-                        else:
-                            succsess_path.append(pathlib.Path(self.path, folder))
-                        current_progress = err['cp']
-                        self.now_doc = err['now_doc']
+            answer = file_parcing(self.path, self.logging, self.line_doing, self.now_doc, self.all_doc,
+                                  self.line_progress, self.progress_value, self.percent_progress, current_progress,
+                                  self.default_path, self.event, self.window_check, twelve_sectors=self.twelve_sectors,
+                                  difference_3=self.difference_3, two_percent=self.two_percent,
+                                  video_check=self.video_check, del_frq_check=self.del_frq_check, del_frq=self.del_frq
+                                  )
+            if answer['status'] == 'exception':
+                self.logging.error(answer['data']['exception'])
+                self.logging.error(answer['data']['trace'])
+                self.logging.warning(f"Парсинг файлов в папке «{self.name_dir}» не завершён из-за ошибки")
+                self.info_value.emit('УПС!', 'Работа программы завершена из-за непредвиденной ошибки')
+                self.event.clear()
+                self.event.wait()
+                self.status.emit(f"Ошибка при парсинге файлов в папке «{self.name_dir}»")
+                os.chdir(self.default_path)
+                self.status_finish.emit('parcing_file', str(self))
+                time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
+                self.window_check.close()
+                return
+            if answer['status'] == 'cancel':
+                raise CancelException
+            if answer['status'] == 'errors':
+                errors = [*answer['data']['errors'], *answer['data']['errors_continue']]
+                error_path.append(self.path)
             else:
-                err = file_parcing(self.path, self.logging, self.line_doing, self.now_doc, self.all_doc,
-                                   self.line_progress, self.progress_value, self.percent_progress, current_progress,
-                                   self.no_freq_lim, self.default_path, self.event, self.window_check,
-                                   self.twelve_sectors)
-                if err['base_exception']:
-                    self.logging.error(err['text'])
-                    self.logging.error(err['trace'])
-                    self.logging.warning(f"Парсинг файлов в папке «{self.name_dir}» не завершён из-за ошибки")
-                    self.info_value.emit('УПС!', 'Работа программы завершена из-за непредвиденной ошибки')
-                    self.event.clear()
-                    self.event.wait()
-                    self.status.emit(f"Ошибка при парсинге файлов в папке «{self.name_dir}»")
-                    os.chdir(self.default_path)
-                    self.status_finish.emit('parcing_file', str(self))
-                    time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
-                    self.window_check.close()
-                    return
-                if err['cancel']:
-                    raise CancelException
-                if err['error']:
-                    errors = err['error']
-                    error_path.append(self.path)
-                else:
-                    succsess_path.append(self.path)
+                succsess_path.append(self.path)
             if succsess_path:
                 self.queue.put({'Прошедшие заказы:': '\n'.join(succsess_path)})
                 self.errors.emit()
@@ -137,7 +106,6 @@ class FileParcing(QThread):
             self.status_finish.emit('parcing_file', str(self))
             time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
             self.window_check.close()
-            # print(datetime.datetime.now() - start_time)
             return
         except CancelException:
             self.logging.warning(f"Парсинг файлов в папке «{self.name_dir}» отменён пользователем")

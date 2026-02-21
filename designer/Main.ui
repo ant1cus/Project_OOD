@@ -810,7 +810,7 @@
         <item row="3" column="0" colspan="3">
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
-           <widget class="QCheckBox" name="checkBox_group_parcing">
+           <widget class="QCheckBox" name="checkBox_difference_3">
             <property name="font">
              <font>
               <pointsize>10</pointsize>
@@ -820,12 +820,12 @@
              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Активировать если необходимо распарсить несколько заказов&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
-             <string>Пакетный парсинг</string>
+             <string>Разница 3 ед.</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QCheckBox" name="checkBox_no_freq_limit">
+           <widget class="QCheckBox" name="checkBox_two_percent">
             <property name="font">
              <font>
               <pointsize>10</pointsize>
@@ -835,7 +835,19 @@
              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Активировать если нет необходимости контроля получаемых значений&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
-             <string>Без ограничения частот</string>
+             <string>Проверка 2%</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBox_video_check">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Video</string>
             </property>
            </widget>
           </item>
@@ -851,6 +863,39 @@
             </property>
             <property name="text">
              <string>12 секторов</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBox_del_frq">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Удалить</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="doubleSpinBox_del_frq">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
+            <property name="decimals">
+             <number>4</number>
+            </property>
+            <property name="maximum">
+             <double>100000.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>100.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -3058,7 +3103,7 @@
      <x>0</x>
      <y>0</y>
      <width>847</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_settings">
@@ -3224,9 +3269,12 @@
   <tabstop>pushButton_check</tabstop>
   <tabstop>lineEdit_path_parser</tabstop>
   <tabstop>pushButton_open_folder_parser</tabstop>
-  <tabstop>checkBox_group_parcing</tabstop>
-  <tabstop>checkBox_no_freq_limit</tabstop>
+  <tabstop>checkBox_difference_3</tabstop>
+  <tabstop>checkBox_two_percent</tabstop>
+  <tabstop>checkBox_video_check</tabstop>
   <tabstop>checkBox_12_sectors</tabstop>
+  <tabstop>checkBox_del_frq</tabstop>
+  <tabstop>doubleSpinBox_del_frq</tabstop>
   <tabstop>plainTextEdit_succsess_order</tabstop>
   <tabstop>plainTextEdit_error_order</tabstop>
   <tabstop>plainTextEdit_errors</tabstop>
@@ -3699,6 +3747,22 @@
     <hint type="destinationlabel">
      <x>503</x>
      <y>364</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_del_frq</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>doubleSpinBox_del_frq</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>629</x>
+     <y>127</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>761</x>
+     <y>127</y>
     </hint>
    </hints>
   </connection>

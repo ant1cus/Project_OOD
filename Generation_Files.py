@@ -61,12 +61,12 @@ class GenerationFile(QThread):
             self.progress_value.emit(0)
             self.percent_progress = 100/self.all_doc
             self.line_doing.emit(f'Парсим файлы из исходной папки {pathlib.Path(self.source).name}')
-            error = file_parcing(self.source, self.logging, self.line_doing, self.now_doc, self.all_doc,
-                                 self.line_progress, self.progress_value, self.percent_progress, current_progress,
-                                 self.no_freq_lim, self.default_path, self.event, self.window_check)
-            if error['base_exception']:
-                self.logging.error(error['text'])
-                self.logging.error(error['trace'])
+            answer = file_parcing(self.source, self.logging, self.line_doing, self.now_doc, self.all_doc,
+                                  self.line_progress, self.progress_value, self.percent_progress, current_progress,
+                                  self.default_path, self.event, self.window_check, no_freq_lim=self.no_freq_lim)
+            if answer['status'] == 'exception':
+                self.logging.error(answer['data']['exception'])
+                self.logging.error(answer['data']['trace'])
                 self.logging.warning(f"Генерация файлов в папке «{self.name_dir}» не завершена из-за ошибки")
                 self.info_value.emit('УПС!', 'Работа программы завершена из-за непредвиденной ошибки')
                 self.event.clear()
@@ -77,12 +77,12 @@ class GenerationFile(QThread):
                 time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
                 self.window_check.close()
                 return
-            if error['cancel']:
+            if answer['status'] == 'cancel':
                 raise CancelException
-            if error['error']:
+            if answer['status'] == 'errors':
                 self.logging.info(f"В исходных файлах в папке «{pathlib.Path(self.source).name}» присутствуют ошибки")
-                self.logging.info('\n'.join(error['error']))
-                err = '\n' + '\n'.join(error['error'])
+                self.logging.info('\n'.join(answer['data']['errors']))
+                err = '\n' + '\n'.join(answer['data']['errors'])
                 self.info_value.emit('УПС!', f"Ошибки при парсинге файлов:{err}")
                 self.event.clear()
                 self.event.wait()
@@ -92,9 +92,9 @@ class GenerationFile(QThread):
                 time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
                 self.window_check.close()
                 return
-            self.now_doc = error['now_doc']
+            self.now_doc = answer['data']['now_doc']
             quant_doc = len(os.listdir(self.source)) - 2
-            current_progress = error['cp']
+            current_progress = answer['data']['cp']
             self.line_progress.emit(f'Выполнено {int(current_progress)} %')
             self.progress_value.emit(int(current_progress))
             self.line_doing.emit(f'Считываем режимы из текстового файла')
