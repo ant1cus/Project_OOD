@@ -102,7 +102,7 @@ def file_parcing(path, logging, line_doing, now_doc, all_doc, line_progress, pro
                     if two_percent and re.findall(r'dp', sheet, re.I):
                         df_rep = df.replace(False, 0)
                         two_percent_check = (np.where(
-                            df_rep[1] != 0, ((df_rep[1] - df_rep[2]) * 100 / df_rep[1]) < 2, False)).tolist()
+                            df_rep[1] != 0, ((df_rep[1] - df_rep[2]) * 100 / df_rep[1]) > 2, False)).tolist()
                     for i in range(df.shape[0]):
                         # Здесь может не попасть в i или брать с названиями
                         frq, s, n = round(df.iloc[i, 0], 4), df.iloc[i, 1], df.iloc[i, 2]
@@ -140,7 +140,7 @@ def file_parcing(path, logging, line_doing, now_doc, all_doc, line_progress, pro
                         if difference_3 and abs(s-n) < 3.1:
                             errors.append(f"В заказе «{name_dir}» в исходнике {file.name} в режиме {sheet} на частоте "
                                           f"{frq} разница между сигналом и шумом меньше 3.1!")
-                        if two_percent and any(two_percent_check):
+                        if two_percent and len(two_percent_check) > 0 and any(two_percent_check) is False:
                             err_str = f"В заказе «{name_dir}» в исходнике {file.name} в режиме {sheet}" \
                                       f" не пройдена проверка 2%!"
                             if err_str not in errors_continue:
