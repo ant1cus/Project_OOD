@@ -131,9 +131,6 @@ def file_parcing(path, logging, line_doing, now_doc, all_doc, line_progress, pro
                         if s == n:
                             errors.append(f"В заказе «{name_dir}» в исходнике {file.name} в режиме {sheet} на частоте "
                                           f"{frq} одинаковые значения сигнала и шума!")
-                        if s > 60:
-                            errors.append(f"В заказе «{name_dir}» в исходнике {file.name} в режиме {sheet} на частоте "
-                                          f"{frq} слишком большое значение сигнала!")
                         if abs(s-n) > 60:
                             errors.append(f"В заказе «{name_dir}» в исходнике {file.name} в режиме {sheet} на частоте "
                                           f"{frq} слишком большая разница между сигналом и шумом!")
