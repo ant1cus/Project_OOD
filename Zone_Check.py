@@ -550,20 +550,22 @@ class ZoneChecked(QThread):
 
                             elif isinstance(ws.cell(row, col).value, str) and ('Windows' in ws.cell(row, col).value
                                                                                or 'Linux' in ws.cell(row, col).value):
-                                if report[set_number]['error_win'] and 'Windows' in ws.cell(row, col).value:
+                                sys_err = True if 'Windows' in ws.cell(row, col).value else False
+                                if (report[set_number]['error_win'] and sys_err) or\
+                                        (report[set_number]['error_lin'] and sys_err is False):
                                     ws.cell(row, col).fill = PatternFill(start_color='FFC000', end_color='FFC000',
                                                                          fill_type="solid")
                                     ws.cell(set_row, 1).fill = PatternFill(start_color='FFC000', end_color='FFC000',
                                                                            fill_type="solid")
-                                    sys_err = True
+                                    # sys_err = True
                                     green = False
-                                elif report[set_number]['error_lin'] and 'Linux' in ws.cell(row, col).value:
-                                    ws.cell(row, col).fill = PatternFill(start_color='FFC000', end_color='FFC000',
-                                                                         fill_type="solid")
-                                    ws.cell(set_row, 1).fill = PatternFill(start_color='FFC000', end_color='FFC000',
-                                                                           fill_type="solid")
-                                    sys_err = False
-                                    green = False
+                                # elif report[set_number]['error_lin'] and sys_err is False:
+                                #     ws.cell(row, col).fill = PatternFill(start_color='FFC000', end_color='FFC000',
+                                #                                          fill_type="solid")
+                                #     ws.cell(set_row, 1).fill = PatternFill(start_color='FFC000', end_color='FFC000',
+                                #                                            fill_type="solid")
+                                #     # sys_err = False
+                                #     green = False
                                 else:
                                     ws.cell(row, col).fill = PatternFill(start_color='92D050', end_color='92D050',
                                                                          fill_type="solid")

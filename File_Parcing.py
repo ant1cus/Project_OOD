@@ -56,7 +56,7 @@ class FileParcing(QThread):
             self.line_progress.emit(f'Выполнено {int(current_progress)} %')
             self.progress_value.emit(0)
             errors = []
-            succsess_path = []
+            success_path = []
             error_path = []
             answer = file_parcing(self.path, self.logging, self.line_doing, self.now_doc, self.all_doc,
                                   self.line_progress, self.progress_value, self.percent_progress, current_progress,
@@ -83,9 +83,9 @@ class FileParcing(QThread):
                 errors = [*answer['data']['errors'], *answer['data']['errors_continue']]
                 error_path.append(self.path)
             else:
-                succsess_path.append(self.path)
-            if succsess_path:
-                self.queue.put({'Прошедшие заказы:': '\n'.join(succsess_path)})
+                success_path.append(self.path)
+            if success_path:
+                self.queue.put({'Прошедшие заказы:': '\n'.join(success_path)})
                 self.errors.emit()
             if error_path:
                 self.queue.put({'Заказы с ошибками:': '\n'.join(error_path)})
