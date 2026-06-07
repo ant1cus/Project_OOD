@@ -125,13 +125,13 @@ def file_parcing(path, logging, line_doing, now_doc, all_doc, line_progress, pro
                                           f"{frq} шум указан как текстовое значение")
                         if isinstance(s, str) or isinstance(n, str) or no_freq_lim:
                             continue
-                        if s < n and any([video_check, re.findall(r'\.p', sheet, re.I)]) is False:
+                        if s < n and all([video_check, re.findall(r'\.p', sheet, re.I)]) is False:
                             errors.append(f"В заказе «{name_dir}» в исходнике {file.name} в режиме {sheet} на частоте "
                                           f"{frq} значения шума больше сигнала!")
-                        if s == n and any([video_check, re.findall(r'\.p', sheet, re.I)]) is False:
+                        if s == n and all([video_check, re.findall(r'\.p', sheet, re.I)]) is False:
                             errors.append(f"В заказе «{name_dir}» в исходнике {file.name} в режиме {sheet} на частоте "
                                           f"{frq} одинаковые значения сигнала и шума!")
-                        if abs(s-n) > 60 and any([video_check, re.findall(r'\.p', sheet, re.I)]) is False:
+                        if abs(s-n) > 60 and all([video_check, re.findall(r'\.p', sheet, re.I)]) is False:
                             errors.append(f"В заказе «{name_dir}» в исходнике {file.name} в режиме {sheet} на частоте "
                                           f"{frq} слишком большая разница между сигналом и шумом!")
                         # Дополнительные проверки (кроме ограничений)
@@ -160,6 +160,8 @@ def file_parcing(path, logging, line_doing, now_doc, all_doc, line_progress, pro
                 event.wait()
                 if window_check.stop_threading:
                     return {'status': 'cancel', 'text': '', 'data': {}}
+                if '~' in file.name:
+                    continue
                 df_for_write = {}
                 now_doc += 1
                 line_doing.emit(f'Создаем txt файлы для документа {file.name} ({now_doc} из {all_doc})')
