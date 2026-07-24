@@ -382,7 +382,7 @@ def checked_generation_cc(start_folder, finish_folder, set_number, checkbox_freq
             if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.')):
                 return ['УПС!', 'Не правильно указана частота для ограничения (дробный разделитель - ".")']
     txt = checkbox_txt.isChecked()
-    dispersion = lineedit_dispersion.text() if checkbox_dispersion.isChecked() else ''
+    dispersion = lineedit_dispersion.text() if checkbox_dispersion.isChecked() else '5'
     if dispersion:
         for i in dispersion:
             if check(i, ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.')):
