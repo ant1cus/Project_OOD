@@ -313,7 +313,7 @@ class ZoneChecked(QThread):
                         continue
                     find_st = df.loc[(df[0].str.contains('Максимальные значения', case=False)) |
                                      (df[0].str.contains('Опасные сигналы не обнаружены', case=False)) |
-                                     (df.apply(lambda x: x[0] == x[zone_col[0]] == x[zone_col[-1]] ==
+                                     (df.apply(lambda x: x[0] == x[1] == x[zone_col[0]] == x[zone_col[-1]] ==
                                                                  x[zone_col[1]] == x[zone_col[-2]], axis=1))]
                     if self.department is False:
                         find_st = find_st.drop(0)
@@ -326,7 +326,7 @@ class ZoneChecked(QThread):
                     name_mode = df.drop([i for i in range(df.shape[1]) if i not in zone_col and i != 0], axis=1)
                     if name_mode.iloc[0, 0] == '2 категория':
                         name_mode = name_mode.drop(0)
-                    name_mode = name_mode.loc[(df.apply(lambda x: x[0] == x[zone_col[0]] == x[zone_col[-1]] ==
+                    name_mode = name_mode.loc[(df.apply(lambda x: x[0] == x[1] == x[zone_col[0]] == x[zone_col[-1]] ==
                                                                   x[zone_col[1]] == x[zone_col[-2]]
                                                         and x[0] != 'Опасные сигналы не обнаружены', axis=1))]
                     # Тут продолжаем плохо дропнулось
