@@ -548,8 +548,8 @@ class ZoneChecked(QThread):
                                                                          fill_type="solid")
                                     green = True
 
-                            elif isinstance(ws.cell(row, col).value, str) and ('Windows' in ws.cell(row, col).value
-                                                                               or 'Linux' in ws.cell(row, col).value):
+                            elif isinstance(ws.cell(row, col).value, str) and (ws.cell(row, col).value == 'Windows'
+                                                                               or ws.cell(row, col).value == 'Linux'):
                                 sys_err = True if 'Windows' in ws.cell(row, col).value else False
                                 if (report[set_number]['error_win'] and sys_err) or\
                                         (report[set_number]['error_lin'] and sys_err is False):
