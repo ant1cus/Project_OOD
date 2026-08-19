@@ -4,7 +4,7 @@ import threading
 import time
 import traceback
 from PyQt5.QtCore import QThread, pyqtSignal
-from convert import file_parcing
+from convert import file_parsing
 from DoingWindow import CheckWindow
 
 
@@ -12,7 +12,7 @@ class CancelException(Exception):
     pass
 
 
-class FileParcing(QThread):
+class FileParsing(QThread):
     status_finish = pyqtSignal(str, str)
     progress_value = pyqtSignal(int)
     info_value = pyqtSignal(str, str)
@@ -58,7 +58,7 @@ class FileParcing(QThread):
             errors = []
             success_path = []
             error_path = []
-            answer = file_parcing(self.path, self.logging, self.line_doing, self.now_doc, self.all_doc,
+            answer = file_parsing(self.path, self.logging, self.line_doing, self.now_doc, self.all_doc,
                                   self.line_progress, self.progress_value, self.percent_progress, current_progress,
                                   self.default_path, self.event, self.window_check, twelve_sectors=self.twelve_sectors,
                                   difference_3=self.difference_3, two_percent=self.two_percent,
@@ -73,7 +73,7 @@ class FileParcing(QThread):
                 self.event.wait()
                 self.status.emit(f"Ошибка при парсинге файлов в папке «{self.name_dir}»")
                 os.chdir(self.default_path)
-                self.status_finish.emit('parcing_file', str(self))
+                self.status_finish.emit('parsing_file', str(self))
                 time.sleep(0.1)  # Не удалять, не успевает отработать emit status_finish. Может потом
                 self.window_check.close()
                 return
@@ -103,7 +103,7 @@ class FileParcing(QThread):
             self.logging.info(f"Генрация файлов в папке «{self.name_dir}» успешно завершена")
             os.chdir(self.default_path)
             self.status.emit(f"Парсинг файлов в папке «{self.name_dir}» успешно завершён")
-            self.status_finish.emit('parcing_file', str(self))
+            self.status_finish.emit('parsing_file', str(self))
             time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
             self.window_check.close()
             return
@@ -111,7 +111,7 @@ class FileParcing(QThread):
             self.logging.warning(f"Парсинг файлов в папке «{self.name_dir}» отменён пользователем")
             self.status.emit(f"Парсинг файлов в папке «{self.name_dir}» отменён пользователем")
             os.chdir(self.default_path)
-            self.status_finish.emit('parcing_file', str(self))
+            self.status_finish.emit('parsing_file', str(self))
             time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
             self.window_check.close()
             return
@@ -124,7 +124,7 @@ class FileParcing(QThread):
             self.event.wait()
             self.status.emit(f"Ошибка при парсинге файлов в папке «{self.name_dir}»")
             os.chdir(self.default_path)
-            self.status_finish.emit('parcing_file', str(self))
+            self.status_finish.emit('parsing_file', str(self))
             time.sleep(1)  # Не удалять, не успевает отработать emit status_finish. Может потом
             self.window_check.close()
             return

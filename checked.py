@@ -47,7 +47,7 @@ def checked_zone_checked(line_edit_path_check, line_edit_table_number, zone):
     return zone_out
 
 
-def checked_file_parcing(dir_path,  del_frq_check, del_frq):
+def checked_file_parsing(dir_path,  del_frq_check, del_frq):
     # Выбираем путь для исходников.
     path = dir_path.text().strip()
     if not path:

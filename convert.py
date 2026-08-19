@@ -2,33 +2,22 @@ import os
 import re
 import traceback
 from pathlib import Path
+from small_functions import read_description_file
 
 import pandas as pd
 import numpy as np
 
 
-def file_parcing(path, logging, line_doing, now_doc, all_doc, line_progress, progress, per, cp,
+def file_parsing(path, logging, line_doing, now_doc, all_doc, line_progress, progress, per, cp,
                  default_path, event, window_check, twelve_sectors=False, no_freq_lim=False, difference_3=False,
                  two_percent=False, video_check=False, del_frq_check=False, del_frq=0):
     try:
         name_dir = Path(path).name
         pat = ['_ЦП', '.m', '.v']  # список ключевых слов для поиска в ЦП
-        mode = []
         errors = []
         errors_continue = []  # Для того, чтобы при ошибках в 2% распарсить файлы
         logging.info(f"Читаем txt, сохраняем режимы, ищем подходящие excel в {name_dir}")
-        for file in Path(path).glob('*.txt'):
-            try:
-                with open(file, mode='r', encoding="utf-8-sig") as f:
-                    logging.info("Кодировка utf-8-sig")
-                    mode_1 = f.readlines()
-                    mode_1 = [line.rstrip() for line in mode_1]
-            except UnicodeDecodeError:
-                with open(file, mode='r') as f:
-                    logging.info("Другая кодировка")
-                    mode_1 = f.readlines()
-                    mode_1 = [line.rstrip() for line in mode_1]
-            mode = [x for x in mode_1 if x]
+        mode = read_description_file(Path(path))
         for file in Path(path).glob('*.xlsx'):
             try:
                 event.wait()
@@ -214,5 +203,5 @@ def file_parcing(path, logging, line_doing, now_doc, all_doc, line_progress, pro
                 'data': {'errors': errors, 'errors_continue': errors_continue, 'cp': cp, 'now_doc': now_doc}}
     # Подумать что тут с исключениями
     except BaseException as es:
-        return {'status': 'exception', 'text': 'Функция «file_parcing» завершилась с ошибкой',
+        return {'status': 'exception', 'text': 'Функция «file_parsing» завершилась с ошибкой',
                 'data': {'trace': traceback.format_exc(), 'exception': es}}

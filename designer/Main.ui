@@ -15,7 +15,7 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="1" column="0">
+    <item row="0" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
        <number>0</number>
@@ -279,6 +279,21 @@
         </item>
         <item row="0" column="0">
          <layout class="QGridLayout" name="gridLayout_2">
+          <item row="3" column="0" colspan="4">
+           <widget class="QLabel" name="label_zone_area">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Требуемые ограничения по зонам:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
           <item row="1" column="1">
            <widget class="QLineEdit" name="lineEdit_table_number">
             <property name="font">
@@ -288,6 +303,21 @@
             </property>
             <property name="toolTip">
              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Целое число&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="5">
+           <widget class="QPushButton" name="pushButton_open_folder_zone_check">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Выбрать директорию для проверки&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string>Открыть</string>
             </property>
            </widget>
           </item>
@@ -303,6 +333,23 @@
             </property>
             <property name="text">
              <string>Только 1 таблица</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QCheckBox" name="checkBox_win_lin">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+              <weight>50</weight>
+              <bold>false</bold>
+             </font>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Активировать, если в документах 2 системы&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string>Windows + Linux</string>
             </property>
            </widget>
           </item>
@@ -330,38 +377,6 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="0" colspan="4">
-           <widget class="QLabel" name="label_zone_area">
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Требуемые ограничения по зонам:</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="3">
-           <widget class="QCheckBox" name="checkBox_win_lin">
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-              <weight>50</weight>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Активировать, если в документах 2 системы&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="text">
-             <string>Windows + Linux</string>
-            </property>
-           </widget>
-          </item>
           <item row="1" column="4">
            <widget class="QCheckBox" name="checkBox_extend_report">
             <property name="font">
@@ -374,22 +389,7 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="4">
-           <widget class="QPushButton" name="pushButton_open_folder_zone_check">
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-             </font>
-            </property>
-            <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Выбрать директорию для проверки&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="text">
-             <string>Открыть</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1" colspan="3">
+          <item row="0" column="1" colspan="4">
            <widget class="QLineEdit" name="lineEdit_path_check">
             <property name="font">
              <font>
@@ -398,6 +398,21 @@
             </property>
             <property name="toolTip">
              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Путь к папке с документами&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="5">
+           <widget class="QPushButton" name="pushButton_zone_mode">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Режимы</string>
             </property>
            </widget>
           </item>
@@ -3253,7 +3268,6 @@
   <tabstop>lineEdit_table_number</tabstop>
   <tabstop>checkBox_first_table</tabstop>
   <tabstop>checkBox_win_lin</tabstop>
-  <tabstop>checkBox_extend_report</tabstop>
   <tabstop>groupBox_FSB</tabstop>
   <tabstop>lineEdit_stationary_FSB</tabstop>
   <tabstop>lineEdit_carry_FSB</tabstop>
@@ -3370,7 +3384,6 @@
   <tabstop>checkBox_director</tabstop>
   <tabstop>lineEdit_conclusion</tabstop>
   <tabstop>lineEdit_path_start_extract</tabstop>
-  <tabstop>tabWidget</tabstop>
   <tabstop>lineEdit_path_folder_start_lf_pemi</tabstop>
   <tabstop>pushButton_open_folder_start_lf_pemi</tabstop>
   <tabstop>lineEdit_path_folder_finish_lf_pemi</tabstop>
@@ -3763,6 +3776,22 @@
     <hint type="destinationlabel">
      <x>761</x>
      <y>127</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_extend_report</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>pushButton_zone_mode</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>662</x>
+     <y>128</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>777</x>
+     <y>128</y>
     </hint>
    </hints>
   </connection>

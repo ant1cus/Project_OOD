@@ -7,7 +7,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QLineEdit, QDialog, QButtonGroup, QLabel, QSizePolicy, QPushButton, QFileDialog, QComboBox,\
     QDoubleSpinBox
 from PyQt5.QtCore import QDir
-from rewrite_settings import rewrite
+from small_functions import rewrite
 
 
 class Button(QLineEdit):

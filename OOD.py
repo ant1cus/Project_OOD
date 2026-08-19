@@ -1,11 +1,12 @@
 import datetime
 import json
 import os
-import pathlib
+from pathlib import Path
 import queue
 import sys
 import traceback
 
+import pandas as pd
 from PyQt5.QtGui import QSyntaxHighlighter, QTextCharFormat, QColor, QIcon
 
 import Main
@@ -13,14 +14,15 @@ import logging
 import about
 from PyQt5.QtCore import QTranslator, QLocale, QLibraryInfo, QDir
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox, QDialog
-from checked import (checked_zone_checked, checked_file_parcing, checked_generation_pemi,
+from checked import (checked_zone_checked, checked_file_parsing, checked_generation_pemi,
                      checked_delete_header_footer, checked_hfe_generation, checked_hfi_generation,
                      checked_application_data, checked_lf_data, checked_generation_cc, checked_number_instance,
                      checked_find_files, checked_lf_pemi)
-from rewrite_settings import rewrite
+from small_functions import rewrite, read_mode_docx
+from Description_File import CheckDescription
 from Default import DefaultWindow
 from Zone_Check import ZoneChecked
-from File_Parcing import FileParcing
+from File_Parsing import FileParsing
 from Generation_Files import GenerationFile
 from Delete_Header_Footer import DeleteHeaderFooter
 from HFE_Generation import HFEGeneration
@@ -118,8 +120,9 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                                                                     self.browse(self.lineEdit_path_folder_finish_lf_pemi)))
         self.groupBox_FSB.clicked.connect(self.group_box_change_state)
         self.groupBox_FSTEK.clicked.connect(self.group_box_change_state)
+        self.pushButton_zone_mode.clicked.connect(self.check_description_file)
         self.pushButton_check.clicked.connect(self.checked_zone)
-        self.pushButton_parser.clicked.connect(self.parcing_file)
+        self.pushButton_parser.clicked.connect(self.parsing_file)
         self.pushButton_generation_pemi.clicked.connect(self.generate_pemi)
         self.pushButton_generation_exctract.clicked.connect(self.delete_header_footer)
         self.pushButton_generation_HFE.clicked.connect(self.generate_hfe)
@@ -149,8 +152,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.tabWidget.tabCloseRequested.connect(lambda index: self.tabWidget.removeTab(index))
         self.start_index = False
         self.start_name = False
-        self.default_path = pathlib.Path.cwd()  # Путь для файла настроек
-        self.setWindowIcon(QIcon(str(pathlib.Path(self.default_path, 'icons', 'logo.png'))))
+        self.default_path = Path.cwd()  # Путь для файла настроек
+        self.setWindowIcon(QIcon(str(Path(self.default_path, 'icons', 'logo.png'))))
         # Имена в файле
         self.name_list = {'checked-path_folder_check': ['Папка с файлами', self.lineEdit_path_check],
                           'checked-table_number': ['Номер таблицы', self.lineEdit_table_number],
@@ -265,7 +268,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                             "tab_finding_files": self.action_finding_file,
                             "tab_gen_lf_pemi": self.action_gen_lf_pemi}
         try:
-            with open(pathlib.Path(pathlib.Path.cwd(), 'Настройки.txt'), "r", encoding='utf-8-sig') as f:
+            with open(Path(Path.cwd(), 'Настройки.txt'), "r", encoding='utf-8-sig') as f:
                 dict_load = json.load(f)
                 self.data = dict_load['widget_settings']
                 self.tab_order = dict_load['gui_settings']['tab_order']
@@ -275,7 +278,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 self.version = dict_load["version"]['actual_version']
 
         except FileNotFoundError:
-            with open(pathlib.Path(pathlib.Path.cwd(), 'Настройки.txt'), "w", encoding='utf-8-sig') as f:
+            with open(Path(Path.cwd(), 'Настройки.txt'), "w", encoding='utf-8-sig') as f:
                 dict_load = {"widget_settings": {},
                              "gui_settings":
                                  {"tab_order": {'0': "tab_zone_checked", '1': "tab_parser", '2': "tab_exctract",
@@ -311,7 +314,10 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 self.name_action[self.tab_order[tab]].setChecked(True)
                 self.tabWidget.addTab(self.tab_for_paint[self.tab_order[tab]], self.name_tab[self.tab_order[tab]])
         self.tabWidget.tabBar().setCurrentIndex(0)
-        self.default_date(self.data)
+        self.default_data(self.data)
+        self.all_mode = pd.DataFrame()
+        self.path_check_change()
+        self.lineEdit_path_check.textChanged.connect(self.path_check_change)
         if self.actual_version != self.version:
             dict_load['version'] = {'actual_version': self.actual_version}
             rewrite(self.default_path, dict_load, widget=True)
@@ -322,15 +328,24 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
         self.thread_dict = {'zone_checked': {}, 'continuous_spectrum': {}, 'delete_header_footer': {},
                             'copy_application': {}, 'change_number_instance': {}, 'generate_lf': {},
                             'generate_hfi': {}, 'generate_hfe': {}, 'finding_files': {}, 'generate_pemi': {},
-                            'parcing_file': {}, 'gen_lf_pemi': {}}
+                            'parsing_file': {}, 'gen_lf_pemi': {}}
+
+    def check_description_file(self):  # Читаем и сохраняем файл с режимами для парсинга
+        self.close()
+        window_description = CheckDescription(self, self.all_mode)
+        window_description.show()
+
+    def path_check_change(self):
+        self.all_mode = read_mode_docx(self.lineEdit_path_check.text().strip(), self.checkBox_win_lin.isChecked(),
+                                       self.groupBox_FSB.isChecked())
 
     def logging_file(self, name):
         filename_now = str(datetime.datetime.today().timestamp()) + '_logs.log'
         filename_all = str(datetime.date.today()) + '_logs.log'
-        os.makedirs(pathlib.Path('logs', name), exist_ok=True)
+        os.makedirs(Path('logs', name), exist_ok=True)
         self.logging_dict[filename_now] = logging.getLogger(filename_now)
         self.logging_dict[filename_now].setLevel(logging.DEBUG)
-        name_log = logging.FileHandler(pathlib.Path('logs', name, filename_now))
+        name_log = logging.FileHandler(Path('logs', name, filename_now))
         basic_format = logging.Formatter("%(asctime)s - %(levelname)s - %(funcName)s: %(lineno)d - %(message)s")
         name_log.setFormatter(basic_format)
         self.logging_dict[filename_now].addHandler(name_log)
@@ -338,10 +353,10 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
 
     def finished_thread(self, method, thread='', name_all='', name_now=''):
         if thread:
-            file_all = pathlib.Path('logs', method, self.thread_dict[method][thread]['filename_all'])
-            file_now = pathlib.Path('logs', method, self.thread_dict[method][thread]['filename_now'])
+            file_all = Path('logs', method, self.thread_dict[method][thread]['filename_all'])
+            file_now = Path('logs', method, self.thread_dict[method][thread]['filename_now'])
         else:
-            file_all, file_now = pathlib.Path(name_all), pathlib.Path(name_now)
+            file_all, file_now = Path(name_all), Path(name_now)
         filemode = 'a' if file_all.is_file() else 'w'
         with open(file_now, mode='r') as f:
             file_data = f.readlines()
@@ -385,7 +400,7 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                         self.tab_visible[el] = False
                         rewrite(self.default_path, self.tab_visible, visible='tab_visible')
 
-    def default_date(self, incoming_data):
+    def default_data(self, incoming_data):
         for element in self.name_list:
             if element in incoming_data:
                 if 'checkBox' in element or 'groupBox' in element:
@@ -436,8 +451,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 self.logging_dict[file_name[0]].warning('Ошибки в заполнении формы, программа не запущена в работу')
                 self.on_message_changed(application[0], application[1])
                 self.finished_thread('copy_application',
-                                     name_all=str(pathlib.Path('logs', 'copy_application', file_name[1])),
-                                     name_now=str(pathlib.Path('logs', 'copy_application', file_name[0])))
+                                     name_all=str(Path('logs', 'copy_application', file_name[1])),
+                                     name_now=str(Path('logs', 'copy_application', file_name[0])))
                 return
             # Если всё прошло запускаем поток
             self.logging_dict[file_name[0]].info('Запуск на выполнение')
@@ -456,8 +471,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.logging_dict[file_name[0]].error(traceback.format_exc())
             self.on_message_changed('УПС!', 'Неизвестная ошибка, обратитесь к разработчику')
             self.finished_thread('copy_application',
-                                 name_all=str(pathlib.Path('logs', 'copy_application', file_name[1])),
-                                 name_now=str(pathlib.Path('logs', 'copy_application', file_name[0])))
+                                 name_all=str(Path('logs', 'copy_application', file_name[1])),
+                                 name_now=str(Path('logs', 'copy_application', file_name[0])))
             return
 
     def generate_pemi(self):
@@ -477,8 +492,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 self.logging_dict[file_name[0]].warning('Ошибки в заполнении формы, программа не запущена в работу')
                 self.on_message_changed(generate[0], generate[1])
                 self.finished_thread('generate_pemi',
-                                     name_all=str(pathlib.Path('logs', 'generate_pemi', file_name[1])),
-                                     name_now=str(pathlib.Path('logs', 'generate_pemi', file_name[0])))
+                                     name_all=str(Path('logs', 'generate_pemi', file_name[1])),
+                                     name_now=str(Path('logs', 'generate_pemi', file_name[0])))
                 return
             # Если всё прошло запускаем поток
             self.logging_dict[file_name[0]].info('Запуск на выполнение')
@@ -498,8 +513,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.logging_dict[file_name[0]].error(traceback.format_exc())
             self.on_message_changed('УПС!', 'Неизвестная ошибка, обратитесь к разработчику')
             self.finished_thread('generate_pemi',
-                                 name_all=str(pathlib.Path('logs', 'generate_pemi', file_name[1])),
-                                 name_now=str(pathlib.Path('logs', 'generate_pemi', file_name[0])))
+                                 name_all=str(Path('logs', 'generate_pemi', file_name[1])),
+                                 name_now=str(Path('logs', 'generate_pemi', file_name[0])))
             return
 
     def generate_hfe(self):
@@ -515,8 +530,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 self.logging_dict[file_name[0]].warning('Ошибки в заполнении формы, программа не запущена в работу')
                 self.on_message_changed(generate[0], generate[1])
                 self.finished_thread('generate_hfe',
-                                     name_all=str(pathlib.Path('logs', 'generate_hfe', file_name[1])),
-                                     name_now=str(pathlib.Path('logs', 'generate_hfe', file_name[0])))
+                                     name_all=str(Path('logs', 'generate_hfe', file_name[1])),
+                                     name_now=str(Path('logs', 'generate_hfe', file_name[0])))
                 return
             # Если всё прошло запускаем поток
             self.logging_dict[file_name[0]].info('Запуск на выполнение')
@@ -534,8 +549,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.logging_dict[file_name[0]].error(traceback.format_exc())
             self.on_message_changed('УПС!', 'Неизвестная ошибка, обратитесь к разработчику')
             self.finished_thread('generate_hfe',
-                                 name_all=str(pathlib.Path('logs', 'generate_hfe', file_name[1])),
-                                 name_now=str(pathlib.Path('logs', 'generate_hfe', file_name[0])))
+                                 name_all=str(Path('logs', 'generate_hfe', file_name[1])),
+                                 name_now=str(Path('logs', 'generate_hfe', file_name[0])))
             return
 
     def generate_hfi(self):
@@ -553,8 +568,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 self.logging_dict[file_name[0]].warning('Ошибки в заполнении формы, программа не запущена в работу')
                 self.on_message_changed(generate[0], generate[1])
                 self.finished_thread('generate_hfi',
-                                     name_all=str(pathlib.Path('logs', 'generate_hfi', file_name[1])),
-                                     name_now=str(pathlib.Path('logs', 'generate_hfi', file_name[0])))
+                                     name_all=str(Path('logs', 'generate_hfi', file_name[1])),
+                                     name_now=str(Path('logs', 'generate_hfi', file_name[0])))
                 return
             # Если всё прошло запускаем поток
             self.logging_dict[file_name[0]].info('Запуск на выполнение')
@@ -572,8 +587,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.logging_dict[file_name[0]].error(traceback.format_exc())
             self.on_message_changed('УПС!', 'Неизвестная ошибка, обратитесь к разработчику')
             self.finished_thread('generate_hfi',
-                                 name_all=str(pathlib.Path('logs', 'generate_hfi', file_name[1])),
-                                 name_now=str(pathlib.Path('logs', 'generate_hfi', file_name[0])))
+                                 name_all=str(Path('logs', 'generate_hfi', file_name[1])),
+                                 name_now=str(Path('logs', 'generate_hfi', file_name[0])))
             return
 
     def generate_lf(self):
@@ -588,8 +603,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 self.logging_dict[file_name[0]].warning('Ошибки в заполнении формы, программа не запущена в работу')
                 self.on_message_changed(generate[0], generate[1])
                 self.finished_thread('generate_lf',
-                                     name_all=str(pathlib.Path('logs', 'generate_lf', file_name[1])),
-                                     name_now=str(pathlib.Path('logs', 'generate_lf', file_name[0])))
+                                     name_all=str(Path('logs', 'generate_lf', file_name[1])),
+                                     name_now=str(Path('logs', 'generate_lf', file_name[0])))
                 return
             # Если всё прошло запускаем поток
             self.logging_dict[file_name[0]].info('Запуск на выполнение')
@@ -607,13 +622,13 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.logging_dict[file_name[0]].error(traceback.format_exc())
             self.on_message_changed('УПС!', 'Неизвестная ошибка, обратитесь к разработчику')
             self.finished_thread('generate_lf',
-                                 name_all=str(pathlib.Path('logs', 'generate_lf', file_name[1])),
-                                 name_now=str(pathlib.Path('logs', 'generate_lf', file_name[0])))
+                                 name_all=str(Path('logs', 'generate_lf', file_name[1])),
+                                 name_now=str(Path('logs', 'generate_lf', file_name[0])))
             return
 
-    def parcing_file(self):
-        file_name = self.logging_file('parcing_file')
-        self.logging_dict[file_name[0]].info('----------------Запускаем parcing_file----------------')
+    def parsing_file(self):
+        file_name = self.logging_file('parsing_file')
+        self.logging_dict[file_name[0]].info('----------------Запускаем parsing_file----------------')
         self.logging_dict[file_name[0]].info('Проверка данных')
         try:
             self.plainTextEdit_succsess_order.clear()
@@ -628,36 +643,36 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             twelve_sectors = self.checkBox_12_sectors.isChecked()
             del_frq_check = self.checkBox_del_frq.isChecked()
             del_frq = self.doubleSpinBox_del_frq.value()
-            folder = checked_file_parcing(self.lineEdit_path_parser, del_frq_check, del_frq)
+            folder = checked_file_parsing(self.lineEdit_path_parser, del_frq_check, del_frq)
             if isinstance(folder, list):
                 self.logging_dict[file_name[0]].warning(folder[1])
                 self.logging_dict[file_name[0]].warning('Ошибки в заполнении формы, программа не запущена в работу')
                 self.on_message_changed(folder[0], folder[1])
-                self.finished_thread('parcing_file',
-                                     name_all=str(pathlib.Path('logs', 'parcing_file', file_name[1])),
-                                     name_now=str(pathlib.Path('logs', 'parcing_file', file_name[0])))
+                self.finished_thread('parsing_file',
+                                     name_all=str(Path('logs', 'parsing_file', file_name[1])),
+                                     name_now=str(Path('logs', 'parsing_file', file_name[0])))
                 return
             # Если всё прошло запускаем поток
             self.logging_dict[file_name[0]].info('Запуск на выполнение')
             folder['difference_3'], folder['two_percent'] = difference_3, two_percent
             folder['video_check'], folder['12_sec'] = video_check, twelve_sectors
             folder['logging'], folder['queue'] = self.logging_dict[file_name[0]], self.queue
-            folder['default_path'], folder['move'] = self.default_path, len(self.thread_dict['parcing_file'])
-            self.thread = FileParcing(folder)
+            folder['default_path'], folder['move'] = self.default_path, len(self.thread_dict['parsing_file'])
+            self.thread = FileParsing(folder)
             self.thread.status_finish.connect(self.finished_thread)
             self.thread.status.connect(self.statusBar().showMessage)
             self.thread.errors.connect(self.errors)
             self.thread.start()
-            self.thread_dict['parcing_file'][str(self.thread)] = {'filename_all': file_name[1],
+            self.thread_dict['parsing_file'][str(self.thread)] = {'filename_all': file_name[1],
                                                                   'filename_now': file_name[0]}
         except BaseException as exception:
-            self.logging_dict[file_name[0]].error('Ошибка при старте parcing_file')
+            self.logging_dict[file_name[0]].error('Ошибка при старте parsing_file')
             self.logging_dict[file_name[0]].error(exception)
             self.logging_dict[file_name[0]].error(traceback.format_exc())
             self.on_message_changed('УПС!', 'Неизвестная ошибка, обратитесь к разработчику')
-            self.finished_thread('parcing_file',
-                                 name_all=str(pathlib.Path('logs', 'parcing_file', file_name[1])),
-                                 name_now=str(pathlib.Path('logs', 'parcing_file', file_name[0])))
+            self.finished_thread('parsing_file',
+                                 name_all=str(Path('logs', 'parsing_file', file_name[1])),
+                                 name_now=str(Path('logs', 'parsing_file', file_name[0])))
             return
 
     def errors(self):
@@ -705,14 +720,14 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 self.logging_dict[file_name[0]].warning('Ошибки в заполнении формы, программа не запущена в работу')
                 self.on_message_changed(zone_all[0], zone_all[1])
                 self.finished_thread('zone_checked',
-                                     name_all=str(pathlib.Path('logs', 'zone_checked', file_name[1])),
-                                     name_now=str(pathlib.Path('logs', 'zone_checked', file_name[0])))
+                                     name_all=str(Path('logs', 'zone_checked', file_name[1])),
+                                     name_now=str(Path('logs', 'zone_checked', file_name[0])))
                 return
             # Если всё прошло запускаем поток
             self.logging_dict[file_name[0]].info('Запуск на выполнение')
             zone = {'path_check': self.lineEdit_path_check.text().strip(),
                     'table_number': self.lineEdit_table_number.text().strip(), 'department': department,
-                    'win_lin': win_lin, 'zone_all': zone_all, 'one_table': one_table,
+                    'win_lin': win_lin, 'zone_all': zone_all, 'one_table': one_table, 'all_mode': self.all_mode,
                     'logging': self.logging_dict[file_name[0]],
                     'queue': self.queue, 'default_path': self.default_path,
                     'move': len(self.thread_dict['zone_checked']),
@@ -729,8 +744,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.logging_dict[file_name[0]].error(traceback.format_exc())
             self.on_message_changed('УПС!', 'Неизвестная ошибка, обратитесь к разработчику')
             self.finished_thread('zone_checked',
-                                 name_all=str(pathlib.Path('logs', 'zone_checked', file_name[1])),
-                                 name_now=str(pathlib.Path('logs', 'zone_checked', file_name[0])))
+                                 name_all=str(Path('logs', 'zone_checked', file_name[1])),
+                                 name_now=str(Path('logs', 'zone_checked', file_name[0])))
             return
 
     def delete_header_footer(self):
@@ -748,8 +763,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 self.logging_dict[file_name[0]].warning('Ошибки в заполнении формы, программа не запущена в работу')
                 self.on_message_changed(output[0], output[1])
                 self.finished_thread('delete_header_footer',
-                                     name_all=str(pathlib.Path('logs', 'delete_header_footer', file_name[1])),
-                                     name_now=str(pathlib.Path('logs', 'delete_header_footer', file_name[0])))
+                                     name_all=str(Path('logs', 'delete_header_footer', file_name[1])),
+                                     name_now=str(Path('logs', 'delete_header_footer', file_name[0])))
                 return
             # Если всё прошло запускаем поток
             self.logging_dict[file_name[0]].info('Запуск на выполнение')
@@ -772,8 +787,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.logging_dict[file_name[0]].error(traceback.format_exc())
             self.on_message_changed('УПС!', 'Неизвестная ошибка, обратитесь к разработчику')
             self.finished_thread('delete_header_footer',
-                                 name_all=str(pathlib.Path('logs', 'delete_header_footer', file_name[1])),
-                                 name_now=str(pathlib.Path('logs', 'delete_header_footer', file_name[0])))
+                                 name_all=str(Path('logs', 'delete_header_footer', file_name[1])),
+                                 name_now=str(Path('logs', 'delete_header_footer', file_name[0])))
             return
 
     def generate_cc(self):
@@ -790,8 +805,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 self.logging_dict[file_name[0]].warning('Ошибки в заполнении формы, программа не запущена в работу')
                 self.on_message_changed(generate[0], generate[1])
                 self.finished_thread('continuous_spectrum',
-                                     name_all=str(pathlib.Path('logs', 'continuous_spectrum', file_name[1])),
-                                     name_now=str(pathlib.Path('logs', 'continuous_spectrum', file_name[0])))
+                                     name_all=str(Path('logs', 'continuous_spectrum', file_name[1])),
+                                     name_now=str(Path('logs', 'continuous_spectrum', file_name[0])))
                 return
             # Если всё прошло запускаем поток
             self.logging_dict[file_name[0]].info('Запуск на выполнение')
@@ -809,8 +824,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.logging_dict[file_name[0]].error(traceback.format_exc())
             self.on_message_changed('УПС!', 'Неизвестная ошибка, обратитесь к разработчику')
             self.finished_thread('continuous_spectrum',
-                                 name_all=str(pathlib.Path('logs', 'continuous_spectrum', file_name[1])),
-                                 name_now=str(pathlib.Path('logs', 'continuous_spectrum', file_name[0])))
+                                 name_all=str(Path('logs', 'continuous_spectrum', file_name[1])),
+                                 name_now=str(Path('logs', 'continuous_spectrum', file_name[0])))
             return
 
     def change_number_instance(self):
@@ -826,8 +841,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 self.logging_dict[file_name[0]].warning('Ошибки в заполнении формы, программа не запущена в работу')
                 self.on_message_changed(incoming[0], incoming[1])
                 self.finished_thread('change_number_instance',
-                                     name_all=str(pathlib.Path('logs', 'change_number_instance', file_name[1])),
-                                     name_now=str(pathlib.Path('logs', 'change_number_instance', file_name[0])))
+                                     name_all=str(Path('logs', 'change_number_instance', file_name[1])),
+                                     name_now=str(Path('logs', 'change_number_instance', file_name[0])))
                 return
             # Если всё прошло запускаем поток
             self.logging_dict[file_name[0]].info('Запуск на выполнение')
@@ -846,8 +861,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.logging_dict[file_name[0]].error(traceback.format_exc())
             self.on_message_changed('УПС!', 'Неизвестная ошибка, обратитесь к разработчику')
             self.finished_thread('change_number_instance',
-                                 name_all=str(pathlib.Path('logs', 'change_number_instance', file_name[1])),
-                                 name_now=str(pathlib.Path('logs', 'change_number_instance', file_name[0])))
+                                 name_all=str(Path('logs', 'change_number_instance', file_name[1])),
+                                 name_now=str(Path('logs', 'change_number_instance', file_name[0])))
             return
 
     def finding_files(self):
@@ -862,8 +877,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 self.logging_dict[file_name[0]].warning('Ошибки в заполнении формы, программа не запущена в работу')
                 self.on_message_changed(find_files[0], find_files[1])
                 self.finished_thread('finding_files',
-                                     name_all=str(pathlib.Path('logs', 'finding_files', file_name[1])),
-                                     name_now=str(pathlib.Path('logs', 'finding_files', file_name[0])))
+                                     name_all=str(Path('logs', 'finding_files', file_name[1])),
+                                     name_now=str(Path('logs', 'finding_files', file_name[0])))
                 return
             # Если всё прошло запускаем поток
             self.logging_dict[file_name[0]].info('Запуск на выполнение')
@@ -882,8 +897,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.logging_dict[file_name[0]].error(traceback.format_exc())
             self.on_message_changed('УПС!', 'Неизвестная ошибка, обратитесь к разработчику')
             self.finished_thread('finding_files',
-                                 name_all=str(pathlib.Path('logs', 'finding_files', file_name[1])),
-                                 name_now=str(pathlib.Path('logs', 'finding_files', file_name[0])))
+                                 name_all=str(Path('logs', 'finding_files', file_name[1])),
+                                 name_now=str(Path('logs', 'finding_files', file_name[0])))
             return
 
     def gen_lf_pemi(self):
@@ -901,8 +916,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
                 self.logging_dict[file_name[0]].warning('Ошибки в заполнении формы, программа не запущена в работу')
                 self.on_message_changed(incoming_data[0], incoming_data[1])
                 self.finished_thread('gen_lf_pemi',
-                                     name_all=str(pathlib.Path('logs', 'gen_lf_pemi', file_name[1])),
-                                     name_now=str(pathlib.Path('logs', 'gen_lf_pemi', file_name[0])))
+                                     name_all=str(Path('logs', 'gen_lf_pemi', file_name[1])),
+                                     name_now=str(Path('logs', 'gen_lf_pemi', file_name[0])))
                 return
             # Если всё прошло запускаем поток
             self.logging_dict[file_name[0]].info('Запуск на выполнение')
@@ -921,8 +936,8 @@ class MainWindow(QMainWindow, Main.Ui_MainWindow):  # Главное окно
             self.logging_dict[file_name[0]].error(traceback.format_exc())
             self.on_message_changed('УПС!', 'Неизвестная ошибка, обратитесь к разработчику')
             self.finished_thread('gen_lf_pemi',
-                                 name_all=str(pathlib.Path('logs', 'gen_lf_pemi', file_name[1])),
-                                 name_now=str(pathlib.Path('logs', 'gen_lf_pemi', file_name[0])))
+                                 name_all=str(Path('logs', 'gen_lf_pemi', file_name[1])),
+                                 name_now=str(Path('logs', 'gen_lf_pemi', file_name[0])))
             return
 
     def pause_thread(self):

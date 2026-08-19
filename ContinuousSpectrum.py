@@ -51,7 +51,7 @@ class GenerationFileCC(QThread):
         self.info_value.connect(self.window_check.info_message)
         self.window_check.show()
 
-    def parcing(self, current_progress, path, path_txt, generation, name_folder):
+    def parsing(self, current_progress, path, path_txt, generation, name_folder):
         def write_gen(df_gen, name_file, mode):
             for num_set in self.set:
                 self.logging.info('Запись генерируемых файлов ' + name_file + ' ' + str(num_set))
@@ -220,7 +220,7 @@ class GenerationFileCC(QThread):
             self.logging.info('0' + '"|"' + str(self.source) + '"|"' + 'True' + '"|"' +
                               str(pathlib.PurePath(self.source).name) + '.txt' + '"|"' + str(self.source))
             self.line_doing.emit(f'Парсинг исходного файла ({self.now_doc} из {self.all_doc})')
-            current_progress = self.parcing(0, self.source, str(pathlib.Path(self.source, 'txt')),
+            current_progress = self.parsing(0, self.source, str(pathlib.Path(self.source, 'txt')),
                                             True, 'исходного файла')
             self.line_progress.emit(f'Выполнено {int(current_progress)} %')
             self.event.wait()
@@ -247,7 +247,7 @@ class GenerationFileCC(QThread):
                         self.logging.info(str(current_progress) + '"|"' + str(pathlib.Path(self.output, str(folder))) +
                                           '"|"' + 'False' + '"|"' + str(folder) + '.txt' + '"|"' + str(folder))
                         self.line_doing.emit(f'Генерация {str(folder)} ({self.now_doc} из {self.all_doc})')
-                        current_progress = self.parcing(current_progress,
+                        current_progress = self.parsing(current_progress,
                                                         str(pathlib.Path(self.output, str(folder))),
                                                         str(pathlib.Path(self.output, 'txt', str(folder))),
                                                         False, str(folder))

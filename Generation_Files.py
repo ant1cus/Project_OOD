@@ -7,7 +7,7 @@ import traceback
 
 import pandas as pd
 from PyQt5.QtCore import QThread, pyqtSignal
-from convert import file_parcing
+from convert import file_parsing
 from DoingWindow import CheckWindow
 
 
@@ -61,7 +61,7 @@ class GenerationFile(QThread):
             self.progress_value.emit(0)
             self.percent_progress = 100/self.all_doc
             self.line_doing.emit(f'Парсим файлы из исходной папки {pathlib.Path(self.source).name}')
-            answer = file_parcing(self.source, self.logging, self.line_doing, self.now_doc, self.all_doc,
+            answer = file_parsing(self.source, self.logging, self.line_doing, self.now_doc, self.all_doc,
                                   self.line_progress, self.progress_value, self.percent_progress, current_progress,
                                   self.default_path, self.event, self.window_check, no_freq_lim=self.no_freq_lim)
             if answer['status'] == 'exception':
@@ -236,7 +236,7 @@ class GenerationFile(QThread):
             if self.no_excel_file is False:
                 with open(self.output + '\\Описание.txt', mode='w', encoding='utf-8-sig') as f:
                     f.write('\n'.join([el for el in mode]).rstrip())
-                error = file_parcing(self.output, self.logging, self.line_doing, self.now_doc, self.all_doc,
+                error = file_parsing(self.output, self.logging, self.line_doing, self.now_doc, self.all_doc,
                                      self.line_progress, self.progress_value, self.percent_progress, current_progress,
                                      self.no_freq_lim, self.default_path, self.event, self.window_check)
             if error['base_exception']:

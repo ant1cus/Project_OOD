@@ -55,6 +55,7 @@ class ZoneChecked(QThread):
         self.extend_report = incoming_data['extend_report']
         self.zone = incoming_data['zone_all']
         self.one_table = incoming_data['one_table']
+        self.all_mode = incoming_data['all_mode']
         self.logging = incoming_data['logging']
         self.queue = incoming_data['queue']
         self.default_path = incoming_data['default_path']
@@ -281,7 +282,7 @@ class ZoneChecked(QThread):
                 self.progress_value.emit(int(progress))
                 self.logging.info("Проверяем и красим ячейки в таблице")
                 self.line_doing.emit(f'Проверяем зоны в {str(name_doc)} ({now_doc} из {all_doc})')
-                # Столбцы для проверки (считать с 0 в Word)
+                # Столбцы для проверки (считать с 0 в Word). Добавил первый столбец для полного имени, потом удаляем
                 zone_col = [5, 7, 9, 11, 13] if self.department else [8, 9, 10, 11]
 
                 def cur_mode_and_sys(find):
@@ -334,13 +335,23 @@ class ZoneChecked(QThread):
                         mag_line = [i for i in name_mode.index.tolist() if 'магнитная составляющая'
                                     in name_mode.loc[i, 0]]
                         name_mode = name_mode.drop(mag_line)
-                    name_mode[0] = list(map(cur_mode_and_sys, name_mode[0].to_numpy().tolist()))
+                    full_name_mode = name_mode[0].to_numpy().tolist()
+                    name_mode[0] = list(map(cur_mode_and_sys, full_name_mode))
                     extend_line = [e for e, x in enumerate(find_st.index.isin(name_mode.index.tolist())) if not x]
                     for col in zone_col:
                         list_val = find_st.iloc[extend_line, col].tolist()
                         name_mode[col] = list_val
                     for line in range(name_mode.shape[0]):
                         app_line = name_mode.iloc[line].tolist()
+                        in_report = True
+                        try:
+                            in_report = self.all_mode.loc[(self.all_mode['name'] == full_name_mode[line]) &
+                                                          (self.all_mode['mode_and_sys'] == app_line[0]),
+                                                          'in_report'].values[0]
+                        except IndexError:
+                            self.logging.info(f"Не нашли в списке режимов {app_line[0]}")
+                        if not in_report:
+                            continue
                         app_line[0] = app_line[0][0]
                         if self.win_lin:
                             if name_mode.iloc[line, 0][1] == 'Windows':
